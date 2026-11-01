@@ -121,6 +121,7 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="GalaxySettings.cs" />
+    <Compile Include="GateNetworkReport.cs" />
     <Compile Include="Generator.cs" />
     <Compile Include="Persist.cs">
       <SubType>Form</SubType>

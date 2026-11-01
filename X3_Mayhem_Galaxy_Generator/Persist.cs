@@ -277,7 +277,7 @@ namespace X3_Mayhem_Galaxy_Generator
             }
 
             // ZMap Expanded 2.2 - Check for connectivity.
-            X3Galaxy.GateNetworkReport network = X3Galaxy.Instance.AnalyzeGateNetwork();
+            GateNetworkReport network = X3Galaxy.Instance.AnalyzeGateNetwork();
 
             if (network.GatelessSectors > 0 || network.OutsideLargestNetwork > 0 || network.MissingDestinations > 0 || network.MissingReturnGates > 0)
             {
@@ -288,8 +288,6 @@ namespace X3_Mayhem_Galaxy_Generator
 
                 return;
             }
-
-
 
             if (tbGalaxyName.Text == string.Empty)
             {
@@ -1082,8 +1080,7 @@ namespace X3_Mayhem_Galaxy_Generator
                 savedGalaxy.LoadFrom_X3_Universe_XML(universeFile);
 
                 bool hasUnknownEnclave = savedGalaxy.Sectors.Any(sector => (ERace)sector.r == ERace.Unknown && sector.Gates.Count == 1);
-
-                X3Galaxy.GateNetworkReport network = savedGalaxy.AnalyzeGateNetwork();
+                GateNetworkReport network = savedGalaxy.AnalyzeGateNetwork();
 
                 if (!hasUnknownEnclave || network.GatelessSectors > 0 || network.OutsideLargestNetwork > 0 || network.MissingDestinations > 0 || network.MissingReturnGates > 0)
                 {

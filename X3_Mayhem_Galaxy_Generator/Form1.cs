@@ -443,8 +443,7 @@ namespace X3_Mayhem_Galaxy_Generator
                 return;
             }
 
-            X3Galaxy.GateNetworkReport network =
-                X3Galaxy.Instance.AnalyzeGateNetwork();
+            GateNetworkReport network = X3Galaxy.Instance.AnalyzeGateNetwork();
             List<string> problems = new List<string>();
 
             if (!X3Galaxy.HasUnknownEnclave())
