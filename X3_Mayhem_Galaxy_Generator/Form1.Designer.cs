@@ -138,10 +138,10 @@ namespace X3_Mayhem_Galaxy_Generator
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.btnShowTerran = new System.Windows.Forms.ToolStripButton();
             this.btnShowSectorStats = new System.Windows.Forms.ToolStripButton();
+            this.btnShowSectorNames = new System.Windows.Forms.ToolStripButton();
             this.btnLaunchWeaponsEditor = new System.Windows.Forms.ToolStripButton();
             this.lblWarning = new System.Windows.Forms.ToolStripLabel();
             this.lblSectorCount = new System.Windows.Forms.ToolStripLabel();
-            this.btnShowSectorNames = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -257,7 +257,7 @@ namespace X3_Mayhem_Galaxy_Generator
             this.btnHelpMain.Name = "btnHelpMain";
             this.btnHelpMain.Size = new System.Drawing.Size(142, 23);
             this.btnHelpMain.TabIndex = 93;
-            this.btnHelpMain.Text = "Help ?";
+            this.btnHelpMain.Text = "Help";
             this.btnHelpMain.UseVisualStyleBackColor = false;
             this.btnHelpMain.Click += new System.EventHandler(this.btnHelpMain_Click);
             // 
@@ -1440,6 +1440,16 @@ namespace X3_Mayhem_Galaxy_Generator
             this.btnShowSectorStats.ToolTipText = "Show sector stats";
             this.btnShowSectorStats.Click += new System.EventHandler(this.btnShowSectorStats_Click);
             // 
+            // btnShowSectorNames
+            // 
+            this.btnShowSectorNames.Image = ((System.Drawing.Image)(resources.GetObject("btnShowSectorNames.Image")));
+            this.btnShowSectorNames.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnShowSectorNames.Name = "btnShowSectorNames";
+            this.btnShowSectorNames.Size = new System.Drawing.Size(100, 22);
+            this.btnShowSectorNames.Text = "Sector Names";
+            this.btnShowSectorNames.ToolTipText = "Show sector names on the galaxy map";
+            this.btnShowSectorNames.Click += new System.EventHandler(this.btnShowSectorNames_Click);
+            // 
             // btnLaunchWeaponsEditor
             // 
             this.btnLaunchWeaponsEditor.Image = ((System.Drawing.Image)(resources.GetObject("btnLaunchWeaponsEditor.Image")));
@@ -1466,16 +1476,6 @@ namespace X3_Mayhem_Galaxy_Generator
             this.lblSectorCount.Size = new System.Drawing.Size(57, 22);
             this.lblSectorCount.Text = "Sectors: 0";
             this.lblSectorCount.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            // 
-            // btnShowSectorNames
-            // 
-            this.btnShowSectorNames.Image = ((System.Drawing.Image)(resources.GetObject("btnShowSectorNames.Image")));
-            this.btnShowSectorNames.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.btnShowSectorNames.Name = "btnShowSectorNames";
-            this.btnShowSectorNames.Size = new System.Drawing.Size(100, 22);
-            this.btnShowSectorNames.Text = "Sector Names";
-            this.btnShowSectorNames.ToolTipText = "Show sector names on the galaxy map";
-            this.btnShowSectorNames.Click += new System.EventHandler(this.btnShowSectorNames_Click);
             // 
             // Form1
             // 
