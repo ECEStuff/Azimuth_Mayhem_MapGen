@@ -118,28 +118,40 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="richTextBox1.Text" xml:space="preserve">
-    <value>1. Make a folder
-2. Put your mp3's in it.
-3. Click the "Select a Folder" button below and point it to your new folder.
-4. Click the "Use Custom Music" button below.
-5. Save your map.  You're Done.
+  <value>Getting Started
 
-More Detailed:
-.  Create a new Folder anywhere this program can access.  Copy whatever .mp3 files you love into that folder.  Be sure to ALSO copy any music from the "Mayhem 3 /soundtrack/" folder that you already like.
-.  What is played in the game is restricted to the MP3 filenames in your custom music folder at the moment in time you GENERATE a map in ZMap.
-.  Music filenames are randomized and embedded in each sector within the Map and cannot be altered once a map is generated.
-.  I have no idea what .mp3 files are compatible with X3.  Look in /soundtrack to see what it uses already.  I'm guessing it will play just about anything.
-.  The .mp3 files in the selected folder WILL BE COPIED to your Mayhem3 /soundtrack folder when you click the "USE CUSTOM MUSIC" button below.
-.  X3 only accepts music files with "integer like" names (82005.mp3 for example), so your copied music file names are transmorgified as they are copied into the /soundtrack folder.
-.  Any duplicate file names will be IGNORED, and not copied.  No files are overwritten, nor are any ever deleted.
-.  While many additional mp3 files may be in the /soundtrack folder, ONLY the ones you had in your custom folder are played during the game.
-.  If you remove a music file from /soundtrack and it's referenced by a map you created, who the hell knows what will happen when the game runs.  
-.  You are responsible for the content and compatibility of the music you provide.  I'm just giving you the mechanism to hear it in the game.
-.  You need to have at least 10 .mp3 files in the folder you choose.  If you have less music files than there are sectors, it will just re-use existing music files so you'll have some duplication.
+1. Create a folder and add at least 10 MP3 files.
+2. Click "Select a Folder" and choose your music folder.
+3. Click "Use Custom Music" to validate and import your tracks.
+4. Generate a new galaxy with Custom Music selected.
+5. Save your galaxy. You're done!
 
-Enjoy
+Additional Information
 
- </value>
+Music Selection
+- Your selected folder determines which tracks are available as sector background music when you generate a galaxy.
+- You can include music from the original Mayhem 3 /soundtrack/ folder. Copy the tracks you want into your custom folder without renaming them.
+- Music is distributed across sectors during galaxy generation. If there are more sectors than available tracks, some music will be reused.
+- Music assignments are stored in the generated galaxy. You can change individual assignments through the Sector Editor or generate another galaxy.
+
+Filenames and Importing
+- X3 requires numeric soundtrack filenames, such as 82005.mp3.
+- Files with nonnumeric names are automatically assigned deterministic numeric IDs when imported. Existing numeric filenames retain their IDs.
+- Only soundtrack IDs 15 and higher, plus ID 12 (the unused X: Beyond the Frontier building theme), are permitted for sector music. Other IDs below 15 are reserved for situational game sounds.
+- At least 10 MP3 files with distinct, valid soundtrack IDs are required.
+- New tracks are copied into your Mayhem 3 /soundtrack/ folder. Existing files are never overwritten or deleted.
+- Previously imported tracks can be reused if their filenames and contents match.
+- Duplicate soundtrack IDs and conflicts with existing audio are rejected. Resolve any reported conflicts before importing.
+
+Important Notes
+- Keep imported music in your /soundtrack/ folder for as long as a galaxy references it. Removing or replacing tracks may cause missing or unexpected music during gameplay.
+- Only the tracks selected for a generated galaxy are assigned as its sector background music. Other game sounds and situational music are unaffected.
+- MP3 compatibility depends on X3's audio support. Refer to the game's existing soundtrack files for suitable formats.
+- You are responsible for the content, compatibility, and rights to use any music you import.
+
+Enjoy your custom soundtrack!
+</value>
+
   </data>
   <metadata name="folderBrowserDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>

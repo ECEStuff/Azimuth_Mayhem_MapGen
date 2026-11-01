@@ -46,6 +46,95 @@ namespace X3_Mayhem_Galaxy_Generator
         }
 
 
+        // Independent Expanded validation. Analyze valid, reciprocal gate links without
+        // modifying sectors or gate data. This also catches broken links in loaded maps.
+        public sealed class GateNetworkReport
+        {
+            public int GatelessSectors { get; internal set; }
+            public int ConnectedNetworks { get; internal set; }
+            public int OutsideLargestNetwork { get; internal set; }
+            public int MissingDestinations { get; internal set; }
+            public int MissingReturnGates { get; internal set; }
+        }
+
+        public GateNetworkReport AnalyzeGateNetwork()
+        {
+            GateNetworkReport result = new GateNetworkReport();
+
+            // Index by coordinates to avoid repeatedly searching all sectors.
+            Dictionary<Tuple<int, int>, X3Sector> sectorLookup =
+                new Dictionary<Tuple<int, int>, X3Sector>();
+            Dictionary<X3Sector, HashSet<X3Sector>> connections =
+                new Dictionary<X3Sector, HashSet<X3Sector>>();
+
+            foreach (X3Sector sector in Sectors)
+            {
+                sectorLookup[Tuple.Create(sector.x, sector.y)] = sector;
+                connections[sector] = new HashSet<X3Sector>();
+
+                if (sector.Gates.Count == 0)
+                    result.GatelessSectors++;
+            }
+
+            // Only reciprocal connections to existing sectors are traversable.
+            foreach (X3Sector sector in Sectors)
+            {
+                foreach (X3Gate gate in sector.Gates)
+                {
+                    X3Sector destination;
+                    if (!sectorLookup.TryGetValue(
+                        Tuple.Create(gate.gx, gate.gy), out destination))
+                    {
+                        result.MissingDestinations++;
+                        continue;
+                    }
+
+                    if (destination == sector ||
+                        !destination.Gates.Any(returnGate =>
+                            returnGate.gx == sector.x && returnGate.gy == sector.y))
+                    {
+                        result.MissingReturnGates++;
+                        continue;
+                    }
+
+                    connections[sector].Add(destination);
+                    connections[destination].Add(sector);
+                }
+            }
+
+            // One traversal per connected component: O(sectors + valid gates).
+            HashSet<X3Sector> visited = new HashSet<X3Sector>();
+            int largestNetwork = 0;
+
+            foreach (X3Sector sector in Sectors)
+            {
+                if (!visited.Add(sector))
+                    continue;
+
+                result.ConnectedNetworks++;
+                int networkSize = 0;
+                Queue<X3Sector> queue = new Queue<X3Sector>();
+                queue.Enqueue(sector);
+
+                while (queue.Count > 0)
+                {
+                    X3Sector current = queue.Dequeue();
+                    networkSize++;
+
+                    foreach (X3Sector neighbor in connections[current])
+                    {
+                        if (visited.Add(neighbor))
+                            queue.Enqueue(neighbor);
+                    }
+                }
+
+                largestNetwork = Math.Max(largestNetwork, networkSize);
+            }
+
+            result.OutsideLargestNetwork = Sectors.Count - largestNetwork;
+            return result;
+        }
+
         private X3Galaxy() { }
 
         public static X3Galaxy Instance
@@ -541,13 +630,13 @@ namespace X3_Mayhem_Galaxy_Generator
 
 
         /// <summary>
-        /// Finds nearest neighbor (vertical or horizontal directions only) randomly up to a distance of 6.
+        /// Finds a random nearest neighbor along a horizontal or vertical axis, up to maxdistance.
         /// </summary>
         /// <param name="source"></param>
         /// <returns></returns>
-        public X3Sector GetNearestRandomNeighbor(X3Sector source, int startdistance = 1)
+        public X3Sector GetNearestRandomNeighbor(X3Sector source, int startdistance = 1, int maxdistance = 6)
         {
-            for (int x = startdistance; x < 7; x++)
+            for (int x = startdistance; x <= maxdistance; x++)
             {
                 List<X3Sector> neighbors = GetNeighbors(source, x);
                 neighbors.RemoveAll(item => item.IsConnectedTo(source));

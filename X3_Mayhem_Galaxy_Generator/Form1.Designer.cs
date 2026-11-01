@@ -140,6 +140,8 @@ namespace X3_Mayhem_Galaxy_Generator
             this.btnShowSectorStats = new System.Windows.Forms.ToolStripButton();
             this.btnLaunchWeaponsEditor = new System.Windows.Forms.ToolStripButton();
             this.lblWarning = new System.Windows.Forms.ToolStripLabel();
+            this.lblSectorCount = new System.Windows.Forms.ToolStripLabel();
+            this.btnShowSectorNames = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -193,7 +195,6 @@ namespace X3_Mayhem_Galaxy_Generator
             // 
             // splitContainer1.Panel1
             // 
-            // 1.8.6: Changed from ivory to system color.
             this.splitContainer1.Panel1.BackColor = System.Drawing.SystemColors.Control;
             this.splitContainer1.Panel1.Controls.Add(this.btnCustomMusic);
             this.splitContainer1.Panel1.Controls.Add(this.btnHelpMain);
@@ -1409,8 +1410,10 @@ namespace X3_Mayhem_Galaxy_Generator
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.btnShowTerran,
             this.btnShowSectorStats,
+            this.btnShowSectorNames,
             this.btnLaunchWeaponsEditor,
-            this.lblWarning});
+            this.lblWarning,
+            this.lblSectorCount});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1514, 25);
@@ -1419,34 +1422,31 @@ namespace X3_Mayhem_Galaxy_Generator
             // 
             // btnShowTerran
             // 
-            this.btnShowTerran.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
             this.btnShowTerran.Image = ((System.Drawing.Image)(resources.GetObject("btnShowTerran.Image")));
             this.btnShowTerran.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.btnShowTerran.Name = "btnShowTerran";
-            this.btnShowTerran.Size = new System.Drawing.Size(23, 22);
-            this.btnShowTerran.Text = "toolStripButton1";
-            this.btnShowTerran.ToolTipText = "Show Terran Memory Systems";
+            this.btnShowTerran.Size = new System.Drawing.Size(60, 22);
+            this.btnShowTerran.Text = "Terran";
+            this.btnShowTerran.ToolTipText = "Highlight sectors with Terran Memory";
             this.btnShowTerran.Click += new System.EventHandler(this.btnShowTerran_Click);
             // 
             // btnShowSectorStats
             // 
-            this.btnShowSectorStats.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
             this.btnShowSectorStats.Image = ((System.Drawing.Image)(resources.GetObject("btnShowSectorStats.Image")));
             this.btnShowSectorStats.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.btnShowSectorStats.Name = "btnShowSectorStats";
-            this.btnShowSectorStats.Size = new System.Drawing.Size(23, 22);
-            this.btnShowSectorStats.Text = "toolStripButton1";
-            this.btnShowSectorStats.ToolTipText = "Show Sector Attributes";
+            this.btnShowSectorStats.Size = new System.Drawing.Size(52, 22);
+            this.btnShowSectorStats.Text = "Stats";
+            this.btnShowSectorStats.ToolTipText = "Show sector stats";
             this.btnShowSectorStats.Click += new System.EventHandler(this.btnShowSectorStats_Click);
             // 
             // btnLaunchWeaponsEditor
             // 
-            this.btnLaunchWeaponsEditor.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
             this.btnLaunchWeaponsEditor.Image = ((System.Drawing.Image)(resources.GetObject("btnLaunchWeaponsEditor.Image")));
             this.btnLaunchWeaponsEditor.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.btnLaunchWeaponsEditor.Name = "btnLaunchWeaponsEditor";
-            this.btnLaunchWeaponsEditor.Size = new System.Drawing.Size(23, 22);
-            this.btnLaunchWeaponsEditor.Text = "toolStripButton1";
+            this.btnLaunchWeaponsEditor.Size = new System.Drawing.Size(130, 22);
+            this.btnLaunchWeaponsEditor.Text = "Ships and Weapons";
             this.btnLaunchWeaponsEditor.ToolTipText = "Weapons and Ships Editor";
             this.btnLaunchWeaponsEditor.Click += new System.EventHandler(this.btnLaunchWeaponsEditor_Click);
             // 
@@ -1458,20 +1458,37 @@ namespace X3_Mayhem_Galaxy_Generator
             this.lblWarning.Size = new System.Drawing.Size(600, 22);
             this.lblWarning.Text = "toolStripLabel1";
             // 
+            // lblSectorCount
+            // 
+            this.lblSectorCount.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.lblSectorCount.Name = "lblSectorCount";
+            this.lblSectorCount.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
+            this.lblSectorCount.Size = new System.Drawing.Size(57, 22);
+            this.lblSectorCount.Text = "Sectors: 0";
+            this.lblSectorCount.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // btnShowSectorNames
+            // 
+            this.btnShowSectorNames.Image = ((System.Drawing.Image)(resources.GetObject("btnShowSectorNames.Image")));
+            this.btnShowSectorNames.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.btnShowSectorNames.Name = "btnShowSectorNames";
+            this.btnShowSectorNames.Size = new System.Drawing.Size(100, 22);
+            this.btnShowSectorNames.Text = "Sector Names";
+            this.btnShowSectorNames.ToolTipText = "Show sector names on the galaxy map";
+            this.btnShowSectorNames.Click += new System.EventHandler(this.btnShowSectorNames_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(1514, 965);
-            this.MinimumSize = new System.Drawing.Size(1000, 900);
-
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.toolStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MinimumSize = new System.Drawing.Size(1000, 900);
             this.Name = "Form1";
             this.Text = "Mayhem Expanded - Map Generator";
-
             this.Shown += new System.EventHandler(this.Form1_Shown);
             this.Resize += new System.EventHandler(this.Form1_Resize);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
@@ -1618,6 +1635,8 @@ namespace X3_Mayhem_Galaxy_Generator
         private System.Windows.Forms.ToolStripLabel lblWarning;
         private System.Windows.Forms.Button btnCustomMusic;
         private System.Windows.Forms.RadioButton rbCustom;
+        private System.Windows.Forms.ToolStripLabel lblSectorCount;
+        private System.Windows.Forms.ToolStripButton btnShowSectorNames;
     }
 }
 

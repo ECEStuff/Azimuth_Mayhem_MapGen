@@ -314,20 +314,71 @@ namespace X3_Mayhem_Galaxy_Generator
         /// Yes, let them orphan systems if that's what they want.
         /// </summary>
         /// <param name="direction"></param>
+        /// 
         private void ToggleGate(EGateDirection direction)
         {
+            // When removing an existing gate, use its actual destination.
+            X3Gate existingGate = m_Sector.Gates.Find(gate => gate.s == (int)direction);
+            if (existingGate != null)
+            {
+                X3Sector linkedSector = X3Galaxy.Instance.GetSectorAt(existingGate.gx, existingGate.gy);
+
+                if (linkedSector != null)
+                {
+                    m_Sector.RemoveGates(linkedSector);
+                }
+                else
+                {
+                    // Allow removal of gates pointing to nonexistent sectors.
+                    m_Sector.Gates.Remove(existingGate);
+                }
+
+                return;
+            }
+
+            // Search for the nearest sector only when adding a new gate.
             X3Sector destination = X3Galaxy.Instance.GetSectorInDirection(m_Sector, direction);
-            if (destination == null) return;
+            if (destination == null)
+                return;
 
-            if (m_Sector.Gates.Exists(item => item.s == (int)direction))
+            // Determine which gate side the destination would use.
+            EGateDirection opposite;
+            switch (direction)
             {
-                m_Sector.RemoveGates(destination);
-            }
-            else
-            {
-                m_Sector.AddGates(destination);
+                case EGateDirection.North:
+                    opposite = EGateDirection.South;
+                    break;
+
+                case EGateDirection.South:
+                    opposite = EGateDirection.North;
+                    break;
+
+                case EGateDirection.East:
+                    opposite = EGateDirection.West;
+                    break;
+
+                case EGateDirection.West:
+                    opposite = EGateDirection.East;
+                    break;
+
+                default:
+                    return;
             }
 
+            // Do not overwrite an occupied gate side.
+            X3Gate occupiedSide = destination.Gates.Find(gate => gate.s == (int)opposite && (gate.gx != m_Sector.x || gate.gy != m_Sector.y));
+            if (occupiedSide != null)
+            {
+                MessageBox.Show(
+                    $"Cannot add a {direction} gate. The destination sector's {opposite} gate is already occupied.",
+                    "Gate Already In Use",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                return;
+            }
+
+            m_Sector.AddGates(destination);
         }
 
         private void btnChangeMusicFile_Click(object sender, EventArgs e)
@@ -344,8 +395,20 @@ namespace X3_Mayhem_Galaxy_Generator
                     MessageBox.Show("Please choose a file from the soundtrack folder.");
                     return;
                 }
-                string src = Path.GetFileName(openFileDialog1.FileName); 
+                string src = Path.GetFileName(openFileDialog1.FileName);
                 string srcFile = Path.GetFileNameWithoutExtension(src);
+
+                if (!X3Utils.IsSectorMusicTrack(srcFile))
+                {
+                    MessageBox.Show(
+                        "This file cannot be assigned as sector music. Soundtrack IDs below 15, except 12, are reserved.",
+                        "Invalid Sector Music",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+
+                    return;
+                }
+
                 m_Sector.m_MusicFileName = srcFile;
                 lblMusicFile.Text = srcFile + ".mp3";
             }

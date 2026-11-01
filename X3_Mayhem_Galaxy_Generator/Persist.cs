@@ -266,16 +266,29 @@ namespace X3_Mayhem_Galaxy_Generator
             string src, dest, destroot;
             bool isActiveMap = false;
 
-
             // 1.77 - just double check that the map has at least one unknown enclave system.
             if (!X3Galaxy.HasUnknownEnclave())
             {
                 MessageBox.Show(
-                    "This galaxy cannot be saved because it contains no Unknown Enclaves. Please generate another.", "Invalid Galaxy", 
+                    "This galaxy cannot be saved because it contains no Unknown Enclaves. Please generate another galaxy.", "Invalid Galaxy", 
                     MessageBoxButtons.OK, 
                     MessageBoxIcon.Warning);
                 return;
             }
+
+            // ZMap Expanded 2.2 - Check for connectivity.
+            X3Galaxy.GateNetworkReport network = X3Galaxy.Instance.AnalyzeGateNetwork();
+
+            if (network.GatelessSectors > 0 || network.OutsideLargestNetwork > 0 || network.MissingDestinations > 0 || network.MissingReturnGates > 0)
+            {
+                MessageBox.Show(
+                    "This galaxy has invalid gate connections. Please resolve the network warnings before saving.", "Invalid Galaxy",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                return;
+            }
+
 
 
             if (tbGalaxyName.Text == string.Empty)
@@ -283,7 +296,7 @@ namespace X3_Mayhem_Galaxy_Generator
                 tbGalaxyName.Text = X3Utils.GetRandomString(3) + "-" + X3Utils.GetRandomNumber(2);
             }
 
-            // Create Galaxy files.  Save the Universe !
+            // Create Galaxy files. Save the Universe!
             destroot = m_CurX3RootFolder + "mayhem_galaxies\\" + tbGalaxyName.Text;         // c:\mayhem 3\mayhem_galaxies\XXX-XX
 
             // If it's your current galaxy.
@@ -1063,6 +1076,25 @@ namespace X3_Mayhem_Galaxy_Generator
                         MessageBoxIcon.Error);
                     return false;
                 }
+
+                // Validate activation.
+                X3Galaxy savedGalaxy = new X3Galaxy(0, 0);
+                savedGalaxy.LoadFrom_X3_Universe_XML(universeFile);
+
+                bool hasUnknownEnclave = savedGalaxy.Sectors.Any(sector => (ERace)sector.r == ERace.Unknown && sector.Gates.Count == 1);
+
+                X3Galaxy.GateNetworkReport network = savedGalaxy.AnalyzeGateNetwork();
+
+                if (!hasUnknownEnclave || network.GatelessSectors > 0 || network.OutsideLargestNetwork > 0 || network.MissingDestinations > 0 || network.MissingReturnGates > 0)
+                {
+                    MessageBox.Show(
+                        "The saved galaxy failed validation and cannot be activated.", "Invalid Galaxy",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+
+                    return false;
+                }
+
 
                 if (!isActive)
                 {

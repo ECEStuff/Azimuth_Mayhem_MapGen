@@ -29,9 +29,9 @@ namespace X3_Mayhem_Galaxy_Generator
         private List<SystemListItem> m_MasterSystemList = new List<SystemListItem>();
         int m_ShowTerran = 0;
         int m_ShowStats = 0;
+        int m_ShowNames = 0;
         int m_LeftMargin = 4;
         int m_TopMargin = 4;
-
 
         // All of the relevant labels in the relations group box that control relations have a tag.
         private List<Label> m_RelationsLabels;
@@ -40,6 +40,7 @@ namespace X3_Mayhem_Galaxy_Generator
         public Form1()
         {
             InitializeComponent();
+            toolStrip1.Renderer = new ActiveToolStripRenderer();
 
             toolTip1.AutoPopDelay = 5000;
             toolTip1.InitialDelay = 1000;
@@ -52,7 +53,9 @@ namespace X3_Mayhem_Galaxy_Generator
             toolTip2.ReshowDelay = 10;
             toolTip2.ShowAlways = true;
 
-            lblWarning.Width = Width * 3 / 4;
+            lblWarning.Overflow = ToolStripItemOverflow.Never;
+            toolStrip1.SizeChanged += (sender, e) => ResizeValidityLabel();
+            ResizeValidityLabel();
             lblWarning.Text = "";
         }
 
@@ -60,21 +63,17 @@ namespace X3_Mayhem_Galaxy_Generator
         private void Form1_Resize(object sender, EventArgs e)
         {
             pictureBox1.Refresh();
-            lblWarning.Width = Width * 3 / 4;
+            ResizeValidityLabel();
         }
 
         private void Form1_Shown(object sender, EventArgs e)
         {
             m_Generator.OnMessage += Message;
-
             m_CurX3MusicFolder = X3Utils.GetSetting("X3Music").Trim();
-            if (m_CurX3MusicFolder != string.Empty)
-            {
-                if (Directory.Exists(m_CurX3MusicFolder))
-                {
-                    rbCustom.Checked = true;
-                }
-            }
+
+            // Remember the folder, but do not automatically select Custom Music.
+            // Custom Music is available only when a valid folder has been configured.
+            rbCustom.Enabled = Directory.Exists(m_CurX3MusicFolder);
 
             if (m_CurSaveGameFolder == string.Empty)
             {
@@ -130,12 +129,18 @@ namespace X3_Mayhem_Galaxy_Generator
 
             m_ShowTerran = GetShowSetting("ShowTerran");
             m_ShowStats = GetShowSetting("ShowStats");
+            X3Utils.EnsureSetting("ShowNames", "0");
+            m_ShowNames = GetShowSetting("ShowNames");
+            btnShowTerran.Checked = m_ShowTerran == 1;
+            btnShowSectorStats.Checked = m_ShowStats == 1;
+            btnShowSectorNames.Checked = m_ShowNames == 1;
 
             string ver = X3Utils.GetVersion();
             this.Text = $"ZMap Expanded v{ver} - by herobetty; original ZMap by Mordan (Hairless-Ape)";
 
             SetupLocalization();
             UpdateRelationsGrid();
+            UpdateSectorCount();
         }
 
         private void SetupLocalization()
@@ -218,6 +223,7 @@ namespace X3_Mayhem_Galaxy_Generator
             X3Galaxy.Instance.GalaxyCreationSettings.BorderGateDensity = rbLowGateDensity.Checked ? EGateDensity.Low : EGateDensity.High;
             m_Generator.GenerateGates();
             pictureBox1.Refresh();
+            CheckMapValidity();
         }
 
         private void btnGenerate_Click(object sender, EventArgs e)
@@ -281,6 +287,38 @@ namespace X3_Mayhem_Galaxy_Generator
             catch(Exception a1)
             {
                 MessageBox.Show(a1.Message);
+                return;
+            }
+
+            // Reserve soundtrack IDs below 15, except the unused X:BTF building theme (12).
+            int originalMusicCount = musicFiles.Count;
+
+            musicFiles = musicFiles.Select(file => file.Trim()).Where(X3Utils.IsSectorMusicTrack).ToList();
+            int excludedMusicCount = originalMusicCount - musicFiles.Count;
+            if (excludedMusicCount > 0)
+            {
+                Message($"Excluded {excludedMusicCount} invalid or reserved music track(s).");
+            }
+
+            if (musicFiles.Count == 0)
+            {
+                MessageBox.Show(
+                    "No usable sector music was found. Music filenames must be numeric, with an ID of 12 or at least 15.",
+                    "Invalid Music Selection",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
+                return;
+            }
+
+            if (rbCustom.Checked && musicFiles.Count < 10)
+            {
+                MessageBox.Show(
+                    "Custom Music requires at least 10 usable tracks. Only soundtrack ID 12 and IDs 15 or higher are permitted.",
+                    "Insufficient Custom Music",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+
                 return;
             }
 
@@ -392,27 +430,87 @@ namespace X3_Mayhem_Galaxy_Generator
             m_Generator.GenerateSystemStats();
 
             GenerateGates();
-
             EnableButtons();
-
-            CheckUnknownEnclave();
         }
 
-        private void CheckUnknownEnclave()
+        // Validate both Renegades plot eligibility and actual gate-network integrity.
+        private void CheckMapValidity()
         {
-            if (!X3Galaxy.HasUnknownEnclave())
+            if (X3Galaxy.Instance.Sectors.Count == 0)
             {
-                lblWarning.Text = "INVALID: This map has no Unknown Enclaves. At least one is required for the Renegades plot.";
-                lblWarning.ForeColor = System.Drawing.Color.DarkRed;
+                lblWarning.Text = "";
+                lblWarning.ToolTipText = "";
+                return;
+            }
+
+            X3Galaxy.GateNetworkReport network =
+                X3Galaxy.Instance.AnalyzeGateNetwork();
+            List<string> problems = new List<string>();
+
+            if (!X3Galaxy.HasUnknownEnclave())
+                problems.Add("No Unknown Enclave (Renegades plot)");
+
+            if (network.GatelessSectors > 0)
+                problems.Add($"{network.GatelessSectors} gateless sector(s)");
+
+            if (network.OutsideLargestNetwork > 0)
+                problems.Add($"{network.OutsideLargestNetwork} outside main network");
+
+            if (network.MissingDestinations > 0)
+                problems.Add($"{network.MissingDestinations} gate(s) with missing destinations");
+
+            if (network.MissingReturnGates > 0)
+                problems.Add($"{network.MissingReturnGates} gate(s) without return connections");
+
+            if (problems.Count > 0)
+            {
+                lblWarning.Text = "INVALID: " + string.Join("; ", problems);
+                lblWarning.ForeColor = Color.DarkRed;
             }
             else
             {
-                lblWarning.Text = "VALID: This map contains an Unknown Enclave. (Double-click a sector to edit stats, gates, and more.)";
-                lblWarning.ForeColor = System.Drawing.Color.DarkBlue;
+                lblWarning.Text = "VALID: Unknown Enclave present; all sectors connected.";
+                lblWarning.ForeColor = Color.DarkBlue;
             }
+
+            // The full summary remains accessible if a narrow window clips the label.
+            lblWarning.ToolTipText = lblWarning.Text;
+            ResizeValidityLabel();
+        }
+
+        private void ResizeValidityLabel()
+        {
+            int occupiedWidth = toolStrip1.Padding.Horizontal
+                + lblWarning.Margin.Horizontal + 16;
+
+            foreach (ToolStripItem item in toolStrip1.Items)
+            {
+                if (item == lblWarning || !item.Available)
+                    continue;
+
+                occupiedWidth +=
+                    item.GetPreferredSize(Size.Empty).Width
+                    + item.Margin.Horizontal;
+            }
+
+            int availableWidth = Math.Max(
+                0, toolStrip1.ClientSize.Width - occupiedWidth);
+
+            lblWarning.Width = availableWidth;
         }
 
 
+        private void UpdateSectorCount()
+        {
+            int count = X3Galaxy.Instance.Sectors.Count;
+            int total = X3Galaxy.Instance.MaxX * X3Galaxy.Instance.MaxY;
+
+            lblSectorCount.Text = total > 0
+                ? $"Sectors: {count} / {total}"
+                : "Sectors: 0";
+
+            ResizeValidityLabel();
+        }
 
         /// <summary>
         /// Retrieves a list of \mayhem_data\sector_names_stream1/2.txt 
@@ -487,11 +585,40 @@ namespace X3_Mayhem_Galaxy_Generator
                 vert_skew = (float)maxy / (float)maxx;
             }
 
-            int totalwidth = (int)(pictureBox1.Width * horz_skew);
-            int totalheight = (int)(pictureBox1.Height * vert_skew);
+            int nameMarginX = 0;
+            int nameMarginY = 0;
+
+            if (m_ShowNames == 1)
+            {
+                int baseCellWidth = (int)((pictureBox1.Width - 8) * horz_skew) / maxx;
+                int baseCellHeight = (int)((pictureBox1.Height - 8) * vert_skew) / maxy;
+                nameMarginX = (int)Math.Ceiling(baseCellWidth * 0.45f);
+
+                using (Font labelFont = new Font("Tahoma", GetMapFontSize(baseCellHeight) * 1.1f))
+                {
+                    nameMarginY = (int)Math.Ceiling(e.Graphics.MeasureString("T", labelFont).Height) + 4;
+                }
+            }
+
+            int totalwidth = (int)((pictureBox1.Width - 8 - nameMarginX * 2) * horz_skew);
+            int totalheight = (int)((pictureBox1.Height - 8 - nameMarginY) * vert_skew);
+
+            if (totalwidth <= 0 || totalheight <= 0)
+                return;
 
             int elementwidth = totalwidth / maxx;
             int elementheight = totalheight / maxy;
+
+            if (elementwidth <= 0 || elementheight <= 0)
+                return;
+
+            m_LeftMargin = 4 + (m_ShowNames == 1
+                ? nameMarginX + (totalwidth - elementwidth * maxx) / 2
+                : 0);
+
+            m_TopMargin = 4 + (m_ShowNames == 1
+                ? nameMarginY + (totalheight - elementheight * maxy) / 2
+                : 0);
 
             for (int x = 0; x < maxx; x++)
             {
@@ -506,6 +633,59 @@ namespace X3_Mayhem_Galaxy_Generator
 
             // Draw connections once, after all sector tiles are rendered.
             DrawGateLines(e.Graphics, elementwidth, elementheight);
+
+            // Draw labels last so gate lines cannot obscure them.
+            if (m_ShowNames == 1)
+                DrawSectorNames(e.Graphics, elementwidth, elementheight);
+        }
+
+        private static int GetMapFontSize(int elementheight)
+        {
+            if (elementheight > 45) return 10;
+            if (elementheight > 35) return 9;
+            if (elementheight > 30) return 8;
+            if (elementheight > 25) return 7;
+            return 6;
+        }
+
+        private void DrawSectorNames(
+            Graphics g, int elementwidth, int elementheight)
+        {
+            using (Font font = new Font(
+                "Tahoma", GetMapFontSize(elementheight) * 1.1f))
+            using (SolidBrush brush = new SolidBrush(Color.White))
+            using (StringFormat format =
+                new StringFormat(StringFormatFlags.NoWrap))
+            {
+                format.Alignment = StringAlignment.Center;
+                format.LineAlignment = StringAlignment.Center;
+                format.Trimming = StringTrimming.EllipsisCharacter;
+
+                int labelHeight =
+                    (int)Math.Ceiling(g.MeasureString("T", font).Height) + 2;
+
+                int labelWidth = (int)Math.Ceiling(elementwidth * 1.9f);
+
+                foreach (X3Sector sector in X3Galaxy.Instance.Sectors)
+                {
+                    if (string.IsNullOrWhiteSpace(sector.SectorName))
+                        continue;
+
+                    Rectangle tile = sector.ScreenBox;
+
+                    if (tile.Width <= 0 || tile.Height <= 0)
+                        continue;
+
+                    RectangleF label = new RectangleF(
+                        tile.Left + (tile.Width - labelWidth) / 2f,
+                        tile.Top - labelHeight - 2,
+                        labelWidth,
+                        labelHeight);
+
+                    g.DrawString(
+                        sector.SectorName, font, brush, label, format);
+                }
+            }
         }
 
         private void DrawSector(Graphics g, int x, int y, int elementwidth, int elementheight)
@@ -513,19 +693,8 @@ namespace X3_Mayhem_Galaxy_Generator
             SolidBrush backgroundBrush = null;
             int xCoordinate = x / 2;
             int yCoordinate = y / 2;
-            int fontsize = 6;
 
-            // Scale font size according to element height.
-            if (elementheight > 25)
-                fontsize = 7;
-            if (elementheight > 30)
-                fontsize = 8;
-            if (elementheight > 35)
-                fontsize = 9;
-            if (elementheight > 45)
-                fontsize = 10;
-            Font ft = new Font("Tahoma", fontsize);
-
+            Font ft = new Font("Tahoma", GetMapFontSize(elementheight));
 
             int textHeight = (int)g.MeasureString("T", ft).Height;
             int leftSide = (x * elementwidth) + m_LeftMargin;
@@ -704,14 +873,14 @@ namespace X3_Mayhem_Galaxy_Generator
         private void DrawGateLines(Graphics g, int elementwidth, int elementheight)
         {
             int linelength, startx = 0, starty = 0, endx = 0, endy = 0;
-            Pen p = Pens.White;
+            Pen p = Pens.DarkGray;
 
             foreach (X3Sector sector in X3Galaxy.Instance.Sectors)
             {
                 // For each gate in this system
                 foreach(X3Gate gate in sector.Gates)
                 {
-                    p = Pens.White;
+                    p = Pens.DarkGray;
                     if (gate.IsSpecial) p = Pens.Red;
 
                     // type of gate.
@@ -758,11 +927,14 @@ namespace X3_Mayhem_Galaxy_Generator
                 UpdateUIFromGalaxySettings();
                 UpdateActiveGalaxyName();
                 pictureBox1.Refresh();
+                CheckMapValidity();
             }
         }
 
         private void EnableButtons()
         {
+            UpdateSectorCount();
+
             if (X3Galaxy.Instance.Sectors.Count == 0)
             {
                 btnGenerateGates.Enabled = false;
@@ -1022,7 +1194,16 @@ namespace X3_Mayhem_Galaxy_Generator
             {
                 if (sector.ScreenBox.Contains(mouseat))
                 {
-                    toolTip2.Show(sector.SectorName, pictureBox1, new Point(sector.ScreenBox.X + sector.ScreenBox.Width + 10, sector.ScreenBox.Y - 10));
+                    string tooltip = sector.SectorName;
+                    if (m_ShowStats == 1)
+                    {
+                        tooltip +=
+                            $"\nPopulation: {sector.SectorCreationData.Manpower}" +
+                            $"\nStation Support: {sector.SectorCreationData.Support}" +
+                            $"\nResearch Rate: {sector.SectorCreationData.Research}%";
+                    }
+
+                    toolTip2.Show(tooltip, pictureBox1, new Point(sector.ScreenBox.X + sector.ScreenBox.Width + 10, sector.ScreenBox.Y - 10));
                     return;
                 }
             }
@@ -1034,6 +1215,7 @@ namespace X3_Mayhem_Galaxy_Generator
             m_ShowTerran = GetShowSetting("ShowTerran");
             m_ShowTerran = m_ShowTerran == 0 ? 1 : 0;   // toggle it.
 
+            btnShowTerran.Checked = m_ShowTerran == 1;
             X3Utils.SaveSetting("ShowTerran", m_ShowTerran.ToString());
             pictureBox1.Refresh();
         }
@@ -1042,7 +1224,17 @@ namespace X3_Mayhem_Galaxy_Generator
         {
             m_ShowStats = GetShowSetting("ShowStats");
             m_ShowStats = m_ShowStats == 0 ? 1 : 0;   // toggle it.
+
+            btnShowSectorStats.Checked = m_ShowStats == 1;
             X3Utils.SaveSetting("ShowStats", m_ShowStats.ToString());
+            pictureBox1.Refresh();
+        }
+
+        private void btnShowSectorNames_Click(object sender, EventArgs e)
+        {
+            m_ShowNames = m_ShowNames == 0 ? 1 : 0;
+            btnShowSectorNames.Checked = m_ShowNames == 1;
+            X3Utils.SaveSetting("ShowNames", m_ShowNames.ToString());
             pictureBox1.Refresh();
         }
 
@@ -1086,7 +1278,7 @@ namespace X3_Mayhem_Galaxy_Generator
                 pictureBox1.Refresh();
             }
 
-            CheckUnknownEnclave();
+            CheckMapValidity();
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
@@ -1131,6 +1323,7 @@ namespace X3_Mayhem_Galaxy_Generator
             we.ShowDialog();
         }
 
+        // Select a custom music folder. If selection failed, keep the existing selection.
         private void btnCustomMusic_Click(object sender, EventArgs e)
         {
             if (m_CurX3RootFolder == string.Empty)
@@ -1142,14 +1335,12 @@ namespace X3_Mayhem_Galaxy_Generator
             DialogResult dr = cm.ShowDialog();
             if (dr == DialogResult.OK)
             {
-                rbCustom.Checked = true;
                 X3Utils.SaveSetting("X3Music", cm.SelectedFolder);
                 m_CurX3MusicFolder = cm.SelectedFolder;
-                Message("Music set Successfully");
-            }
-            else
-            {
-                rbLitcubeMusic.Checked = true;
+
+                rbCustom.Enabled = true;
+                rbCustom.Checked = true;
+                Message("Custom Music configured successfully.");
             }
         }
     }

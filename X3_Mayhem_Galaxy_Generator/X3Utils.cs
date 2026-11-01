@@ -48,6 +48,15 @@ namespace X3_Mayhem_Galaxy_Generator
             }
         }
 
+        public static bool IsSectorMusicTrack(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                return false;
+
+            // IDs 15+ are sector music. ID 12 (X:BTF station building theme) is permitted as an exception.
+            return int.TryParse(name.Trim(), out int trackId) && (trackId >= 15 || trackId == 12);
+        }
+
         public static bool RaceIsMain(int race)
         {
             // Add-Ons 1.8.1: Changed bound from 1-5 to 1-6 (Xenon)
@@ -399,6 +408,17 @@ namespace X3_Mayhem_Galaxy_Generator
                 }
             }
             throw new Exception($"Setting {settingName} not found.");
+        }
+
+        public static void EnsureSetting(string settingName, string defaultValue)
+        {
+            List<string> settings = File.ReadAllLines("Settings.txt").ToList();
+
+            if (settings.Any(line => line.StartsWith(settingName + "|", StringComparison.Ordinal)))
+                return;
+
+            settings.Add(settingName + "|" + defaultValue);
+            File.WriteAllLines("Settings.txt", settings);
         }
 
         public static void SaveSetting(string settingName, string value)

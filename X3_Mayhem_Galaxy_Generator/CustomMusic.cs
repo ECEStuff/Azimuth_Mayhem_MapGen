@@ -20,11 +20,13 @@ namespace X3_Mayhem_Galaxy_Generator
         public CustomMusic()
         {
             InitializeComponent();
+            btnOk.DialogResult = DialogResult.None;
         }
 
         public CustomMusic(string existingFolder, string x3root)
         {
             InitializeComponent();
+            btnOk.DialogResult = DialogResult.None;
             lblFolderName.Text = existingFolder;
             m_x3root = x3root;
         }
@@ -47,61 +49,137 @@ namespace X3_Mayhem_Galaxy_Generator
 
         private void btnOk_Click(object sender, EventArgs e)
         {
-            if (Directory.Exists(lblFolderName.Text))
+            string folder = lblFolderName.Text;
+
+            if (!Directory.Exists(folder))
             {
-                if (Directory.GetFiles(lblFolderName.Text, "*.mp3").Length > 9)
+                MessageBox.Show("Custom Music folder does not exist.");
+                return;
+            }
+
+            try
+            {
+                string[] sources = Directory.GetFiles(folder, "*.mp3");
+
+                if (sources.Length < 10)
                 {
-                    // Copy these mp3's into the Mayhem/soundtrack folder, skipping duplicates.
-                    string dest = m_x3root + "\\soundtrack\\";
-                    try
-                    {
-                        Directory.GetFiles(lblFolderName.Text, "*.mp3").ToList().ForEach(item => CopyFile(item, dest));
-                    }
-                    catch(Exception ex)
-                    {
-                        MessageBox.Show("Unable to copy music files.  Error: " + ex.Message);
-                        return;
-                    }
-
-
-                    SelectedFolder = lblFolderName.Text;
-                    DialogResult = DialogResult.OK;
-                    Close();
+                    MessageBox.Show(
+                        "You need at least 10 MP3 files in the custom music folder.");
                     return;
                 }
-                else
+
+                string destinationFolder = Path.Combine(m_x3root, "soundtrack");
+                Directory.CreateDirectory(destinationFolder);
+
+                // Index existing MP3s by numeric ID, not literal filename.
+                Dictionary<int, List<string>> existingById =
+                    new Dictionary<int, List<string>>();
+
+                foreach (string existing in Directory.GetFiles(destinationFolder, "*.mp3"))
                 {
-                    MessageBox.Show("You need to pick a folder with at least 10 mp3 files in it.");
+                    if (!int.TryParse(
+                        Path.GetFileNameWithoutExtension(existing), out int id))
+                        continue;
+
+                    if (!existingById.TryGetValue(id, out List<string> matches))
+                    {
+                        matches = new List<string>();
+                        existingById.Add(id, matches);
+                    }
+
+                    matches.Add(existing);
                 }
-            }
-            else
-            {
-                MessageBox.Show("Folder does not exist");
-            }
 
-            DialogResult = DialogResult.Cancel;
+                // Validate everything before copying.
+                Dictionary<int, string> sourceById = new Dictionary<int, string>();
+                List<KeyValuePair<string, string>> filesToCopy =
+                    new List<KeyValuePair<string, string>>();
+
+                foreach (string source in sources)
+                {
+                    string originalName = Path.GetFileName(source);
+                    string numericName = X3Utils.Transmute(
+                        Path.GetFileNameWithoutExtension(source));
+
+                    if (!X3Utils.IsSectorMusicTrack(numericName))
+                    {
+                        throw new InvalidOperationException(
+                            $"'{originalName}' maps to reserved or invalid soundtrack ID " +
+                            $"'{numericName}'. Only ID 12 and IDs 15+ are permitted.");
+                    }
+
+                    int trackId = int.Parse(numericName);
+
+                    // Detect collisions within the selected custom folder.
+                    if (sourceById.TryGetValue(trackId, out string previous))
+                    {
+                        throw new InvalidOperationException(
+                            $"'{Path.GetFileName(previous)}' and '{originalName}' both " +
+                            $"map to soundtrack ID {trackId}. Rename or remove one file.");
+                    }
+
+                    sourceById.Add(trackId, source);
+                    string destination = Path.Combine(destinationFolder, numericName + ".mp3");
+
+                    // Detect collisions with existing game music.
+                    if (existingById.TryGetValue(trackId, out List<string> matches))
+                    {
+                        // Reusing the exact same previously imported file is safe.
+                        // Numeric aliases or different contents are not.
+                        if (matches.Count != 1 || !string.Equals(matches[0], destination, StringComparison.OrdinalIgnoreCase) || !FilesAreIdentical(source, matches[0]))
+                        {
+                            throw new InvalidOperationException(
+                                $"'{originalName}' conflicts with an existing MP3 " +
+                                $"for soundtrack ID {trackId}. Existing game audio " +
+                                "was not changed.");
+                        }
+
+                        continue;
+                    }
+
+                    filesToCopy.Add(
+                        new KeyValuePair<string, string>(source, destination));
+                }
+
+                if (sourceById.Count < 10)
+                {
+                    MessageBox.Show("Custom Music requires at least 10 unique, usable tracks.");
+                    return;
+                }
+
+                // Do not overwrite existing files.
+                foreach (var file in filesToCopy)
+                    File.Copy(file.Key, file.Value, false);
+
+                SelectedFolder = folder;
+                DialogResult = DialogResult.OK;
+                Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "Custom music import rejected: " + ex.Message,
+                    "Custom Music",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
         }
 
-        /// <summary>
-        /// Copy file from full source path to a destination folder dst, but only if it doesn't exist in the destination.
-        /// Transmutes each filename in the source so that it appears like an "Integer" in the destination.
-        /// X3 seems to like to use "00000.mp3" filenames for all it's music, and I'm sticking with the convention just so nothing breakes.
-        /// </summary>
-        /// <param name="src"></param>
-        /// <param name="dst"></param>
-        private void CopyFile(string src, string dst)
+        private static bool FilesAreIdentical(string first, string second)
         {
-            //string srcFile = Path.GetFileName(src);                 // root name, not including path.     "mymusicfile.mp3"
-            string srcFile = Path.GetFileNameWithoutExtension(src);
-            string intengerSrcFile = X3Utils.Transmute(srcFile) + ".mp3";            // converted integer-like name for this.
-            string fulldst = dst + intengerSrcFile;
-            if (!File.Exists(fulldst))
+            if (new FileInfo(first).Length != new FileInfo(second).Length)
+                return false;
+
+            using (var hash = SHA256.Create())
+            using (var firstStream = File.OpenRead(first))
+            using (var secondStream = File.OpenRead(second))
             {
-                File.Copy(src, fulldst, false);
+                byte[] firstHash = hash.ComputeHash(firstStream);
+                byte[] secondHash = hash.ComputeHash(secondStream);
+
+                return firstHash.SequenceEqual(secondHash);
             }
         }
-
-
 
         private void btnCancel_Click(object sender, EventArgs e)
         {

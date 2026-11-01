@@ -351,8 +351,30 @@ namespace X3_Mayhem_Galaxy_Generator
 #endif
         }
 
+        // Use the same effective void percentage for sector placement and gate searches.
+        // This does not modify galaxy dimensions or sector-count targets.
+        private int GetVoidPercent()
+        {
+            int voidpct = X3Galaxy.Instance.GalaxyCreationSettings.ShatteredGalaxy ? 35 : 15;
+            int configured;
+            if (int.TryParse(X3Utils.GetSetting("EmptySpacePercent"), out configured)
+                && configured > 15 && configured < 51)
+            {
+                voidpct = configured;
+            }
+            return voidpct;
+        }
+
+        // Sparse maps can need longer gate searches; 15% voids retain the original limits.
+        private int GetLinkDistance(int baseDistance)
+        {
+            double multiplier = 85.0 / (100.0 - GetVoidPercent());
+            return (int)Math.Round(baseDistance * multiplier, MidpointRounding.AwayFromZero);
+        }
+
         public void CombineGlobs()
         {
+            int linkDistance = GetLinkDistance(4);
             int curGlobId;
 
             bool done = false;
@@ -380,7 +402,7 @@ namespace X3_Mayhem_Galaxy_Generator
                         if (srcsec.x == dstsec.x || srcsec.y == dstsec.y)       // Only include destinations that are on the same vertical or horizontal axis.  nothing horizontal.
                         {
                             int dst = srcsec.DistanceFrom(dstsec);
-                            if (dst < 5)   // Don't add, those with a distance >= 5;
+                            if (dst <= linkDistance)   // Extend candidate search on sparse maps.
                             {
                                 // Don't add any that cross over another system.
                                 if (!X3Galaxy.Instance.HasNonVoidSectorsBetween(srcsec, dstsec))
@@ -565,12 +587,13 @@ namespace X3_Mayhem_Galaxy_Generator
 
         public void ConnectOrphanedSectors()
         {
+            int linkDistance = GetLinkDistance(6);
             int numorphaned = 0;
             foreach (X3Sector source in X3Galaxy.Instance.Sectors)
             {
                 if (source.Gates.Count == 0)        // If it has no gates at all, add one to nearest neighbor.
                 {
-                    X3Sector dest = X3Galaxy.Instance.GetNearestRandomNeighbor(source);
+                    X3Sector dest = X3Galaxy.Instance.GetNearestRandomNeighbor(source, 1, linkDistance);
                     if (dest != null)
                     {
                         numorphaned++;
@@ -814,20 +837,9 @@ namespace X3_Mayhem_Galaxy_Generator
         private void GenerateVoidOrXenonSectors(bool isXenon = false)
         {
             bool isVoid = !isXenon;
-            int voidpct = X3Galaxy.Instance.GalaxyCreationSettings.ShatteredGalaxy ? 35 : 15;           // Standard percent range.
+            int voidpct = GetVoidPercent();
             bool isChaotic = X3Galaxy.Instance.GalaxyCreationSettings.ChaoticStart;
             X3Sector sector;
-
-            // void space override.
-            string voidpercentsetting = X3Utils.GetSetting("EmptySpacePercent");    // override the standard values.  Only usable overrides are 16-50.
-            int vps;
-            if (int.TryParse(voidpercentsetting, out vps))
-            {
-                if (vps > 15 && vps < 51)
-                {
-                    voidpct = vps;
-                }
-            }
 
             // xenon space override
             int xenonpct = 3;
