@@ -1,0 +1,321 @@
+﻿-------------  Weapons and Ship Editor ----------------------------------
+The purpose of this is NOT to edit invididual stats for items as that can be done in X3 Editor 2.
+The purpose is to allow a global adjustment to weapons or ships stats:
+	A - Randomize all weapons stats +/- 20% globally.   (stats: Lifetime, Hull Damage, Shield Damage, OOS Hull & shield Damage).  All stats are modified identically for a weapon.
+	B - Randominzing all Ships status +/- 20% globally.
+	C - Randomizing all Ship status for a Race +/- 20% globally
+1. Using X3 Editor 2, you can open \addon\10.cat\TShips.pck   (or TBullets, TMissles, TLaser, TShields) with the TFileEditor
+2. Once opened, you can SAVE, and choose .TXT as output and Switch to System View. From there, navigate to \addon\types and save as TShips.txt (or whatever)
+3. Any of these .txt files placed in the \addon\types folder should override any .CAT files in the game.  
+3. This Editor allows a graphical UI to edit each of these default templates and save them back to your Game folder.
+
+
+
+
+---------------  Everything Else -----------------------------------------
+More Info:	http://www.xenotaph.net/lib_pdf/galaxy_hacking_x3tc.pdf
+
+mayhem_galaxy.json	
+/addon/director/start.xml
+/addon/maps/
+/addon/mov/
+/addon/t/
+/addon/types/				
+/objects/cut/00749.bod
+
+
+Notes:		0001-L044.xml which lists all the sector names.
+			
+
+Main Types:
+0	-	Bullets
+1	-	Sector maybe?
+2	-	Backgrounds
+3	-	Suns
+4	-	Planets
+5	-	Docks
+6	-	Factories
+7	-	Ships
+8	-	Lasers
+9	-	Shields
+10	-	Missiles
+11-16	-	Wares
+17	-	Asteroids
+
+----------------------------------
+mayhem_galay.json		This was original author's way of saving entire state of things in his generator, including map and U.I. settings per map.
+----------------------------------
+
+	Notes:	This contains the Textual Saved representation of the systems names, races and 2-D coordinates for the generated galaxy.
+			It also contains a list of Traits (choices) you made in the Galaxy generator.  This is just a saved session of the galaxy generator and not used by Mayhem 3 in any way.
+
+{"sector_layout":[{"name":"Aphrodite's Storm","race":3,"x":0,"y":0},{"name":"Midnight Star","race":4,"x":13,"y":9},...],
+"traits":{"random_distribution":0,"hollowed_galaxy":0,"extra_stats":0,"scattered_galaxy":1,"no_enclaves":1,"clustered_xenons":0},
+"useParticles":0,"height":17,"cluster_user_size":0,"use_particles":0,"fog":0,"size":15,"width":15,"name":"BTEST1",
+"sectors":[[{"suns":[],"gates":[],"manpower":0,"background":0,"production":0,"planets":[],"consumption":0,"support_oasis":0,"company":0,"size":0,"music":"",
+"name":"","support":0,"race":0,"radius":0,"xenons":0,"objects":[],"terrans":0,"smugglers":0,"asteroids":[],"x":0,"y":0,"cluster":0,"research":0,"valid":0,"dejure":0}]],
+"history":{"age":1,"race_ignore":[0,0,0,0,0,0],"race_relations":[[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]],"dominance":0,"minority":0},"use_ambient_soundtrack":1}
+
+
+------------------------------
+/objects/cut/00749.bod
+------------------------------
+Generated from the x3_universe.xml.    It helps universe map to be displayed properly in game.
+
+
+------------------------------
+/addon/director/start.xml
+------------------------------
+	Notes:	So far, can't find any changes in this file when a universe is generated different ways.  Going to just copy it verbatim.
+
+
+-----------------------------
+/addon/maps/WareTemplate.xml
+-----------------------------
+	Blank
+
+-----------------------------
+/addon/maps/x3_universe.xml	
+-----------------------------
+	Notes:	This is the generated map itself.  
+	
+	Each main element represents a sector.  196 in test example.
+	Note:  The sector ID is not shown here, but is shown in 9970-L044.xml. 
+
+	x3_universe.xml
+	---------------
+	<?xml version="1.0" encoding="UTF-8" ?>
+	<universe>
+		<o t="1" x="0" y="0" r="5" size="24500000" m="08004" p="-2" qtrade="0" qfight="0" qbuild="0" qthink="0">			(Sector location and size)
+			<o t="2" s="72"/>																								(Background)
+			<o t="3" s="137" x="-111610675" y="128463385" z="-113143755" color="13158655"/>									(Sun)
+			<o t="4" s="154" x="387073577" y="-24562097" z="-255680485"/>													(Planets)
+			<o t="18" s="1" x="-83010" y="-5093525" z="-20582013" gid="1" gx="0" gy="1" gtid="0" a="32768" b="0" g="0"/>	(Asteroids)
+			...
+		</o>
+		<o t="1" x="0" y="1" r="5" size="21000000" m="08016" p="-2" qtrade="0" qfight="0" qbuild="0" qthink="0">
+			<o t="2" s="33"/>
+			<o t="3" s="206" x="727713000" y="-882887000" z="-667288000" color="16777160"/>
+			<o t="4" s="179" x="-139397500" y="-143026000" z="-96111500"/>
+			<o t="18" s="0" x="-1954345" y="967408" z="16442846" gid="0" gx="0" gy="0" gtid="1" a="0" b="0" g="0"/>
+			<o t="18" s="1" x="-2132001" y="2024609" z="-22625232" gid="1" gx="0" gy="2" gtid="0" a="32768" b="0" g="0"/>
+			...
+			<o t="20" s="SS_SPECIAL_SIGN3" x="-67461" y="-4580943" z="-4878952" a="0" b="0" g="0" v="-1"/>					(Specials)
+		</o>
+	</universe>
+
+Fields:
+------------
+	SECTOR
+	<o t="1" x="0" y="0" r="5" size="24500000" m="08004" p="-2" qtrade="0" qfight="0" qbuild="0" qthink="0">			-	Represents a System
+		t - 1 represents a SECTOR
+		x - This is the X coordinate of the system.  (0 indexed)
+		y - Y coordinate of the system
+		r - race.  1=argon, see appendix 2 below.  1-6 along with 14 are used in file.  Pirates don't get their own system.
+		size - basic diameter of system.  22500000 would represent 90km.  Seems to vary between 18500000 and 27500000
+		m - music track.  i.e.  08004 is 08004.mp3.   0 represents a default track.
+		p - population.  -2 is unknown, which is used in all cases here.
+		qtrade etc..  - denotes the frequency of missions.  This is ZERO for all mayhem systems.
+
+		BACKGROUND
+		<o t="2" s="72"/>
+			t - 2 represents the Background.
+			s - represents sub-type which is the 0-index into types/TBackgrounds.pck												0-249.  See 07.cat.
+
+		SUN
+		<o t="3" s="206" x="727713000" y="-882887000" z="-667288000" color="16777160"/>
+			t - 3 represents the SUN.
+			s - type of sun.  index into type\TSuns.pck																				0-218 index.  See 11.cat. 
+			x, y, z - position of sun
+			color - rgb color index.  See appendix 3 in the linked document.
+
+			NOTE:  See Mayhem3\mayhem_data\extracted\suns.txt, which seems to have templates.  (suns should be ID XX4 through XX8 which would be 100% to 300% sun levels.)
+	
+		PLANET
+		<o t="4" s="179" x="-139397500" y="-143026000" z="-96111500"/>
+			t - 4 represents a Planet
+			s - sub-type, which is index in types\TPlanets.pck	-280 index.  See 07.cat.
+			x,y,z - position of planet
+
+			NOTE:  See Mayhem3\mayhem_data\extracted\SunsAndPlanets.txt, which seems to have templates.
+
+		ASTEROID
+		<o t="17" s="5" x="16067500" y="2893000" z="-26141000" atype="0" aamount="20" a="8808" b="25682" g="44640"/>				
+			t - 17 represents an asteroid.
+			s - sub-type, which is index into types\TAsteroids.pc																	0-9.  See 07.cat.
+			atype - 0-Ore, 1=Silicon, 2=Nividium, 3=Ice
+			aamount = yield quantity
+			a,b,g - rotational factors 
+			Note:  s type of 0 represents a larger asteroid that a MINE can be placed on.  I think it can't be located to far out from center or it won't show up that way.
+
+			NOTE:  See Mayhem3\mayhem_data\extracted\asteroids.txt, which seems to have templates.
+
+		GATE
+		<o t="18" s="1" x="-83010" y="-5093525" z="-20582013" gid="1" gx="0" gy="1" gtid="0" a="32768" b="0" g="0"/>
+			t - 18 is a GATE
+			s - sub-type of gate, found as index into TGates.pck.   
+				0 = North, 
+				1 = South, 
+				2 = West, 
+				3 = East							0-23.  See 10.cat.
+			gid - 1 same as s.  denotes gate direction.
+			gx and gy - represent the DESTINATION coordinates for the gate.
+			gtid - represents the DESTINATION gate.  So for an s=1 (south gate), the destination gate would be 0 (north)
+			a,b,c - gate rotation.  
+				North Gate	- a="0" b="0" g="0"
+				South Gate	- a="32768" b="0" g="0"
+				West Gate	- a="16384" b="0" g="0"
+				East Gate	- a="49152" b="0" g="0"
+
+		SIGN
+		<o t="20" s="SS_SPECIAL_SIGN3" x="3319953" y="-3572378" z="-2421400" a="0" b="0" g="0" v="-1"/>
+			t - 20 is special 
+			s - sub-type indexed in TSpecials.pck																			(SS_SPECIAL_SIGN1 through SS_SPECIAL_SIGN4) Odd donut shaped signs.  Not sure what for.
+			x,y,z - position
+			a,b,g - rotation
+			v - video stream to be played on advertising buoys.																may want to play with this.
+
+
+-----------------------------
+/addon/mov/00044.xml
+-----------------------------
+Generated from data in 3 files:
+	. \addon\t\9970-L044.xml 
+	. \mayhem_data\sector_names_stream1&2.txt,
+	. \mayhem_data\template_00044.xml
+This holds spoken text information pointers.  For us, we only add the System Names pointers, but there are other pointers in there for other system sounds from the starting template.
+Ultimately these are audio pointers into \addon\mov\00144.dat (for stream 1) and 00244.dat (for stream 2)
+1.  Find list of all Names and ID's for Systems.
+	The list is in \addon\t\9970-L044.xml.  There are 246 names in here.
+	Here, for Acquisition Repository, the ID is found to be 1021701.
+	<t id="1021701">Acquisition Repository</t>
+2.  Find Sector Name Audio Pointers for each System name.  Timestamp and duration of all sector names spoken in game are found here.
+	Here, the list is in \mayhem_data\sector_names_stream1&2.txt.   1 is for Stream 1 and 2 is for Stream 2 audio.  
+	Acquisition Repository|43677375|2313
+3.  Generate \addon\mov\00044.xml file
+	I.E.:
+	<page id="7" stream="1"> (or stream 2)
+		..
+		<t id="1021701" s="43677375" l="2313"/>
+		..
+	</page>
+
+
+---------------------------------------
+To see the audio stream type and stats:
+---------------------------------------
+Load \addon\mov\00144.dat into "GSpot.exe" (video editing tool)
+File Type: ASF (.WMA/.WMV)
+Mime Type: video/x-ms-asf
+File Length Correct
+Sys Bitrate: 48 kb/s
+Created: 2008 Sep 05 09:03:22
+Note:  to listen to the file just rename it .WMA and play it with the media player.  It's just a constant stream of audio.
+Unfortunately, the references to the audio clips in the 00444.dat are in the 00044.xml, which is derived from \mayhem_data\template_00044.xml.  Whoever created
+that left out a lot of the ID's that seem to actually exist inside the music dat file.  Maybe he picked and chose just some?
+
+----------------------------------------
+Playing Sounds in script:
+---------------------------------------
+For example, found at the top of Mayhem.GameCreator.Setup.xml:
+
+* "Welcome onboard!"
+@START speak text: page=13 id=1100065 priority=100
+
+In the 00044.xml file, this shows as:
+<page id="13" stream="1">
+   <t id="1100065" s="30914381" l="1061"/>
+</page>
+
+Using X-Studio,
+You can look up the ID to see what spoken voice matches with it.  There is a quick-icon at the top of the application,
+that brings you to "Display all game strings available..".  Here, if you look for the "Green" speakers on the left, those
+are the ones that have spoken phrases which show up on the right side list.  Page ID is on the left followed by the description of the 
+voice, and on the right is the void ID and printed version of the spoken word. 
+Not all the ID's you will see in the game strings display will be present in the 00044.xml file, so some of them won't playl.
+
+
+
+-----------------------------
+/addon/t/9970-L044.xml				
+-----------------------------
+Contains:
+1. System ID's and names actually generated for this 1 map.  
+2. Sector descriptions for each system generated
+3. Custom Data (such as race relations and more) set in Azimuth and loaded in the game.  Some is read from:	Mayhem.GameCreator.GalaxyData.xml
+
+Is read like this in Mayhem.GameCreator.GalaxyData.xml:
+	$galaxyName = read text: page=9970 id=4
+
+
+
+-----------------------------
+/addon/t/8379-L044.xml
+-----------------------------
+Contains one line  <t id="999">BTEST1\n</t>,
+That denotes the mayhem 3 generated galaxy that is being used.  This is just text shown on the main screen where you pick "new game", and this text shows up in the lower right of the screen.
+Sorta useless, but maybe good for advertising.
+Swap token from template file:  {galaxyname}
+
+
+2. Sector description
+	List of all sector names along with their long description.  Length varies depending on size of galaxy generated.
+	a. coordinates
+	b. Dejure owner status
+	c. Company name if any
+	d. Abnormal Signals
+	e. Terran memory
+	f. Max population
+	g. Station support number
+	h. Research Rate
+	i. Outpost Production (meat, vegetables etc)
+	j. Outpost Consumption (meat, vegies etc)
+
+3. Mayhem Galaxy Generator
+
+
+-----------------------------
+/addon/types/gamestarts.xml
+-----------------------------
+List of games start information for each race.
+	a.	Name of scenario for mayhem 3
+	b.  Starting Sector coordinates for Player 
+	c.  Starting Ship type.
+
+-----------------------------
+/addon/types/jobs.txt
+-----------------------------
+Blank
+
+-----------------------------
+/addon/types/TBackgrounds.txt
+-----------------------------
+Looks like data for 82 backgrounds.  Affects Fog and Space Particles, so we have to load the template for this first,
+and then we can change fog and particles and then we can save out the actual file.
+\mayhem_data\custom_backgrounds.txt contains indicies 0-81
+\mayhem_data\template_TBackgrounds.txt contains actual data for 81 backgrounds.
+This will override what's in X3 because it's loaded into the \types folder.
+
+
+Appendix 2: Races
+The difference races are as follows:
+1 => argon
+2 => boron
+3 => split
+4 => paranid
+5 => teladi
+6 => xenon
+7 => kha'ak
+8 => pirates
+9 => goner
+10 => ufo [deprecated]
+11 => hostile race [deprecated]
+12 => neutral race (ships that can be claimed)
+13 => friendly race [deprecated]
+14 => unknown (as in “unknown sector”)
+15 => n/a
+16 => n/a
+17 => Terran (ATF)
+18 => Terran (USC)
+19 => Yaki
+20 => n/a

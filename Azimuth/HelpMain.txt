@@ -1,0 +1,71 @@
+﻿1. FIRST, the program should have asked you for your Mayhem 3 folders.  Please ensure these are correct.
+	If they are not set and shown correctly at the top left of your main screen, click on the fields to Set them.
+
+	Normally, these look like this, but you'll need to ensure they match YOUR installation:
+	Mayhem 3 Root Folder		-	C:\Mayhem\
+	Mayhem 3 Save Game Folder	-	C:\Users\mylogin\Documents\Egosoft\X3AP\save\
+
+2. SECOND, click the "Generate Systems" Button.
+	This generates a map according to all the settings you have shown on this screen.
+	If you don't like what it generated, change some settings and click it again and again.
+	You can click icons at the top of the form to turn ON/OFF the display of system Statistics and Terran Memory sectors.
+
+3. If you like the Map as it is, but don't like the ways the Gates are connecting each sector,
+	click "Re-Generate Gates" over and over until you do like it.  Alternately, you can
+	Double-Click on a system in the map, and from there, you can add or remove gates connected to it.
+
+4. If you like everything, but don't like the system Statistics generated you can randomize them all again
+	without changing the map layout by clicking the "Re-Generate Stats" button.  Alternately, you can
+	double click on a system in the map and change most of the system stats.
+
+5. Finally, once you like everything, click the "Save/Load Galaxy" button.
+	Here, you should do 2 things:
+	1. SAVE your map. Give it a name and save it.
+	2. Make that map ACTIVE.  This actually copies the map files to your working X3 game folder and now a new game uses it!
+
+
+
+Ships and Weapons Editor
+-------------------------
+Located in the toolbar, there is a launch icon for the Ships and Weapons Editor.
+The purpose of this editor is NOT to allow editing of individual ships or weapons, as you can already do that through the use
+of the "X3 Editor 2".
+
+
+1. This editor will allow you to globally randomize Weapons stats, providing some unique variation for each game you play.
+	Key weapon stats are adjusted by +/- 20% and uniquely computed for EACH weapon.  Some may go up and others down.
+2. The editor will also allow you to randomize or adjust up/down key ship statistics based on a Race.  
+	This will allow you to pick any given race and apply either a random adjustment to all their ships, or you can
+	lower or raise their ship capabilities.  If you feel the Paranid are too strong, simply select their race
+	from the drop-down and select "lower all ship status for Race" and click "Execute" !
+3. The Editor also allows you to restore the game defaults.
+
+Note:  If something doesn't appear to be working, check your /addon/types/ folder and ensure there are no TShips.pck or TBullets.pck files there. 
+	If you find any, either delete or rename them to .temp or something else.
+
+This editor works by allowing you to graphically edit the Default TShips.txt and TBullets.txt files. (These were extracted from Mayhem 3's 10.cat file.)
+Once these files are adjusted by this editor, it writes them out to the /addon/types/ folder in your Mayhem 3 install folder, where
+these settings will automatically Override the default values found in the 10.cat file in the game.  You can certainly modify these values
+by hand, but they are a bit hard to parse and read.  The editor does this for you, and also allows the important values to be randomized globally
+or by Race.
+
+	Stats Modified
+	---------------
+	All stats listed here are modified by a random value between -20% and +20% computed uniquely for EACH Weapon or Ship.
+	If you choose to "Raise" ship stats for a race, each ship in that race will receive a change of +10% to +20% computed randomly for EACH ship in that race.  
+	If you choose to "Lower" ship stats for a race, each ship in that race will receive a change of -10% to -20% computed randomly for EACH ship in that race. 
+
+	1. Weapons Stats:	
+		. Hull Damage (both in/out of system)
+		. Shield Damage (both in/out of system)
+		. Lifetime (laser range)
+	2. Ship Stats:
+		. Cargo min, Cargo max
+		. Production rel. value (NPC), Production rel. val (player)
+		. Yaw, Pitch, Roll
+		. Speed (base)
+		. Hull strength
+		. Power (shield recharge)
+		. Weapons Energy
+
+
