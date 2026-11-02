@@ -49,7 +49,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Avatar.ico</ApplicationIcon>
+    <ApplicationIcon>Azimuth.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <GenerateManifests>false</GenerateManifests>
@@ -111,6 +111,7 @@
     <Compile Include="GalaxySettings.cs" />
     <Compile Include="GateNetworkReport.cs" />
     <Compile Include="Generator.cs" />
+    <Compile Include="LiveSaveOwner.cs" />
     <Compile Include="Persist.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -137,7 +138,7 @@
     <Compile Include="X3Background.cs" />
     <Compile Include="X3Galaxy.cs" />
     <Compile Include="X3Gate.cs" />
-    <Compile Include="X3MapPath.cs" />
+    <Compile Include="GalaxyFileTransaction.cs" />
     <Compile Include="X3Planet.cs" />
     <Compile Include="X3Sector.cs" />
     <Compile Include="X3Special.cs" />
@@ -164,6 +165,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <EmbeddedResource Include="SectorEdit.resx">
       <DependentUpon>SectorEdit.cs</DependentUpon>
@@ -193,7 +195,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Avatar.ico" />
+    <Content Include="Azimuth.ico" />
     <Content Include="Design.txt" />
     <Content Include="HelpMain.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

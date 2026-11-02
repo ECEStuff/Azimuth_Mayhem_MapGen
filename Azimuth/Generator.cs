@@ -566,22 +566,6 @@ namespace Azimuth
 
 
 
-        /// <summary>
-        /// Start with the first Argon Glob system created, we can iterate through ALL remaining sectors on the map and determining if there
-        /// is a valid path to that original system.  If not, it's marked as Orphaned
-        /// </summary>
-        public void MarkOrphanedSectors()
-        {
-            foreach (X3Sector dest in X3Galaxy.Instance.Sectors)
-            {
-                if (dest != m_FirstRaceSectorCreated)
-                {
-                    dest.IsOrphaned = !X3MapPath.HasPath(m_FirstRaceSectorCreated, dest);
-                }
-            }
-        }
-
-
         public void ConnectOrphanedSectors()
         {
             int numorphaned = 0;

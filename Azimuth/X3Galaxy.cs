@@ -29,6 +29,7 @@ namespace Azimuth
         public GalaxySettings GalaxyCreationSettings = new GalaxySettings();
         public Dictionary<string, string> LocalizationDictionary = new Dictionary<string, string>();
         public bool HasUnsavedChanges;
+        public bool HasUnsavedManualEdits;
 
         public static bool HasUnknownEnclave()
         {
@@ -340,7 +341,7 @@ namespace Azimuth
                                 throw new Exception($"Invalid value found in 9970 file for galaxy age: {value}");
                             continue;
                         case "4":        // Universe Name
-                            GalaxyCreationSettings.GalaxyName = value;
+                            GalaxyCreationSettings.GalaxyName = System.Net.WebUtility.HtmlDecode(value);
                             continue;
                     }
                     int intId = int.Parse(id);

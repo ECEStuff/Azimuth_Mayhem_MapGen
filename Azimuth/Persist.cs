@@ -10,7 +10,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
-using static System.Collections.Specialized.BitVector32;
+using System.Security;
+using System.Text.RegularExpressions;
 
 namespace Azimuth
 {
@@ -42,6 +43,14 @@ namespace Azimuth
             }
 
             SetupLocalization();
+            var identify = new Button
+            {
+                Text = "Identify Current Saves...",
+                Location = new Point(btnSetGalaxyAsCurrent.Right + 12, btnSetGalaxyAsCurrent.Top),
+                Size = btnSetGalaxyAsCurrent.Size
+            };
+            identify.Click += IdentifyCurrentSaves;
+            Controls.Add(identify);
         }
 
         private void SetupLocalization()
@@ -52,7 +61,8 @@ namespace Azimuth
 
         private void Message(string msg, bool clear = false)
         {
-            if (clear) rtb1.Clear();
+            if (clear)
+                rtb1.Clear();
             rtb1.AppendText(msg + "\r\n");
         }
 
@@ -66,48 +76,44 @@ namespace Azimuth
         {
             if (lbAvailableGalaxies.SelectedItem == null) return;       // nothing selected to load.
 
-            string mapToLoad = lbAvailableGalaxies.SelectedItem.ToString().Replace(ActiveString, "");
+            string mapToLoad = SelectedGalaxyName;
 
             Message($"{mapToLoad} map is loading into the Generator for you to review or edit.", true);
             Message("Here are some system statistics for the loaded map.  Close this dialog to see the map.");
 
-            // Loads the entire map.  Gates, Asteroids etc.     There are no Sector Names, ID's or System stats stored in the map file.   (thanks egosoft).
-            string universepath = m_CurX3RootFolder + "mayhem_galaxies\\" + mapToLoad + "\\addon\\maps\\x3_universe.xml";
-            if (!File.Exists(universepath))
+            var loaded = new X3Galaxy(0, 0);
+            try
             {
-                Message($"File {universepath} does not exist.");
+                string folder = Path.Combine(m_CurX3RootFolder, "mayhem_galaxies", mapToLoad);
+                string language = X3Utils.GetLocalizedText("language_id_file");
+                loaded.LoadFrom_X3_Universe_XML(Path.Combine(folder, @"addon\maps\x3_universe.xml"));
+                loaded.LoadFrom_X3_Universe_Settings(Path.Combine(folder, "GalaxySettings.json"));
+                loaded.Load9970_XML(Path.Combine(folder, $@"addon\t\9970-L0{language}.xml"));
+                loaded.Load00044_XML(Path.Combine(folder, $@"addon\mov\000{language}.xml"));
+                var settings = loaded.GalaxyCreationSettings;
+                int[] spread = { settings.ArgonSpread, settings.BoronSpread, settings.SplitSpread,
+                    settings.ParanidSpread, settings.TeladiSpread, settings.TerranSpread };
+                if (spread.Any(value => value < -50 || value > 50) || settings.FogLevelPercent < 0 ||
+                    settings.FogLevelPercent > 100 || settings.Relations == null ||
+                    settings.Relations.GetLength(0) != 6 || settings.Relations.GetLength(1) != 6)
+                    throw new InvalidDataException("Galaxy settings contain unsupported values.");
+            }
+            catch (Exception ex)
+            {
+                Message("Could not load galaxy: " + ex.Message);
                 return;
             }
-            X3Galaxy.Instance.LoadFrom_X3_Universe_XML(universepath);
-
-
-            // If a settings file exists, load it.
-            string settingspath = m_CurX3RootFolder + "mayhem_galaxies\\" + mapToLoad + "\\GalaxySettings.json";
-            X3Galaxy.Instance.LoadFrom_X3_Universe_Settings(settingspath);
-
-            // Notify the U.I. we updated settings, so it can reflect those new settings.
+            if (!Form1.ConfirmDiscard(this, "load another galaxy"))
+                return;
+            var current = X3Galaxy.Instance;
+            current.SetSize(loaded.MaxX, loaded.MaxY);
+            current.Sectors = loaded.Sectors;
+            current.GalaxyCreationSettings = loaded.GalaxyCreationSettings;
+            current.HasUnsavedChanges = false;
+            current.HasUnsavedManualEdits = false;
+            GalaxyWasLoaded = true;
+            btnSaveNew.Enabled = true;
             OnSettingsUpdated?.Invoke();
-
-
-            // Loads all the sector names and stats
-            string language = X3Utils.GetLocalizedText("language_id_file");
-            string path9970 = m_CurX3RootFolder + "mayhem_galaxies\\" + mapToLoad + $"\\addon\\t\\9970-L0{language}.xml";
-            if (!File.Exists(path9970))
-            {
-                Message($"File {path9970} does not exist.");
-                return;
-            }
-            X3Galaxy.Instance.Load9970_XML(path9970);
-
-
-            // load the 00044 file, which has the system Sound stream pointers and lengths for the systems we just loaded.
-            string path00044 = m_CurX3RootFolder + "mayhem_galaxies\\" + mapToLoad + $"\\addon\\mov\\000{language}.xml";
-            if (!File.Exists(path00044))
-            {
-                Message($"File {path00044} does not exist.");
-                return;
-            }
-            X3Galaxy.Instance.Load00044_XML(path00044);
 
             // Double Check was ok.  Are there any systems we loaded from the Map file that were not assigned a StreamID from the 00044 file..
             // var val = X3Galaxy.Instance.Sectors.FindAll(item => item.StreamID == 0);
@@ -148,16 +154,16 @@ namespace Azimuth
 
             int avgSectorSize = (int)X3Galaxy.Instance.Sectors.Average(item => item.size);
             // Find average, minimum, and max offset of North gate from system X center?
-            int avgGateOffset = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Average(gate => gate.x);
-            int minGateOffset = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Min(gate => gate.x);
-            int maxGateOffset = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Max(gate => gate.x);
+            int avgGateOffset = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Select(gate => gate.x).DefaultIfEmpty().Average();
+            int minGateOffset = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Select(gate => gate.x).DefaultIfEmpty().Min();
+            int maxGateOffset = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Select(gate => gate.x).DefaultIfEmpty().Max();
             // Find average distance (gate.z) of North gate in comparison to the system size (size)
-            int avgGateDist = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Average(gate => gate.z);
-            int minGateDist = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Min(gate => gate.z);
-            int maxGateDist = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Max(gate => gate.z);
+            int avgGateDist = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Select(gate => gate.z).DefaultIfEmpty().Average();
+            int minGateDist = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Select(gate => gate.z).DefaultIfEmpty().Min();
+            int maxGateDist = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Select(gate => gate.z).DefaultIfEmpty().Max();
             // Find offset above/below ecliptic plane.
-            int minGateDepth = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Min(gate => gate.y);
-            int maxGateDepth = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Max(gate => gate.y);
+            int minGateDepth = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Select(gate => gate.y).DefaultIfEmpty().Min();
+            int maxGateDepth = (int)X3Galaxy.Instance.Sectors.SelectMany(sector => sector.Gates).Where(gate => gate.gid == (int)EGateDirection.South).Select(gate => gate.y).DefaultIfEmpty().Max();
 
 
             // some random stats for fun.
@@ -188,7 +194,7 @@ namespace Azimuth
             Message($"Abnormal Signals at 0", X3Galaxy.Instance.Sectors.Count(item => item.SectorCreationData.Xenons == 0));
             Message($"Abnormal Signals Max", X3Galaxy.Instance.Sectors.Max(item => item.SectorCreationData.Xenons));
             Message($"Abnormal Signals Avg", (int)X3Galaxy.Instance.Sectors.Average(item => item.SectorCreationData.Xenons));
-            Message($"Abnormal Signals Avg in Xenon space", (int)X3Galaxy.Instance.Sectors.Where(item => item.r == 6).Average(item => item.SectorCreationData.Xenons));
+            Message($"Abnormal Signals Avg in Xenon space", (int)X3Galaxy.Instance.Sectors.Where(item => item.r == 6).Select(item => item.SectorCreationData.Xenons).DefaultIfEmpty().Average());
             Message($"Terran Memory Count ({terrancount * 100 / secct})%", terrancount);
             Message($"Research Min", X3Galaxy.Instance.Sectors.Min(item => item.SectorCreationData.Research));
             Message($"Research Max", X3Galaxy.Instance.Sectors.Max(item => item.SectorCreationData.Research));
@@ -205,7 +211,6 @@ namespace Azimuth
             Message($"Company Count {(ECompany)company}", companycount);
             //Message($"{(ECompany)company} Companies not in their race Space (one found in {(ERace)kk})", companyinNonRaceSpace); 
 
-            GalaxyWasLoaded = true;
         }
 
         private void Message(string msg, int val)
@@ -242,13 +247,132 @@ namespace Azimuth
 
 
                 // The only ACTIVE galaxy is the one referenced in the root folder.
-                if (GetActiveMap() == folder)
+                if (string.Equals(GetActiveMap(), folder, StringComparison.OrdinalIgnoreCase))
                 {
                     folder += ActiveString;
                 }
 
                 lbAvailableGalaxies.Items.Add(folder);
             }
+        }
+
+        private string OwnerFile =>
+            Path.Combine(m_X3SaveFolder, "Azimuth.LiveSaves.json");
+
+        private static string NormalizeRoot(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !Path.IsPathRooted(path))
+                throw new InvalidDataException("Invalid X3 installation path.");
+
+            string full = Path.GetFullPath(path);
+            string root = Path.GetPathRoot(full);
+
+            return full.Length == root.Length
+                ? root
+                : full.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        }
+
+        private LiveSaveOwner ReadLiveOwner()
+        {
+            if (!File.Exists(OwnerFile))
+                return null;
+
+            var owner = JsonConvert.DeserializeObject<LiveSaveOwner>(
+                File.ReadAllText(OwnerFile));
+
+            if (owner == null || !ValidGalaxyName(owner.GalaxyName))
+                throw new InvalidDataException("Invalid Azimuth live-save ownership record.");
+
+            owner.InstallRoot = NormalizeRoot(owner.InstallRoot);
+            return owner;
+        }
+
+        private static bool SameOwner(LiveSaveOwner first, LiveSaveOwner second)
+        {
+            return first != null && second != null &&
+                string.Equals(first.InstallRoot, second.InstallRoot,
+                    StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(first.GalaxyName, second.GalaxyName,
+                    StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void WriteLiveOwner(
+            GalaxyFileTransaction tx, string destination, LiveSaveOwner owner)
+        {
+            string temp = Path.GetTempFileName();
+            try
+            {
+                File.WriteAllText(temp,
+                    JsonConvert.SerializeObject(owner, Newtonsoft.Json.Formatting.Indented));
+                tx.Copy(temp, destination);
+            }
+            finally
+            {
+                File.Delete(temp);
+            }
+        }
+
+        // This function is used to properly back up saves in case this tool is used from another Mayhem installation.
+        private string SaveBackupFolder(LiveSaveOwner owner)
+        {
+            string key = owner.InstallRoot.ToUpperInvariant();
+            byte[] bytes = Encoding.UTF8.GetBytes(key);
+
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+            {
+                string installId = BitConverter.ToString(sha.ComputeHash(bytes), 0, 8).Replace("-", "");
+                return Path.Combine(m_X3SaveFolder, "Azimuth_Backups", installId, owner.GalaxyName);
+            }
+        }
+
+        private LiveSaveOwner OwnerFor(string name)
+        {
+            return new LiveSaveOwner { InstallRoot = NormalizeRoot(m_CurX3RootFolder), GalaxyName = name };
+        }
+
+        private void IdentifyCurrentSaves(object sender, EventArgs e)
+        {
+            if (lbAvailableGalaxies.SelectedIndex < 0)
+            {
+                Message("Select the galaxy that owns the current live saves.");
+                return;
+            }
+            try
+            {
+                var owner = OwnerFor(SelectedGalaxyName);
+                int slots = Directory.GetFiles(m_X3SaveFolder, "*.sav").Length;
+                if (slots == 0)
+                {
+                    Message("There are no live saves to identify.");
+                    return;
+                }
+
+                var previous = ReadLiveOwner();
+                string prior = previous == null ? "Unknown" : previous.GalaxyName + " in " + previous.InstallRoot;
+                string question = $"Save folder: {m_X3SaveFolder}\r\nRecorded owner: {prior}\r\n\r\n" +
+                    $"Do all {slots} live saves belong to '{owner.GalaxyName}' in {owner.InstallRoot}?\r\n" +
+                    "This updates the ownership record only. If the slots are mixed, choose No.";
+                if (MessageBox.Show(this, question, "Identify current saves", MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                    return;
+
+                GalaxyFileTransaction.Run(tx => WriteLiveOwner(tx, OwnerFile, owner));
+                Message($"Recorded '{owner.GalaxyName}' as the owner of the current live saves.");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, "Could not identify current saves");
+            }
+        }
+
+        private string SelectedGalaxyName => m_SavedGalaxyFolderNames[lbAvailableGalaxies.SelectedIndex];
+
+        private static bool ValidGalaxyName(string name)
+        {
+            return !string.IsNullOrWhiteSpace(name) && name == name.Trim() &&
+                !name.EndsWith(".") && name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0 &&
+                !Regex.IsMatch(name.Split('.')[0].TrimEnd(), @"^(CON|PRN|AUX|NUL|CONIN\$|CONOUT\$|(?:COM|LPT)[1-9¹²³])$",
+                    RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         }
 
         private string GetActiveMap()
@@ -263,8 +387,7 @@ namespace Azimuth
         /// <param name="e"></param>
         private void btnSaveNew_Click(object sender, EventArgs e)
         {
-            string src, dest, destroot;
-            bool isActiveMap = false;
+
 
             // 1.77 - just double check that the map has at least one unknown enclave system.
             if (!X3Galaxy.HasUnknownEnclave())
@@ -294,26 +417,103 @@ namespace Azimuth
                 tbGalaxyName.Text = X3Utils.GetRandomString(3) + "-" + X3Utils.GetRandomNumber(2);
             }
 
-            // Create Galaxy files. Save the Universe!
-            destroot = m_CurX3RootFolder + "mayhem_galaxies\\" + tbGalaxyName.Text;         // c:\mayhem 3\mayhem_galaxies\XXX-XX
-
-            // If it's your current galaxy.
-            if (tbGalaxyName.Text == GetActiveMap())
+            string name = tbGalaxyName.Text;
+            if (!ValidGalaxyName(name))
             {
-                isActiveMap = true;
-                string msg = X3Utils.GetLocalizedText("{UpdateActiveMapWarning}");
-                string warning = X3Utils.GetLocalizedText("{Warning}");
-                if (MessageBox.Show(msg, warning, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
-                {
-                    return;
-                }
+                MessageBox.Show("Enter a valid folder name for this galaxy.");
+                return;
             }
 
+            bool active;
+            string root = Path.Combine(m_CurX3RootFolder, "mayhem_galaxies");
+            string destination = Path.Combine(root, name);
+            string staging = Path.Combine(m_CurX3RootFolder, ".azimuth-" + Guid.NewGuid().ToString("N"));
+            var galaxy = X3Galaxy.Instance;
+            string previousName = galaxy.GalaxyCreationSettings.GalaxyName;
+            try
+            {
+                active = string.Equals(name, GetActiveMap(), StringComparison.OrdinalIgnoreCase);
+                bool exists = Directory.Exists(destination);
+                if (active || exists)
+                {
+                    string question = active ? X3Utils.GetLocalizedText("{UpdateActiveMapWarning}")
+                        : $"Overwrite saved galaxy '{name}'?";
+                    if (MessageBox.Show(this, question, X3Utils.GetLocalizedText("{Warning}"),
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                        return;
+                }
+
+                galaxy.GalaxyCreationSettings.GalaxyName = name;
+                WriteGalaxyFiles(staging);
+                string[] files = GalaxyFiles();
+                ValidateGalaxyFiles(staging, files, name);
+                if (exists)
+                    GalaxyFileTransaction.Run(tx => CopyGalaxyFiles(tx, files, staging, destination));
+                else
+                    Directory.Move(staging, destination);
+            }
+            catch (Exception ex)
+            {
+                galaxy.GalaxyCreationSettings.GalaxyName = previousName;
+                MessageBox.Show("Could not save galaxy: " + ex.Message);
+                return;
+            }
+            finally
+            {
+                try { if (Directory.Exists(staging)) Directory.Delete(staging, true); }
+                catch (IOException ex) { Message(ex.Message); }
+                catch (UnauthorizedAccessException ex) { Message(ex.Message); }
+            }
+
+            galaxy.HasUnsavedChanges = false;
+            galaxy.HasUnsavedManualEdits = false;
+            LoadSavedGalaxiesList();
+            Message($"Saved galaxy '{name}'.", true);
+            if (active)
+                Message(ActivateMap(name, switchLiveSaves: false) ? "The installed galaxy was updated." : "Saved, but activation failed.");
+            else
+                Message("To play this map, first set it Active.");
+        }
+
+        private string[] GalaxyFiles()
+        {
             string language = X3Utils.GetLocalizedText("language_id_file");
+            return new[] { @"addon\maps\x3_universe.xml", @"addon\director\start.xml", @"objects\cut\00749.bod",
+                @"addon\maps\WareTemplate.xml", $@"addon\mov\000{language}.xml", $@"addon\t\8379-L0{language}.xml",
+                $@"addon\t\9970-L0{language}.xml", @"addon\types\gamestarts.xml", @"addon\types\jobs.txt",
+                @"addon\types\TBackgrounds.txt", "GalaxySettings.json" };
+        }
 
-            X3Galaxy.Instance.GalaxyCreationSettings.GalaxyName = tbGalaxyName.Text;
+        private static void ValidateGalaxyFiles(string folder, string[] files, string name)
+        {
+            foreach (string relative in files)
+            {
+                string path = Path.Combine(folder, relative);
+                using (var stream = File.OpenRead(path))
+                {
+                    if (relative == @"addon\maps\WareTemplate.xml" || relative == @"addon\types\jobs.txt")
+                        continue;
+                    if (stream.Length == 0)
+                        throw new InvalidDataException("Empty galaxy file: " + path);
+                    if (path.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
+                        new XmlDocument().Load(stream);
+                }
+            }
+            if (!string.Equals(X3Utils.GetSettingsMap(Path.Combine(folder, "GalaxySettings.json")), name,
+                StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("The galaxy name in GalaxySettings.json differs from its folder name.");
+        }
 
+        private static void CopyGalaxyFiles(GalaxyFileTransaction tx, IEnumerable<string> files, string source, string destination)
+        {
+            foreach (string relative in files)
+                tx.Copy(Path.Combine(source, relative), Path.Combine(destination, relative));
+        }
 
+        private void WriteGalaxyFiles(string destroot)
+        {
+            string src, dest;
+            string language = X3Utils.GetLocalizedText("language_id_file");
             Directory.CreateDirectory(destroot);
             Directory.CreateDirectory(destroot + "\\addon");
             Directory.CreateDirectory(destroot + "\\addon\\director");
@@ -330,155 +530,48 @@ namespace Azimuth
             // Create /addon/director/start.xml
             src = m_CurX3RootFolder + "mayhem_data\\template_start.xml";
             dest = destroot + "\\addon\\director\\start.xml";
-            try
-            {
-                File.Copy(src, dest, true);
-            }
-            catch (Exception a1)
-            {
-                MessageBox.Show($"Error copying start.xml file: {a1.Message}");
-                return;
-            }
+            File.Copy(src, dest, true);
 
             // Create \objects\cut\00749.bod file
             dest = destroot + "\\objects\\cut\\00749.bod";
             string bod = BodGen.Generate_00749();
-            try
-            {
-                File.WriteAllText(dest, bod);
-            }
-            catch (Exception a2)
-            {
-                MessageBox.Show($"Error copying 00749.bod file: {a2.Message}");
-                return;
-            }
+            File.WriteAllText(dest, bod);
 
             // Create /addon/maps/WareTemplate.xml.  Apparently this is blank.
             dest = destroot + "\\addon\\maps\\WareTemplate.xml";
-            try
-            {
-                File.WriteAllText(dest, "");
-            }
-            catch (Exception a3)
-            {
-                MessageBox.Show($"Error copying WareTemplate file: {a3.Message}");
-                return;
-            }
+            File.WriteAllText(dest, "");
             // Create /addon/mov/00044.xml
             src = m_CurX3RootFolder + "mayhem_data\\template_00044.xml";
             dest = destroot + $"\\addon\\mov\\000{language}.xml";
-            try
-            {
-                Create00044(src, dest);
-            }
-            catch (Exception a4)
-            {
-                MessageBox.Show($"Error copying 00044.xml file: {a4.Message}");
-                return;
-            }
+            Create00044(src, dest);
 
             // Create /addon/t/8379-L044.xml
             src = m_CurX3RootFolder + "mayhem_data\\template_8379-L044.xml";
             dest = destroot + $"\\addon\\t\\8379-L0{language}.xml";
-            try
-            {
-                Create8379(src, dest);
-            }
-            catch (Exception a5)
-            {
-                MessageBox.Show($"Error copying 8379-....xml file: {a5.Message}");
-                return;
-            }
+            Create8379(src, dest);
 
             // Create /addon/t/9970-L044.xml
             dest = destroot + $"\\addon\\t\\9970-L0{language}.xml";
-            try
-            {
-                Create9970(dest);
-            }
-            catch (Exception a6)
-            {
-                MessageBox.Show($"Error copying 9970-....xml file: {a6.Message}");
-                return;
-            }
+            Create9970(dest);
 
             // Create /addon/types/gamestarts.xml      (this is an override loaded automatically by X3)
             src = m_CurX3RootFolder +"mayhem_data\\template_gamestarts.xml";
             string src2 = m_CurX3RootFolder + "mayhem_data\\gamestart_ships.json";
             dest = destroot + "\\addon\\types\\gamestarts.xml";
-            try
-            {
-                CreateGameStarts(src, src2, dest);
-            }
-            catch (Exception a7)
-            {
-                MessageBox.Show($"Error copying gamestarts file: {a7.Message}");
-                return;
-            }
+            CreateGameStarts(src, src2, dest);
 
             // Create /addon/types/jobs.txt
             dest = destroot + "\\addon\\types\\jobs.txt";
-            try
-            {
-                File.WriteAllText(dest, "");
-            }
-            catch (Exception a8)
-            {
-                MessageBox.Show($"Error copying jobs.txt file: {a8.Message}");
-                return;
-            }
+            File.WriteAllText(dest, "");
 
             // Create /addon/types/TBackgrounds.txt         (this is an override loaded automatically by X3)
             src = m_CurX3RootFolder + "mayhem_data\\template_TBackgrounds.txt";
             dest = destroot + "\\addon\\types\\TBackgrounds.txt";
-            try
-            {
-                CreateBackgrounds(src, dest);
-            }
-            catch (Exception a9)
-            {
-                MessageBox.Show($"Error copying backgrounds file: {a9.Message}");
-                return;
-            }
+            CreateBackgrounds(src, dest);
 
             // Save current Galaxy settings to a json file.
             string settings = JsonConvert.SerializeObject(X3Galaxy.Instance.GalaxyCreationSettings, Newtonsoft.Json.Formatting.Indented);
-            try
-            {
-                File.WriteAllText(destroot + "\\GalaxySettings.json", settings);
-            }
-            catch (Exception aa)
-            {
-                MessageBox.Show($"Error copying galaxysettings file: {aa.Message}");
-                return;
-            }
-
-
-
-            // If this is the active map, we copy the files over to the X3 root, but don't try to manipulate the savegame files.
-            if (isActiveMap)
-            {
-                int oldindex = lbAvailableGalaxies.SelectedIndex;
-                LoadSavedGalaxiesList();
-                lbAvailableGalaxies.SelectedIndex = oldindex;
-
-                Message($"Map {tbGalaxyName.Text} successfully updated.", true);
-                if (ActivateMap(tbGalaxyName.Text, true))
-                {
-                    Message("Done. You are ready to play.");
-                }
-                else
-                {
-                    Message("The map was saved, but activation failed.");
-                }
-            }
-            else
-            {
-                // Update the displayed list
-                LoadSavedGalaxiesList();
-                Message($"Map {tbGalaxyName.Text} successfully saved. ", true);
-                Message($"To play this map, first set it Active.");
-            }
+            File.WriteAllText(destroot + "\\GalaxySettings.json", settings);
         }
 
         private string Localize9970Template(string template)
@@ -548,7 +641,7 @@ namespace Azimuth
             content.Add($"\t\t<t id=\"1\">{(int)X3Galaxy.Instance.GalaxyCreationSettings.GalaxyExpansion}</t>");
             content.Add($"\t\t<t id=\"2\">{0}</t>");        // mayhem_galaxy.dominance  Not used in game.
             content.Add($"\t\t<t id=\"3\">{0}</t>");        // mayhem_galaxy.minority   Not used in game.
-            content.Add($"\t\t<t id=\"4\">{X3Galaxy.Instance.GalaxyCreationSettings.GalaxyName}</t>");
+            content.Add($"\t\t<t id=\"4\">{SecurityElement.Escape(X3Galaxy.Instance.GalaxyCreationSettings.GalaxyName)}</t>");
             // 5-40 are relations.
             int id = 5;
             for (int x=1; x<7; x++)
@@ -633,7 +726,7 @@ namespace Azimuth
             string ver = X3Utils.GetVersion();
             for (int x=0; x < content.Count; x++)
             {
-                content[x] = content[x].Replace("{galaxyname}", tbGalaxyName.Text + " Azimuth v" + ver);
+                content[x] = content[x].Replace("{galaxyname}", SecurityElement.Escape(X3Galaxy.Instance.GalaxyCreationSettings.GalaxyName) + " Azimuth v" + ver);
             }
 
             // and for some stupid reason, he already has the closing </language> marker in the template.. fail.
@@ -796,7 +889,7 @@ namespace Azimuth
                     source = source.Replace(tokenb, y.ToString());
                 }
 
-                source = source.Replace("{galaxyname}", tbGalaxyName.Text);
+                source = source.Replace("{galaxyname}", SecurityElement.Escape(X3Galaxy.Instance.GalaxyCreationSettings.GalaxyName));
 
             }
 
@@ -969,9 +1062,7 @@ namespace Azimuth
                 return;
             }
 
-            string selection = lbAvailableGalaxies.SelectedItem.ToString();
-            bool isActiveMap = selection.Contains(ActiveString);
-            bool success = ActivateMap(selection, isActiveMap);
+            bool success = ActivateMap(SelectedGalaxyName, switchLiveSaves: true);
             LoadSavedGalaxiesList();
 
             if (success)
@@ -980,16 +1071,49 @@ namespace Azimuth
             }
         }
 
-        /// <summary>
-        /// Removes the obsolete standalone Mayhem Galaxy Generator.
-        /// </summary>
-        private void DisableLegacyGalaxyGenerator()
+        private void SwitchSaveSlots(GalaxyFileTransaction tx, LiveSaveOwner outgoing, LiveSaveOwner incoming)
         {
-            string legacyGenerator = Path.Combine(m_CurX3RootFolder, "Mayhem Galaxy Generator.exe");
-            if (File.Exists(legacyGenerator))
+            string[] live = Directory.GetFiles(m_X3SaveFolder, "*.sav");
+
+            if (outgoing == null && live.Length != 0)
+                throw new InvalidOperationException(
+                    "The shared save folder contains saves whose owner has not been set. " +
+                    "Identify their galaxy before switching.");
+
+            string incomingFolder = SaveBackupFolder(incoming);
+            string[] restore = Directory.Exists(incomingFolder)
+                ? Directory.GetFiles(incomingFolder, "*.sav")
+                : new string[0];
+
+            if (outgoing != null)
             {
-                File.Delete(legacyGenerator);
+                string outgoingFolder = SaveBackupFolder(outgoing);
+
+                if (Directory.Exists(outgoingFolder))
+                {
+                    foreach (string old in Directory.GetFiles(outgoingFolder, "*.sav"))
+                    {
+                        string liveFile = Path.Combine(m_X3SaveFolder, Path.GetFileName(old));
+                        if (!File.Exists(liveFile))
+                            tx.Remove(old);
+                    }
+                }
+
+                foreach (string file in live)
+                    tx.Copy(file, Path.Combine(outgoingFolder, Path.GetFileName(file)));
+                // Remember even an empty archive so stale legacy slots do not reappear.
+                WriteLiveOwner(tx, Path.Combine(outgoingFolder, "owner.json"), outgoing);
             }
+
+            foreach (string file in live)
+            {
+                string replacement = Path.Combine(incomingFolder, Path.GetFileName(file));
+                if (!File.Exists(replacement))
+                    tx.Remove(file);
+            }
+
+            foreach (string file in restore)
+                tx.Copy(file, Path.Combine(m_X3SaveFolder, Path.GetFileName(file)));
         }
 
         /// <summary>
@@ -1047,11 +1171,12 @@ namespace Azimuth
         /// Activates a saved galaxy and, when switching galaxies, backs up/restores its savegames.
         /// A successful result means file operations completed, not that the game was tested.
         /// </summary>
-        private bool ActivateMap(string mapname, bool isActive)
+        private bool ActivateMap(string mapname, bool switchLiveSaves)
         {
             try
             {
-                mapname = mapname.Replace(ActiveString, string.Empty);
+
+                string[] files = GalaxyFiles();
                 string source = Path.Combine(m_CurX3RootFolder, "mayhem_galaxies", mapname);
 
                 // Check the source before touching any savegames.
@@ -1061,19 +1186,8 @@ namespace Azimuth
                     return false;
                 }
 
-                string settingsFile = Path.Combine(source, "GalaxySettings.json");
                 string universeFile = Path.Combine(source, "addon", "maps", "x3_universe.xml");
-
-                // Check for essential files before proceeding with activation.
-                if (!File.Exists(settingsFile) || !File.Exists(universeFile))
-                {
-                    MessageBox.Show(
-                        $"Galaxy '{mapname}' is missing essential files and cannot be activated.",
-                        "Invalid Galaxy",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error);
-                    return false;
-                }
+                ValidateGalaxyFiles(source, files, mapname);
 
                 // Validate activation.
                 X3Galaxy savedGalaxy = new X3Galaxy(0, 0);
@@ -1093,44 +1207,69 @@ namespace Azimuth
                 }
 
 
-                if (!isActive)
+                var target = OwnerFor(mapname);
+                var outgoing = switchLiveSaves ? ReadLiveOwner() : null;
+                bool changeOwner = switchLiveSaves && !SameOwner(outgoing, target);
+                string legacyImport = null;
+                if (changeOwner)
                 {
-                    string activeMap = GetActiveMap();
-
-                    if (!string.IsNullOrEmpty(activeMap))
+                    if (outgoing == null && Directory.GetFiles(m_X3SaveFolder, "*.sav").Length > 0)
                     {
-                        string backupFolder = Path.Combine(m_X3SaveFolder, "backup_" + activeMap);
-                        Directory.CreateDirectory(backupFolder);
-
-                        string[] existingSaves = Directory.GetFiles(m_X3SaveFolder, "*.sav");
-
-                        // Only delete the current saves after every backup copy succeeds.
-                        foreach (string save in existingSaves)
-                            File.Copy(save, Path.Combine(backupFolder, Path.GetFileName(save)), true);
-
-                        foreach (string save in existingSaves)
-                            File.Delete(save);
+                        MessageBox.Show(this, "Open Azimuth for the installation that owns the live saves, " +
+                            "select their galaxy, and click Identify Current Saves before switching.");
+                        return false;
                     }
 
-                    string savedBackup = Path.Combine(m_X3SaveFolder, "backup_" + mapname);
-                    if (Directory.Exists(savedBackup))
+                    string oldFolder = Path.Combine(m_X3SaveFolder, "backup_" + mapname);
+                    string scoped = SaveBackupFolder(target);
+                    bool hasScopedBackup = File.Exists(Path.Combine(scoped, "owner.json")) ||
+                        (Directory.Exists(scoped) && Directory.GetFiles(scoped, "*.sav").Length > 0);
+                    if (!hasScopedBackup && Directory.Exists(oldFolder) && Directory.GetFiles(oldFolder, "*.sav").Length > 0)
                     {
-                        foreach (string save in Directory.GetFiles(savedBackup, "*.sav"))
-                            File.Copy(save, Path.Combine(m_X3SaveFolder, Path.GetFileName(save)), true);
+                        string question = $"Legacy backup: {oldFolder}\r\n\r\n" +
+                            $"Do these saves belong to '{mapname}' in {target.InstallRoot}?\r\n" +
+                            "Yes imports a copy. No cancels activation.";
+                        if (MessageBox.Show(this, question, "Identify legacy backup", MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+                            return false;
+                        legacyImport = oldFolder;
                     }
                 }
 
-                Message($"Copying {mapname} files to {m_CurX3RootFolder}");
-                DisableLegacyGalaxyGenerator();
-                X3Utils.CopyFolder(source, m_CurX3RootFolder);
+                // Keep additional payload files supplied with a saved galaxy.
+                string prefix = source.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+                string[] payload = Directory.GetFiles(source, "*", SearchOption.AllDirectories)
+                    .Select(path => path.Substring(prefix.Length))
+                    .Where(path => !string.Equals(path, "GalaxySettings.json", StringComparison.OrdinalIgnoreCase))
+                    .Where(path => !Regex.IsMatch(path, @"\.azimuth-[0-9a-f]{32}$", RegexOptions.IgnoreCase))
+                    .ToArray();
+
+                GalaxyFileTransaction.Run(tx =>
+                {
+                    CopyGalaxyFiles(tx, payload, source, m_CurX3RootFolder);
+                    if (changeOwner)
+                    {
+                        if (legacyImport != null)
+                        {
+                            string scoped = SaveBackupFolder(target);
+                            foreach (string file in Directory.GetFiles(legacyImport, "*.sav"))
+                                tx.Copy(file, Path.Combine(scoped, Path.GetFileName(file)));
+                        }
+                        SwitchSaveSlots(tx, outgoing, target);
+                        WriteLiveOwner(tx, OwnerFile, target);
+                    }
+                    string legacy = Path.Combine(m_CurX3RootFolder, "Mayhem Galaxy Generator.exe");
+                    if (File.Exists(legacy))
+                        tx.Remove(legacy);
+                    tx.Copy(Path.Combine(source, "GalaxySettings.json"), Path.Combine(m_CurX3RootFolder, "GalaxySettings.json"));
+                });
                 DisableLegacySoundFile(); // Warns separately if the packed speech file cannot be archived.
                 return true;
             }
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Could not activate galaxy '{mapname}': {ex.Message}\r\n\r\n" +
-                    "Activation may be incomplete. Check the game installation and save files before playing.",
+                    $"Could not activate galaxy '{mapname}': {ex.Message}",
                     "Galaxy Activation Failed",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
@@ -1142,7 +1281,7 @@ namespace Azimuth
         private void lbAvailableGalaxies_SelectedValueChanged(object sender, EventArgs e)
         {
             if (lbAvailableGalaxies.SelectedItem == null) return;
-            tbGalaxyName.Text = lbAvailableGalaxies.SelectedItem.ToString().Replace(ActiveString, "");
+            tbGalaxyName.Text = SelectedGalaxyName;
         }
 
         private void btnDeleteGalaxy_Click(object sender, EventArgs e)
@@ -1153,7 +1292,7 @@ namespace Azimuth
                 return;
             }
 
-            string selectedGalaxyName = lbAvailableGalaxies.SelectedItem.ToString().Replace(ActiveString, string.Empty);
+            string selectedGalaxyName = SelectedGalaxyName;
 
             // Do not delete the currently active galaxy.
             if (string.Equals(selectedGalaxyName, GetActiveMap(),
@@ -1197,7 +1336,7 @@ namespace Azimuth
             Message($"Successfully deleted galaxy {selectedGalaxyName}.");
 
             // Preserve existing savegame backups.
-            string backupFolder = Path.Combine(m_X3SaveFolder, "backup_" + selectedGalaxyName);
+            string backupFolder = SaveBackupFolder(OwnerFor(selectedGalaxyName));
 
             if (Directory.Exists(backupFolder))
                 Message($"Savegame backup preserved at: {backupFolder}");

@@ -325,7 +325,7 @@ namespace Azimuth
             btnShowSectorNames.Checked = m_ShowNames == 1;
 
             string ver = X3Utils.GetVersion();
-            this.Text = $"Azimuth v{ver} by herobetty, based on ZMap by Mordan (Hairless-Ape)";
+            this.Text = $"Azimuth v{ver} by herobetty | Based on ZMap by Mordan (Hairless-Ape)";
 
             SetupLocalization();
             UpdateRelationsGrid();
@@ -400,8 +400,24 @@ namespace Azimuth
             rtb1.AppendText(msg + "\n");
         }
 
+        internal static bool ConfirmDiscard(IWin32Window owner, string action)
+        {
+            return !X3Galaxy.Instance.HasUnsavedChanges ||
+                MessageBox.Show(owner, $"This galaxy has unsaved changes. Continue and {action}?",
+                    "Unsaved galaxy", MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
+                    MessageBoxDefaultButton.Button2) == DialogResult.Yes;
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            if (!e.Cancel && !ConfirmDiscard(this, "close Azimuth"))
+                e.Cancel = true;
+        }
+
         private void btnGenerateGates_Click(object sender, EventArgs e)
         {
+            X3Galaxy.Instance.HasUnsavedChanges = true;
             rtb1.Clear();
             GenerateGates();
         }
@@ -536,9 +552,20 @@ namespace Azimuth
                 return;
             }
 
+            // Check for unsaved manual edits before generating the galaxy.
+            var galaxy = X3Galaxy.Instance;
+            if (galaxy.HasUnsavedManualEdits &&
+                MessageBox.Show(this,
+                    "Generate a new galaxy and discard your unsaved edits to this one?",
+                    "Replace galaxy",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning,
+                    MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+            {
+                return;
+            }
 
-            //rtb1.Clear();
-
+            X3Galaxy.Instance.HasUnsavedChanges = true;
             X3Galaxy.Instance.GalaxyCreationSettings.UseParticles = cbUseParticles.Checked;
             X3Galaxy.Instance.GalaxyCreationSettings.ClusteredVoids = cbClusteredVoids.Checked;
             X3Galaxy.Instance.GalaxyCreationSettings.ShatteredGalaxy = cbShattered.Checked;
@@ -621,6 +648,7 @@ namespace Azimuth
 
             GenerateGates();
             EnableButtons();
+            galaxy.HasUnsavedManualEdits = false;
         }
 
         // Validate both Renegades plot eligibility and actual gate-network integrity.
@@ -1154,18 +1182,39 @@ namespace Azimuth
 
         private void btnSaveGalaxy_Click(object sender, EventArgs e)
         {
-            Persist p = new Persist();
-            p.OnSettingsUpdated += UpdateUIFromGalaxySettings;
-            p.Initialize();
-            p.ShowDialog(this);
-
-            if (p.GalaxyWasLoaded)
+            // A second editor must not interleave saves, deletes, or rollback operations.
+            bool ownsDialog;
+            using (var gate = new System.Threading.Mutex(true, @"Local\AzimuthGalaxyPersistence", out ownsDialog))
             {
-                ClearSectorSearch();
-                UpdateUIFromGalaxySettings();
-                UpdateActiveGalaxyName();
-                pictureBox1.Refresh();
-                CheckMapValidity();
+                if (!ownsDialog)
+                {
+                    MessageBox.Show("Another Azimuth window already has Save/Load open.");
+                    return;
+                }
+                try
+                {
+                    using (var p = new Persist())
+                    {
+                        p.OnSettingsUpdated += UpdateUIFromGalaxySettings;
+                        p.Initialize();
+                        p.ShowDialog(this);
+                        if (p.GalaxyWasLoaded)
+                        {
+                            ClearSectorSearch();
+                            UpdateUIFromGalaxySettings();
+                            pictureBox1.Refresh();
+                            CheckMapValidity();
+                        }
+                        else
+                        {
+                            UpdateActiveGalaxyName();
+                        }
+                    }
+                }
+                finally
+                {
+                    gate.ReleaseMutex();
+                }
             }
         }
 
@@ -1344,6 +1393,12 @@ namespace Azimuth
             X3Galaxy.Instance.GalaxyCreationSettings.Relations[srcIndex, dstIndex] = curRelatinship;
             X3Galaxy.Instance.GalaxyCreationSettings.Relations[dstIndex, srcIndex] = curRelatinship;
 
+            if (X3Galaxy.Instance.Sectors.Count > 0)
+            {
+                X3Galaxy.Instance.HasUnsavedChanges = true;
+                X3Galaxy.Instance.HasUnsavedManualEdits = true;
+            }
+
             // Update Relations Display
             UpdateRelationsGrid();
         }
@@ -1417,13 +1472,22 @@ namespace Azimuth
         /// <param name="e"></param>
         private void btnGenerateStats_Click(object sender, EventArgs e)
         {
+            X3Galaxy.Instance.HasUnsavedChanges = true;
             m_Generator.GenerateSystemStats();
             pictureBox1.Refresh();
         }
 
         private void tbFog_Scroll(object sender, EventArgs e)
         {
-            X3Galaxy.Instance.GalaxyCreationSettings.FogLevelPercent = tbFog.Value * 25;
+            int fog = tbFog.Value * 25;
+            var galaxy = X3Galaxy.Instance;
+            if (galaxy.Sectors.Count > 0 && galaxy.GalaxyCreationSettings.FogLevelPercent != fog)
+            {
+                galaxy.HasUnsavedChanges = true;
+                galaxy.HasUnsavedManualEdits = true;
+            }
+                
+            galaxy.GalaxyCreationSettings.FogLevelPercent = fog;
         }
 
 
@@ -1505,8 +1569,6 @@ namespace Azimuth
         private void pictureBox1_DoubleClick(object sender, EventArgs e)
         {
             if (X3Galaxy.Instance.Sectors.Count == 0) return;
-
-            //rtb1.Clear();
 
             // We stored the rectangle where we drew each sector box in the paint method.  Here we can just see if we clicked in one of those rectangles to figure
             // out which sector was clicked.

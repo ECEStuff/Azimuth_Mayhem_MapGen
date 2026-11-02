@@ -204,14 +204,33 @@ namespace Azimuth
             int consumption = (int)cbConsumption.SelectedValue;
             int company = (int)cbCompany.SelectedValue;
 
-            m_Sector.Sun.SetSunLevel((int)cbSunLevel.SelectedValue);
-
             if (production == consumption)
             {
                 string msgg = X3Utils.GetLocalizedText("{ProdConsumNotSame}");
                 MessageBox.Show(msgg);
                 return;
             }
+            if (m_Sector.r != owner ||
+                m_Sector.SectorCreationData.DejureOwner != dejowner ||
+                m_Sector.SectorCreationData.Production != production ||
+                m_Sector.SectorCreationData.Consumption != consumption ||
+                m_Sector.SectorCreationData.Company != company ||
+                m_Sector.SectorCreationData.Xenons != (int)nudAbnormalSignals.Value ||
+                m_Sector.SectorCreationData.Research != (int)nudResearch.Value ||
+                m_Sector.SectorCreationData.Support != (int)nudSupport.Value ||
+                m_Sector.SectorCreationData.Manpower != (int)nudManpower.Value ||
+                m_Sector.size != (int)nudSystemSize.Value ||
+                m_Sector.SectorCreationData.Terrans != (cbTerranMemory.Checked ? 1 : 0) ||
+                X3Utils.PlaceDigitValue(0, m_Sector.Sun.s) != (int)cbSunLevel.SelectedValue ||
+                (X3Utils.RaceIsMain(owner) && m_InitialStartSector != cbStartSector.Checked) ||
+                m_StartMaelstrom != cbMaelstrom.Checked
+                )
+            {
+                X3Galaxy.Instance.HasUnsavedChanges = true;
+                X3Galaxy.Instance.HasUnsavedManualEdits = true;
+            }
+
+            m_Sector.Sun.SetSunLevel((int)cbSunLevel.SelectedValue);
             // Save the UI values back into the sector.
 
             m_Sector.r = owner;
@@ -333,6 +352,8 @@ namespace Azimuth
                     m_Sector.Gates.Remove(existingGate);
                 }
 
+                X3Galaxy.Instance.HasUnsavedChanges = true;
+                X3Galaxy.Instance.HasUnsavedManualEdits = true;
                 return;
             }
 
@@ -378,7 +399,13 @@ namespace Azimuth
                 return;
             }
 
+            int gateCount = m_Sector.Gates.Count + destination.Gates.Count;
             m_Sector.AddGates(destination);
+            if (gateCount != m_Sector.Gates.Count + destination.Gates.Count)
+            {
+                X3Galaxy.Instance.HasUnsavedChanges = true;
+                X3Galaxy.Instance.HasUnsavedManualEdits = true;
+            }
         }
 
         private void btnChangeMusicFile_Click(object sender, EventArgs e)
@@ -409,6 +436,12 @@ namespace Azimuth
                     return;
                 }
 
+                if (m_Sector.m_MusicFileName != srcFile)
+                {
+                    X3Galaxy.Instance.HasUnsavedChanges = true;
+                    X3Galaxy.Instance.HasUnsavedManualEdits = true;
+                }
+                    
                 m_Sector.m_MusicFileName = srcFile;
                 lblMusicFile.Text = srcFile + ".mp3";
             }
