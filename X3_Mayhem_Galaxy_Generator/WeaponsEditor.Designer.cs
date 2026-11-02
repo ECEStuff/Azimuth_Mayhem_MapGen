@@ -195,7 +195,7 @@ namespace X3_Mayhem_Galaxy_Generator
             this.btnHelpMain.Name = "btnHelpMain";
             this.btnHelpMain.Size = new System.Drawing.Size(75, 23);
             this.btnHelpMain.TabIndex = 94;
-            this.btnHelpMain.Text = "Help ?";
+            this.btnHelpMain.Text = "Help";
             this.btnHelpMain.UseVisualStyleBackColor = false;
             this.btnHelpMain.Click += new System.EventHandler(this.btnHelpMain_Click);
             // 

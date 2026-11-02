@@ -591,11 +591,15 @@ namespace X3_Mayhem_Galaxy_Generator
             {
                 int baseCellWidth = (int)((pictureBox1.Width - 8) * horz_skew) / maxx;
                 int baseCellHeight = (int)((pictureBox1.Height - 8) * vert_skew) / maxy;
-                nameMarginX = (int)Math.Ceiling(baseCellWidth * 0.45f);
 
-                using (Font labelFont = new Font("Tahoma", GetMapFontSize(baseCellHeight) * 1.1f))
+                // Every sector occupies one cell of a two-cell grid pitch.
+                // Reserve only the extra horizontal space its centered label needs.
+                int labelWidth = GetSectorLabelWidth(baseCellWidth);
+                nameMarginX = (labelWidth - baseCellWidth) / 2 + 2;
+
+                using (Font labelFont = new Font("Tahoma", GetSectorLabelFontSize(baseCellHeight)))
                 {
-                    nameMarginY = (int)Math.Ceiling(e.Graphics.MeasureString("T", labelFont).Height) + 4;
+                    nameMarginY = (int)Math.Ceiling(e.Graphics.MeasureString("Mg", labelFont).Height) + 4;
                 }
             }
 
@@ -638,20 +642,29 @@ namespace X3_Mayhem_Galaxy_Generator
                 DrawSectorNames(e.Graphics, elementwidth, elementheight);
         }
 
-        private static int GetMapFontSize(int elementheight)
+        private static float GetMapFontSize(int cellHeight)
         {
-            if (elementheight > 45) return 10;
-            if (elementheight > 35) return 9;
-            if (elementheight > 30) return 8;
-            if (elementheight > 25) return 7;
-            return 6;
+            // Two stacked attribute lines must share the available cell height.
+            // Scale continuously instead of changing fonts at fixed thresholds.
+            return Math.Max(5f, Math.Min(10.5f, (cellHeight - 2f) / 3f));
+        }
+
+        private static float GetSectorLabelFontSize(int cellHeight)
+        {
+            return Math.Min(11f, GetMapFontSize(cellHeight) + 0.5f);
+        }
+
+        private static int GetSectorLabelWidth(int cellWidth)
+        {
+            // Leave a small visual gap between labels in adjacent sector columns.
+            return Math.Max(cellWidth, cellWidth * 2 - 6);
         }
 
         private void DrawSectorNames(
             Graphics g, int elementwidth, int elementheight)
         {
             using (Font font = new Font(
-                "Tahoma", GetMapFontSize(elementheight) * 1.1f))
+                "Tahoma", GetSectorLabelFontSize(elementheight)))
             using (SolidBrush brush = new SolidBrush(Color.White))
             using (StringFormat format =
                 new StringFormat(StringFormatFlags.NoWrap))
@@ -661,9 +674,9 @@ namespace X3_Mayhem_Galaxy_Generator
                 format.Trimming = StringTrimming.EllipsisCharacter;
 
                 int labelHeight =
-                    (int)Math.Ceiling(g.MeasureString("T", font).Height) + 2;
+                    (int)Math.Ceiling(g.MeasureString("Mg", font).Height) + 2;
 
-                int labelWidth = (int)Math.Ceiling(elementwidth * 1.9f);
+                int labelWidth = GetSectorLabelWidth(elementwidth);
 
                 foreach (X3Sector sector in X3Galaxy.Instance.Sectors)
                 {

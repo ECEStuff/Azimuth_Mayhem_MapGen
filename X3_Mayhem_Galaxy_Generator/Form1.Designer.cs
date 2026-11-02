@@ -313,7 +313,7 @@ namespace X3_Mayhem_Galaxy_Generator
             this.btnGenerateStats.Name = "btnGenerateStats";
             this.btnGenerateStats.Size = new System.Drawing.Size(122, 23);
             this.btnGenerateStats.TabIndex = 88;
-            this.btnGenerateStats.Text = "Re-Generate Stats";
+            this.btnGenerateStats.Text = "Regenerate Stats";
             this.btnGenerateStats.UseVisualStyleBackColor = false;
             this.btnGenerateStats.Click += new System.EventHandler(this.btnGenerateStats_Click);
             // 
@@ -1218,7 +1218,7 @@ namespace X3_Mayhem_Galaxy_Generator
             this.btnGenerateGates.Name = "btnGenerateGates";
             this.btnGenerateGates.Size = new System.Drawing.Size(122, 23);
             this.btnGenerateGates.TabIndex = 66;
-            this.btnGenerateGates.Text = "Re-Generate Gates";
+            this.btnGenerateGates.Text = "Regenerate Gates";
             this.btnGenerateGates.UseVisualStyleBackColor = false;
             this.btnGenerateGates.Click += new System.EventHandler(this.btnGenerateGates_Click);
             // 
@@ -1437,7 +1437,7 @@ namespace X3_Mayhem_Galaxy_Generator
             this.btnShowSectorStats.Name = "btnShowSectorStats";
             this.btnShowSectorStats.Size = new System.Drawing.Size(52, 22);
             this.btnShowSectorStats.Text = "Stats";
-            this.btnShowSectorStats.ToolTipText = "Show sector stats";
+            this.btnShowSectorStats.ToolTipText = "Show population and station support stats";
             this.btnShowSectorStats.Click += new System.EventHandler(this.btnShowSectorStats_Click);
             // 
             // btnShowSectorNames
@@ -1457,7 +1457,7 @@ namespace X3_Mayhem_Galaxy_Generator
             this.btnLaunchWeaponsEditor.Name = "btnLaunchWeaponsEditor";
             this.btnLaunchWeaponsEditor.Size = new System.Drawing.Size(130, 22);
             this.btnLaunchWeaponsEditor.Text = "Ships and Weapons";
-            this.btnLaunchWeaponsEditor.ToolTipText = "Weapons and Ships Editor";
+            this.btnLaunchWeaponsEditor.ToolTipText = "Randomize ship and weapon stats";
             this.btnLaunchWeaponsEditor.Click += new System.EventHandler(this.btnLaunchWeaponsEditor_Click);
             // 
             // lblWarning

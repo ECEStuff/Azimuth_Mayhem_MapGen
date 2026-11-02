@@ -25,7 +25,7 @@ namespace X3_Mayhem_Galaxy_Generator
 
         public void GenerateSystemStats()
         {
-            Msg("Generating new Attributes for each System.");
+            Msg("Generating new attributes for each sector.");
 
             m_Extrastats = X3Galaxy.Instance.GalaxyCreationSettings.ExtraSystemStats;
             
@@ -223,7 +223,7 @@ namespace X3_Mayhem_Galaxy_Generator
 
             // Mark Remaining space as unknown.
             int unknown = X3Galaxy.Instance.Sectors.Count(item => !item.IsInitialized);
-            Msg($"Generated {unknown} Unknown Sectors.");
+            Msg($"Generated {unknown} Unknown sectors.");
             X3Galaxy.Instance.Sectors.Where(item => !item.IsInitialized).ToList().ForEach(i => i.MarkSectorRace(ERace.Unknown));
 
             // remove any empty/void sectors.
@@ -254,7 +254,7 @@ namespace X3_Mayhem_Galaxy_Generator
             X3Galaxy.Instance.ClearAllGates();
 
             // 1. Create gates to every possible direct neighbor.
-            Msg("Creating Gates.");
+            Msg("Creating gates.");
             for (int x = 0; x < X3Galaxy.Instance.MaxX; x++)
             {
                 for (int y = 0; y < X3Galaxy.Instance.MaxY; y++)
@@ -286,12 +286,12 @@ namespace X3_Mayhem_Galaxy_Generator
             // 3.
             if (!X3Galaxy.Instance.GalaxyCreationSettings.LimitedEnclaves)
             {
-                Msg("Creating additional Enclaves.  Removing Gates.");
+                Msg("Creating additional enclaves. Removing gates.");
                 CreateMoreEnclaves();
             }
 
             // An individual sector is sitting there with no gates.
-            Msg("Connecting Orphaned systems.");
+            Msg("Connecting orphaned sectors.");
             ConnectOrphanedSectors();
 
             // Everything up to now has been used to create groupings of systems and give them group ID's.  Each group being a Glob.
@@ -365,16 +365,11 @@ namespace X3_Mayhem_Galaxy_Generator
             return voidpct;
         }
 
-        // Sparse maps can need longer gate searches; 15% voids retain the original limits.
-        private int GetLinkDistance(int baseDistance)
-        {
-            double multiplier = 85.0 / (100.0 - GetVoidPercent());
-            return (int)Math.Round(baseDistance * multiplier, MidpointRounding.AwayFromZero);
-        }
-
         public void CombineGlobs()
         {
-            int linkDistance = GetLinkDistance(4);
+            // Ordinary clusters use nearby links. Distant links are a fallback only
+            // when the actual sector layout offers no nearby connection.
+            const int preferredLinkDistance = 4;
             int curGlobId;
 
             bool done = false;
@@ -402,21 +397,23 @@ namespace X3_Mayhem_Galaxy_Generator
                         if (srcsec.x == dstsec.x || srcsec.y == dstsec.y)       // Only include destinations that are on the same vertical or horizontal axis.  nothing horizontal.
                         {
                             int dst = srcsec.DistanceFrom(dstsec);
-                            if (dst <= linkDistance)   // Extend candidate search on sparse maps.
+                            // A usable link must have a clear, axis-aligned path.
+                            // Evaluate the map itself, rather than its configured void %.
+                            if (!X3Galaxy.Instance.HasNonVoidSectorsBetween(srcsec, dstsec))
                             {
-                                // Don't add any that cross over another system.
-                                if (!X3Galaxy.Instance.HasNonVoidSectorsBetween(srcsec, dstsec))
-                                {
-                                    matches.Add(new Match { Source = srcsec, Dest = dstsec, Distance = dst });
-                                }
+                                matches.Add(new Match { Source = srcsec, Dest = dstsec, Distance = dst });
                             }
                         }
                     }
                 }
                 if (matches.Count == 0)  break;      // shouldn't get here.
 
-                // Sorty by Distance, less being at the top.
+                // Prefer the old four-sector neighborhood. If it has no valid
+                // link, allow only the nearest longer reach needed for this glob.
+                // This adapts to real gaps without lengthening every gate on sparse maps.
                 matches.Sort((a, b) => a.Distance.CompareTo(b.Distance));
+                int allowedDistance = Math.Max(preferredLinkDistance, matches[0].Distance);
+                matches.RemoveAll(match => match.Distance > allowedDistance);
 
                 // Try to create from x number of gates for each blob depending on size.  Some globs are only 2 sytems, while others are 40+ systems.
                 int srcGatesToCreate = (int)Math.Sqrt(srcglob.Count);
@@ -587,13 +584,34 @@ namespace X3_Mayhem_Galaxy_Generator
 
         public void ConnectOrphanedSectors()
         {
-            int linkDistance = GetLinkDistance(6);
             int numorphaned = 0;
             foreach (X3Sector source in X3Galaxy.Instance.Sectors)
             {
-                if (source.Gates.Count == 0)        // If it has no gates at all, add one to nearest neighbor.
+                if (source.Gates.Count == 0)
                 {
-                    X3Sector dest = X3Galaxy.Instance.GetNearestRandomNeighbor(source, 1, linkDistance);
+                    // Retain the original six-sector neighborhood whenever possible.
+                    X3Sector dest = X3Galaxy.Instance.GetNearestRandomNeighbor(source);
+                    if (dest == null)
+                    {
+                        // Sparse or shattered layouts may have no nearby sector.
+                        // Find the closest unobstructed sector along either axis.
+                        List<X3Sector> candidates = X3Galaxy.Instance.Sectors
+                            .Where(candidate => candidate != source
+                                && (candidate.x == source.x || candidate.y == source.y)
+                                && !source.IsConnectedTo(candidate)
+                                && !X3Galaxy.Instance.HasNonVoidSectorsBetween(source, candidate))
+                            .ToList();
+
+                        if (candidates.Count > 0)
+                        {
+                            int nearest = candidates.Min(candidate => source.DistanceFrom(candidate));
+                            List<X3Sector> closest = candidates
+                                .Where(candidate => source.DistanceFrom(candidate) == nearest)
+                                .ToList();
+                            dest = closest[m_Rand.Next(closest.Count)];
+                        }
+                    }
+
                     if (dest != null)
                     {
                         numorphaned++;
@@ -726,8 +744,8 @@ namespace X3_Mayhem_Galaxy_Generator
                     break;
             }
             m_AvgSystemsPerRace =  totalsystemsAvailable / 6;   // number of systems each race would get if all left at equal spreads.
-            Debug.WriteLine($"Average Systems per Race: {m_AvgSystemsPerRace}");
-            Msg($"Average Systems per Race: { m_AvgSystemsPerRace}");
+            Debug.WriteLine($"Average sectors per race: {m_AvgSystemsPerRace}");
+            Msg($"Average sectors per race: { m_AvgSystemsPerRace}");
 
             GenerateRaceSector(ERace.Argon, X3Galaxy.Instance.GalaxyCreationSettings.ArgonSpread);
             GenerateRaceSector(ERace.Boron, X3Galaxy.Instance.GalaxyCreationSettings.BoronSpread);
@@ -768,7 +786,7 @@ namespace X3_Mayhem_Galaxy_Generator
             {
                 created4 = CreateGlob(EQuadrant.None, race, remaining);
             }
-            Msg($"{race} - {created1 + created2 + created3 + created4} systems created");
+            Msg($"{race} - {created1 + created2 + created3 + created4} sectors created");
         }
 
 
@@ -897,7 +915,7 @@ namespace X3_Mayhem_Galaxy_Generator
                 }
 
                 sector = X3Galaxy.Instance.GetRandomUninitializedSector();
-                if (sector == null) throw new Exception("Unable to place sector.  No unitialized sectors left.");
+                if (sector == null) throw new Exception("Unable to place sector. No unitialized sectors left.");
 
                 bool clustered = isXenon ? X3Galaxy.Instance.GalaxyCreationSettings.ClusteredXenons : X3Galaxy.Instance.GalaxyCreationSettings.ClusteredVoids;
                 if (clustered)
