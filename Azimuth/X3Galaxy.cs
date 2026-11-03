@@ -28,6 +28,8 @@ namespace Azimuth
         private Random m_Rand = new Random();
         public GalaxySettings GalaxyCreationSettings = new GalaxySettings();
         public Dictionary<string, string> LocalizationDictionary = new Dictionary<string, string>();
+        public int MinimumSectorCount => GalaxyCreationSettings.MinimumCount;
+        public int MaximumSectorCount => Math.Min(MaxX * MaxY, GalaxyCreationSettings.MaximumCount);
         public bool HasUnsavedChanges;
         public bool HasUnsavedManualEdits;
 

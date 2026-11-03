@@ -100,6 +100,34 @@ namespace Azimuth
         public int TeladiSpread;
         public int TerranSpread;
         public int FogLevelPercent;
+        public int? VoidPercent;
+        internal int EffectiveVoidPercent => VoidPercent.HasValue && VoidPercent >= 15 && VoidPercent <= 50
+            ? VoidPercent.Value : (ShatteredGalaxy ? 35 : 15);
+
+        internal int MinimumCount => GalaxySize == 0 ? 50 : GalaxySize == 1 ? 86 : 145;
+        internal int MaximumCount => GalaxySize == 0 ? 85 : GalaxySize == 1 ? 144 : 246;
+
+        internal int SectorTarget(int cells, int percent)
+        {
+            int raw = cells - cells * percent / 100;
+            return Math.Min(cells, Math.Max(MinimumCount, Math.Min(MaximumCount, raw)));
+        }
+
+        internal int SquareSide => GalaxySize == 0 ? 10 : GalaxySize == 1 ? 13 : 17;
+
+        public System.Drawing.Size PresetGridSize(bool legacy = false)
+        {
+            if (MapType == 0)
+            {
+                return new System.Drawing.Size(SquareSide, SquareSide);
+            }
+            if (GalaxySize == 0) return new System.Drawing.Size(legacy ? 13 : 14, 7);
+            if (GalaxySize == 1) return legacy ? new System.Drawing.Size(18, 9) : new System.Drawing.Size(17, 10);
+            return legacy ? new System.Drawing.Size(22, 13) : new System.Drawing.Size(24, 12);
+        }
+
+        public int GridWidth;
+        public int GridHeight;
         public int GalaxySize;      // 0, 1, 2  (small, medium, large)
     }
 }

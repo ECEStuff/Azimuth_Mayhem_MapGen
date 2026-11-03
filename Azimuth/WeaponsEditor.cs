@@ -34,6 +34,7 @@ namespace Azimuth
         public WeaponsEditor()
         {
             InitializeComponent();
+            Icon = new System.Drawing.Icon(typeof(WeaponsEditor), "ShipsWeapons.ico");
         }
 
         private void btnExit_Click(object sender, EventArgs e)

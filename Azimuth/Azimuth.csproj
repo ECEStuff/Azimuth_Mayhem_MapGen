@@ -49,7 +49,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Azimuth.ico</ApplicationIcon>
+    <ApplicationIcon>Icons\Azimuth.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <GenerateManifests>false</GenerateManifests>
@@ -79,6 +79,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActiveToolStripRenderer.cs" />
+    <Compile Include="GameConfigEditor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="GameConfigFile.cs" />
     <Compile Include="BodGen.cs" />
     <Compile Include="CustomMusic.cs">
       <SubType>Form</SubType>
@@ -144,6 +148,15 @@
     <Compile Include="X3Special.cs" />
     <Compile Include="X3Sun.cs" />
     <Compile Include="X3Utils.cs" />
+    <EmbeddedResource Include="GameConfigEditor.resx">
+      <DependentUpon>GameConfigEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Icons\ShipsWeapons.ico">
+      <LogicalName>Azimuth.ShipsWeapons.ico</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Icons\Config.ico">
+      <LogicalName>Azimuth.Config.ico</LogicalName>
+    </EmbeddedResource>
     <EmbeddedResource Include="CustomMusic.resx">
       <DependentUpon>CustomMusic.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -195,7 +208,16 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Azimuth.ico" />
+    <Content Include="ConfigDefaults\SettingNames.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ConfigDefaults\9972-L044.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ConfigDefaults\9973-L044.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Icons\Azimuth.ico" />
     <Content Include="Design.txt" />
     <Content Include="HelpMain.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>

@@ -29,6 +29,7 @@ namespace Azimuth
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(WeaponsEditor));
             this.gbAction = new System.Windows.Forms.GroupBox();
             this.rbRaiseShipStatsForRace = new System.Windows.Forms.RadioButton();
             this.rbLowerShipStatsForRace = new System.Windows.Forms.RadioButton();
@@ -43,8 +44,8 @@ namespace Azimuth
             this.lblNote = new System.Windows.Forms.Label();
             this.btnHelpMain = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.rbTwentypercent = new System.Windows.Forms.RadioButton();
             this.rbThirtypercent = new System.Windows.Forms.RadioButton();
+            this.rbTwentypercent = new System.Windows.Forms.RadioButton();
             this.gbAction.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -210,6 +211,16 @@ namespace Azimuth
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Maximum Stat Adjustment";
             // 
+            // rbThirtypercent
+            // 
+            this.rbThirtypercent.AutoSize = true;
+            this.rbThirtypercent.Location = new System.Drawing.Point(7, 43);
+            this.rbThirtypercent.Name = "rbThirtypercent";
+            this.rbThirtypercent.Size = new System.Drawing.Size(62, 17);
+            this.rbThirtypercent.TabIndex = 1;
+            this.rbThirtypercent.Text = "+/- 30%";
+            this.rbThirtypercent.UseVisualStyleBackColor = true;
+            // 
             // rbTwentypercent
             // 
             this.rbTwentypercent.AutoSize = true;
@@ -221,16 +232,6 @@ namespace Azimuth
             this.rbTwentypercent.TabStop = true;
             this.rbTwentypercent.Text = "+/- 20%";
             this.rbTwentypercent.UseVisualStyleBackColor = true;
-            // 
-            // rbThirtypercent
-            // 
-            this.rbThirtypercent.AutoSize = true;
-            this.rbThirtypercent.Location = new System.Drawing.Point(7, 43);
-            this.rbThirtypercent.Name = "rbThirtypercent";
-            this.rbThirtypercent.Size = new System.Drawing.Size(62, 17);
-            this.rbThirtypercent.TabIndex = 1;
-            this.rbThirtypercent.Text = "+/- 30%";
-            this.rbThirtypercent.UseVisualStyleBackColor = true;
             // 
             // WeaponsEditor
             // 
@@ -246,6 +247,7 @@ namespace Azimuth
             this.Controls.Add(this.btnExit);
             this.Controls.Add(this.btnDoIt);
             this.Controls.Add(this.gbAction);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "WeaponsEditor";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Ship and Weapon Stats Editor";

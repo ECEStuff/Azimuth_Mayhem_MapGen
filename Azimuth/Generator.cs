@@ -126,7 +126,7 @@ namespace Azimuth
             target = allSectors.Where(item => item.r == (int)ERace.Unknown).ToList();
             target.Shuffle();
             target = target.Take(6).ToList();
-            for (int c = 0; c < 6; c++)     // all companies
+            for (int c = 0; c < target.Count; c++)     // all companies
             {
                 target[c].SectorCreationData.Company = c;
             }
@@ -140,23 +140,22 @@ namespace Azimuth
             m_FirstRaceSectorCreated = null;
             m_GlobID = 1;
 
-            int musicIndex = musicFiles.Count;
             int backgroundIndex = backgroundFiles.Count;
             int sunsIndex = sunAndPlanets.Count;
             int asteroidsIndex = asteroids.Count;
 
-            string musicFile;
             int backgroundFile;
             List<string> sunsToUse;
             List<string> asteroidsToUse;
 
-            musicFiles.Shuffle();
             backgroundFiles.Shuffle();
             sunAndPlanets.Shuffle();
             asteroids.Shuffle();
 
             X3Galaxy.Instance.Sectors.Clear();
             X3Galaxy.Instance.SetSize(maxx, maxy);
+            X3Galaxy.Instance.GalaxyCreationSettings.GridWidth = maxx;
+            X3Galaxy.Instance.GalaxyCreationSettings.GridHeight = maxy;
 
 
             // Create all sectors
@@ -164,20 +163,6 @@ namespace Azimuth
             {
                 for (int y = 0; y < X3Galaxy.Instance.MaxY; y++)
                 {
-                    // For music, background, planets and asteroids, we essentially are using Templates out of the \mayhem_data folder created by Mayhem 3.
-                    // We randomize these lists, and use each and every template first, and when we run out we only then pick a random template.  This ensures the least duplicates in our universe.
-
-                    // System Music
-                    if (--musicIndex < 0)
-                    {
-                        musicFile = musicFiles[m_Rand.Next(musicFiles.Count)];
-                    }
-                    else
-                    {
-                        musicFile = musicFiles[musicIndex];
-                    }
-
-
                     // System Background
                     if (--backgroundIndex < 0)
                     {
@@ -212,7 +197,7 @@ namespace Azimuth
                     }
 
                     // Create uninitialized sectors in all spaces to start with.  Void/Empty (not unknown) sectors will be removed from the list when we are all done.
-                    X3Sector sector = new X3Sector(x, y, musicFile, backgroundFile, sunsToUse, asteroidsToUse);
+                    X3Sector sector = new X3Sector(x, y, null, backgroundFile, sunsToUse, asteroidsToUse);
                     X3Galaxy.Instance.Sectors.Add(sector);                     // All sectors exist at start.  They are just uninitialized.
                 }
             }
@@ -228,6 +213,17 @@ namespace Azimuth
 
             // remove any empty/void sectors.
             X3Galaxy.Instance.Sectors.RemoveAll(sector => sector.IsVoid);
+
+            // Deal tracks only to surviving sectors. Every complete round uses each ID once.
+            int musicIndex = 0;
+            foreach (var sector in X3Galaxy.Instance.Sectors)
+            {
+                if (musicIndex == 0)
+                    musicFiles.Shuffle();
+                sector.m_MusicFileName = musicFiles[musicIndex++];
+                if (musicIndex == musicFiles.Count)
+                    musicIndex = 0;
+            }
 
             int sectorCount = X3Galaxy.Instance.Sectors.Count;
             Msg($"Created {sectorCount} total sectors.");
@@ -349,20 +345,6 @@ namespace Azimuth
 #if (GLOBTESTING)
             PaintGlobs();
 #endif
-        }
-
-        // Use the same effective void percentage for sector placement and gate searches.
-        // This does not modify galaxy dimensions or sector-count targets.
-        private int GetVoidPercent()
-        {
-            int voidpct = X3Galaxy.Instance.GalaxyCreationSettings.ShatteredGalaxy ? 35 : 15;
-            int configured;
-            if (int.TryParse(X3Utils.GetSetting("EmptySpacePercent"), out configured)
-                && configured > 15 && configured < 51)
-            {
-                voidpct = configured;
-            }
-            return voidpct;
         }
 
         public void CombineGlobs()
@@ -839,7 +821,7 @@ namespace Azimuth
         private void GenerateVoidOrXenonSectors(bool isXenon = false)
         {
             bool isVoid = !isXenon;
-            int voidpct = GetVoidPercent();
+            int voidpct = X3Galaxy.Instance.GalaxyCreationSettings.EffectiveVoidPercent;
             bool isChaotic = X3Galaxy.Instance.GalaxyCreationSettings.ChaoticStart;
             X3Sector sector;
 
@@ -860,8 +842,9 @@ namespace Azimuth
             }
 
 
-            int avgspace = isXenon ? xenonpct : voidpct;
-            int numSectors = (X3Galaxy.Instance.MaxX * X3Galaxy.Instance.MaxY * avgspace) / 100;
+            var galaxy = X3Galaxy.Instance;
+            int cells = galaxy.MaxX * galaxy.MaxY;
+            int numSectors = isXenon ? cells * xenonpct / 100 : cells - galaxy.GalaxyCreationSettings.SectorTarget(cells, voidpct);
 
 
             if (isXenon)
@@ -874,15 +857,6 @@ namespace Azimuth
                     sector.IsMaelstromPortal = true;
                     return;
                 }
-            }
-            else
-            {
-                // safety check here to make sure we don't generate more than 256 actual systems, as we only have that many system names.
-                // Note, this means the map dimensions can support 300 raw sectors, cut down by 15% for voids which would yield 255 actual sectors.
-                // This is 17x17 or 16x18
-                int rawsectorcount = X3Galaxy.Instance.Sectors.Count;       // 300
-                int dif = rawsectorcount - numSectors - 256;                // 300 - 45 - 256 = -1
-                if (dif > 0) numSectors += dif;
             }
 
             string action = isXenon ? "Xenon" : "Void (gaps)";
@@ -935,11 +909,12 @@ namespace Azimuth
                                 done = true;
                                 break;
                             }
-                            if (distance++ > 5)
+                            if (!done && distance++ > 5)
                             {
                                 // Could find no neighboring uninit sectors within 5 squares of any of these sectors.
                                 // This usually occurs only on the first Xenon sector for a Chaotic Start, and also using the Shattered Galaxy option.  In this condition,
                                 // you can have the first xenon system in a corner with no nearby neighbors.  Usually it will find one within 2 squares 90% of the time.
+                                if (isVoid) sector.MarkSectorVoidorXenon(false);
                                 done = true;
                             }
                         }

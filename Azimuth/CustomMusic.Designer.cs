@@ -101,6 +101,9 @@ namespace Azimuth
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOk);
             this.DoubleBuffered = true;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "CustomMusic";
             this.Text = "CustomMusic";
             this.ResumeLayout(false);

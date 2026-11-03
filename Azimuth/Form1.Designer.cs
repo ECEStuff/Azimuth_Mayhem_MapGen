@@ -129,12 +129,15 @@ namespace Azimuth
             this.rbOrigin = new System.Windows.Forms.RadioButton();
             this.cbLimitedEnclaves = new System.Windows.Forms.CheckBox();
             this.cbClusteredXenon = new System.Windows.Forms.CheckBox();
-            this.cbShattered = new System.Windows.Forms.CheckBox();
+            this.voidSlider = new System.Windows.Forms.TrackBar();
+            this.voidLabel = new System.Windows.Forms.Label();
             this.cbClusteredVoids = new System.Windows.Forms.CheckBox();
             this.btnGenerateSystems = new System.Windows.Forms.Button();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.toolTip2 = new System.Windows.Forms.ToolTip(this.components);
+            this.btnConfig = new System.Windows.Forms.ToolStripDropDownButton();
+            this.edit9972 = new System.Windows.Forms.ToolStripMenuItem();
+            this.edit9973 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.btnShowTerran = new System.Windows.Forms.ToolStripButton();
             this.btnShowSectorStats = new System.Windows.Forms.ToolStripButton();
@@ -167,6 +170,7 @@ namespace Azimuth
             this.gbGateDensity.SuspendLayout();
             this.gbGalaxySize.SuspendLayout();
             this.gbExpansion.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.voidSlider)).BeginInit();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -229,7 +233,8 @@ namespace Azimuth
             this.splitContainer1.Panel1.Controls.Add(this.gbExpansion);
             this.splitContainer1.Panel1.Controls.Add(this.cbLimitedEnclaves);
             this.splitContainer1.Panel1.Controls.Add(this.cbClusteredXenon);
-            this.splitContainer1.Panel1.Controls.Add(this.cbShattered);
+            this.splitContainer1.Panel1.Controls.Add(this.voidSlider);
+            this.splitContainer1.Panel1.Controls.Add(this.voidLabel);
             this.splitContainer1.Panel1.Controls.Add(this.cbClusteredVoids);
             this.splitContainer1.Panel1.Controls.Add(this.btnGenerateSystems);
             // 
@@ -1380,15 +1385,26 @@ namespace Azimuth
             this.cbClusteredXenon.Text = "Clustered Xenons";
             this.cbClusteredXenon.UseVisualStyleBackColor = true;
             // 
-            // cbShattered
+            // voidSlider
             // 
-            this.cbShattered.AutoSize = true;
-            this.cbShattered.Location = new System.Drawing.Point(16, 188);
-            this.cbShattered.Name = "cbShattered";
-            this.cbShattered.Size = new System.Drawing.Size(107, 17);
-            this.cbShattered.TabIndex = 48;
-            this.cbShattered.Text = "Shattered Galaxy";
-            this.cbShattered.UseVisualStyleBackColor = true;
+            this.voidSlider.AutoSize = false;
+            this.voidSlider.Location = new System.Drawing.Point(76, 185);
+            this.voidSlider.Maximum = 50;
+            this.voidSlider.Minimum = 15;
+            this.voidSlider.Name = "voidSlider";
+            this.voidSlider.Size = new System.Drawing.Size(96, 22);
+            this.voidSlider.TabIndex = 48;
+            this.voidSlider.TickStyle = System.Windows.Forms.TickStyle.None;
+            this.voidSlider.Value = 15;
+            // 
+            // voidLabel
+            // 
+            this.voidLabel.AutoSize = true;
+            this.voidLabel.Location = new System.Drawing.Point(16, 188);
+            this.voidLabel.Name = "voidLabel";
+            this.voidLabel.Size = new System.Drawing.Size(51, 13);
+            this.voidLabel.TabIndex = 95;
+            this.voidLabel.Text = "Void 15%";
             // 
             // cbClusteredVoids
             // 
@@ -1411,6 +1427,31 @@ namespace Azimuth
             this.btnGenerateSystems.UseVisualStyleBackColor = false;
             this.btnGenerateSystems.Click += new System.EventHandler(this.btnGenerate_Click);
             // 
+            // btnConfig
+            // 
+            this.btnConfig.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.edit9972,
+            this.edit9973});
+            this.btnConfig.Image = ((System.Drawing.Image)(resources.GetObject("btnConfig.Image")));
+            this.btnConfig.Name = "btnConfig";
+            this.btnConfig.Size = new System.Drawing.Size(72, 22);
+            this.btnConfig.Text = "Config";
+            this.btnConfig.ToolTipText = "Edit Mayhem game settings in the 9972 and 9973 configuration files";
+            // 
+            // edit9972
+            // 
+            this.edit9972.Name = "edit9972";
+            this.edit9972.Size = new System.Drawing.Size(306, 22);
+            this.edit9972.Text = "9972 — Mayhem settings…";
+            this.edit9972.Click += new System.EventHandler(this.edit9972_Click);
+            // 
+            // edit9973
+            // 
+            this.edit9973.Name = "edit9973";
+            this.edit9973.Size = new System.Drawing.Size(306, 22);
+            this.edit9973.Text = "9973 — Zero Hour and Renegades settings…";
+            this.edit9973.Click += new System.EventHandler(this.edit9973_Click);
+            // 
             // toolStrip1
             // 
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -1418,6 +1459,7 @@ namespace Azimuth
             this.btnShowSectorStats,
             this.btnShowSectorNames,
             this.btnLaunchWeaponsEditor,
+            this.btnConfig,
             this.toolStripSeparatorFind,
             this.lblFindCaption,
             this.txtFindSector,
@@ -1574,6 +1616,7 @@ namespace Azimuth
             this.gbGalaxySize.PerformLayout();
             this.gbExpansion.ResumeLayout(false);
             this.gbExpansion.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.voidSlider)).EndInit();
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -1610,7 +1653,8 @@ namespace Azimuth
         private System.Windows.Forms.NumericUpDown udArgon;
         private System.Windows.Forms.CheckBox cbLimitedEnclaves;
         private System.Windows.Forms.CheckBox cbClusteredXenon;
-        private System.Windows.Forms.CheckBox cbShattered;
+        private System.Windows.Forms.TrackBar voidSlider;
+        private System.Windows.Forms.Label voidLabel;
         private System.Windows.Forms.CheckBox cbClusteredVoids;
         private System.Windows.Forms.Button btnGenerateSystems;
         private System.Windows.Forms.Label lblX3RootFolder;
@@ -1666,7 +1710,9 @@ namespace Azimuth
         private System.Windows.Forms.Label lblMayhemSave;
         private System.Windows.Forms.Label lblMayhemRoot;
         private System.Windows.Forms.RadioButton rbAllMusic;
-        private System.Windows.Forms.ToolTip toolTip2;
+        private System.Windows.Forms.ToolStripDropDownButton btnConfig;
+        private System.Windows.Forms.ToolStripMenuItem edit9972;
+        private System.Windows.Forms.ToolStripMenuItem edit9973;
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripButton btnShowTerran;
         private System.Windows.Forms.ToolStripButton btnShowSectorStats;

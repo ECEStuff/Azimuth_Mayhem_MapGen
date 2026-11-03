@@ -43,20 +43,19 @@ namespace Azimuth
             }
 
             SetupLocalization();
-            var identify = new Button
-            {
-                Text = "Identify Current Saves...",
-                Location = new Point(btnSetGalaxyAsCurrent.Right + 12, btnSetGalaxyAsCurrent.Top),
-                Size = btnSetGalaxyAsCurrent.Size
-            };
-            identify.Click += IdentifyCurrentSaves;
-            Controls.Add(identify);
         }
 
         private void SetupLocalization()
         {
             this.Text = X3Utils.GetLocalizedText("{SaveLoadFormTitle}");
             X3Utils.SetControlChildrenText(this);
+
+            foreach (var button in new[] {btnSaveNew, btnRandomName, btnLoadSelected, btnSetGalaxyAsCurrent, btnIdentifyCurrentSaves, btnDeleteGalaxy})
+            {
+                string tip = X3Utils.GetLocalizedText("{Tips." + button.Name + "}");
+                if (!string.IsNullOrWhiteSpace(tip))
+                    tipSaveLoad.SetToolTip(button, tip);
+            }
         }
 
         private void Message(string msg, bool clear = false)
@@ -91,6 +90,26 @@ namespace Azimuth
                 loaded.Load9970_XML(Path.Combine(folder, $@"addon\t\9970-L0{language}.xml"));
                 loaded.Load00044_XML(Path.Combine(folder, $@"addon\mov\000{language}.xml"));
                 var settings = loaded.GalaxyCreationSettings;
+                if (settings.GridWidth != 0 || settings.GridHeight != 0)
+                {
+                    if (settings.GridWidth < loaded.MaxX || settings.GridHeight < loaded.MaxY ||
+                        settings.GridWidth > 99 || settings.GridHeight > 99)
+                        throw new InvalidDataException("Invalid saved galaxy dimensions.");
+                    loaded.SetSize(settings.GridWidth, settings.GridHeight);
+                }
+                else if (File.Exists(Path.Combine(folder, "GalaxySettings.json")) &&
+                    settings.GalaxySize >= 0 && settings.GalaxySize <= 2 &&
+                    (settings.MapType == 0 || settings.MapType == 1))
+                {
+                    // Legacy Azimuth maps recorded the preset, but not empty outer rows and columns.
+                    var preset = settings.PresetGridSize(legacy: true);
+                    if (loaded.MaxX <= preset.Width && loaded.MaxY <= preset.Height)
+                        loaded.SetSize(preset.Width, preset.Height);
+                }
+                if (!File.Exists(Path.Combine(folder, "GalaxySettings.json")))
+                    settings.GalaxySize = loaded.Sectors.Count <= 85 ? 0 : loaded.Sectors.Count <= 144 ? 1 : 2;
+                settings.GridWidth = loaded.MaxX;
+                settings.GridHeight = loaded.MaxY;
                 int[] spread = { settings.ArgonSpread, settings.BoronSpread, settings.SplitSpread,
                     settings.ParanidSpread, settings.TeladiSpread, settings.TerranSpread };
                 if (spread.Any(value => value < -50 || value > 50) || settings.FogLevelPercent < 0 ||
