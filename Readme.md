@@ -8,11 +8,11 @@ Originally developed to support [Mayhem Expanded](https://github.com/ECEStuff/Ma
 
 ## Background
 
-ZMap was originally developed by Mordan, who publicly released its source code on GitHub as version 1.8.2.
+The original Mayhem map generator was made by Joubarbe, released with Mayhem 3 in 2020. However, its source code was lost.
 
-Azimuth is derived from that publicly released version and retains much of ZMap's original architecture and interface while introducing new functionality and independently maintained improvements.
+ZMap was developed and released in 2022 by Mordan/Hairless-Ape. It was created by reverse engineering the original map generator. Mordan later publicly released ZMap's source code on GitHub until version 1.8.2. When Mayhem: Friend or Foe (FoF) was released, later ZMap versions became separate, proprietary development. As such, ZMap is not part of this repository.
 
-ZMap for Mayhem: Friend or Foe (FoF) is a separate, proprietary development and is not part of this repository.
+Azimuth is derived from ZMap version 1.8.2, the last publicly released version. It retains much of ZMap's original architecture and interface while introducing new functionality and independently maintained improvements.
 
 ## Development
 
@@ -28,12 +28,10 @@ Development focuses on:
 
 ## Credits
 
+- **Joubarbe** - The original creator of the original Mayhem Map Generator.
 - **Mordan (Hairless-Ape)** — Original creator of ZMap and its foundational architecture and functionality.
-- **herobetty** — Azimuth development, enhancements, maintenance, and integration with Mayhem Expanded.
 - Sector Names icon: [Sector Names icon by Cap Cool](https://www.flaticon.com/free-icons/text-box)
 - App icon: [Constellation icon by Magnific](https://www.flaticon.com/free-icons/constellation)
-
-Azimuth acknowledges and preserves the contributions of Mordan, the original ZMap author.
 
 ## Licensing
 
