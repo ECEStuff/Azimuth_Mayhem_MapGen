@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Per-sector Mayhem attributes. The 9970 prefix selects the attribute and the XXYY suffix identifies the sector.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -46,7 +48,7 @@ namespace Azimuth
         //<t id="10020101">48</t>           // Xenons:              id = 1002 + SectorLocation      Abnormal signals.  0-60, average 22.
         //<t id="10030101">0</t>            // Terrans:             id = 1003 + "                   Terran Memory.
         //<t id="10040101">99</t>           // research:            id = 1004 + "                   40-100, average 70
-        //<t id="10050101">9</t>            // support              id = 1005 + "                   Number of stations supported in system.  8-15, Average 9.
+        //<t id="10050101">9</t>            // support              id = 1005 + "                   Number of stations supported in system.  Normal rolls average 10; Saboteur rolls average 8.
         //<t id="10060101">107</t>          // manpower             id = 1006 + "                   Population of system (60-130, average 95)
         //<t id="10070101">-1</t>           // cluster              id = 1007 + "                   Not Used.  Set to -1 to duplicate old program.
         //<t id="10080101">3 </t >          // production           id = 1008 + "                   Type of Food produced.  See EFood above for enumeration.

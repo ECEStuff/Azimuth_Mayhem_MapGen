@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿// Owns galaxy import, export, activation and save-slot ownership. Loading a map and installing it are separate operations.
+
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
+using System.Xml.Linq;
 using System.Security;
 using System.Text.RegularExpressions;
 
@@ -77,8 +80,8 @@ namespace Azimuth
 
             string mapToLoad = SelectedGalaxyName;
 
-            Message($"{mapToLoad} map is loading into the Generator for you to review or edit.", true);
-            Message("Here are some system statistics for the loaded map.  Close this dialog to see the map.");
+            Message(X3Utils.Ui("Persist.MapIsLoadingIntoTheGeneratorFor", mapToLoad), true);
+            Message(X3Utils.Ui("Persist.HereAreSomeSystemStatisticsForThe"));
 
             var loaded = new X3Galaxy(0, 0);
             try
@@ -94,7 +97,7 @@ namespace Azimuth
                 {
                     if (settings.GridWidth < loaded.MaxX || settings.GridHeight < loaded.MaxY ||
                         settings.GridWidth > 99 || settings.GridHeight > 99)
-                        throw new InvalidDataException("Invalid saved galaxy dimensions.");
+                        throw new InvalidDataException(X3Utils.Ui("Persist.InvalidSavedGalaxyDimensions"));
                     loaded.SetSize(settings.GridWidth, settings.GridHeight);
                 }
                 else if (File.Exists(Path.Combine(folder, "GalaxySettings.json")) &&
@@ -115,14 +118,14 @@ namespace Azimuth
                 if (spread.Any(value => value < -50 || value > 50) || settings.FogLevelPercent < 0 ||
                     settings.FogLevelPercent > 100 || settings.Relations == null ||
                     settings.Relations.GetLength(0) != 6 || settings.Relations.GetLength(1) != 6)
-                    throw new InvalidDataException("Galaxy settings contain unsupported values.");
+                    throw new InvalidDataException(X3Utils.Ui("Persist.GalaxySettingsContainUnsupportedValues"));
             }
             catch (Exception ex)
             {
-                Message("Could not load galaxy: " + ex.Message);
+                Message(X3Utils.Ui("Persist.CouldNotLoadGalaxy.Message", ex.Message));
                 return;
             }
-            if (!Form1.ConfirmDiscard(this, "load another galaxy"))
+            if (!Form1.ConfirmDiscard(this, X3Utils.Ui("Persist.LoadAnotherGalaxy")))
                 return;
             var current = X3Galaxy.Instance;
             current.SetSize(loaded.MaxX, loaded.MaxY);
@@ -144,7 +147,7 @@ namespace Azimuth
             //<t id="10020101">48</t>           // Xenons:              id = 1002 + SectorLocation      Abnormal signals.  0-60, average 23.    30% of these are at 0.
             //<t id="10030101">0</t>            // Terrans:             id = 1003 + "                   20% chance galaxy wide.
             //<t id="10040101">99</t>           // research:            id = 1004 + "                   40-100, average 70
-            //<t id="10050101">9</t>            // support              id = 1005 + "                   Number of stations supported in system.  8-15, Average 9.
+            //<t id="10050101">9</t>            // support              id = 1005 + "                   Number of stations supported in system.  Normal rolls average 10; Saboteur rolls average 8.
             //<t id="10060101">107</t>          // manpower             id = 1006 + "                   Population of system (60-130, average 95)
             //<t id="10070101">-1</t>           // cluster              id = 1007 + "                   Not Used.  Set to -1 to duplicate old program.
             //<t id="10080101">3 </t >          // production           id = 1008 + "                   Type of Food produced.  See EFood above for enumeration.
@@ -186,48 +189,48 @@ namespace Azimuth
 
 
             // some random stats for fun.
-            Message("Sector Count: ", secct);
-            Message("Gate Count: ", gatect);
-            Message("Galaxy Dimensions: " + mapdimensions);
+            Message(X3Utils.Ui("Persist.SectorCount"), secct);
+            Message(X3Utils.Ui("Persist.GateCount"), gatect);
+            Message(X3Utils.Ui("Persist.GalaxyDimensions.Message", mapdimensions));
 
-            Message("Average Sector Size: ", avgSectorSize);
-            Message("Average Gate Offset: ", avgGateOffset);
-            Message("Min Gate Offset: ", minGateOffset);            // +/- 17% of system size.
-            Message("Max Gate Offset: ", maxGateOffset);
-            Message("Average Gate Distance: ", avgGateDist);
-            Message("Min Gate Distance: ", minGateDist);            // 55-125% of system size.
-            Message("Max Gate Distance: ", maxGateDist);
-            Message("Min Gate Depth: " + minGateDepth);
-            Message("Max Gate Depth: " + maxGateDepth);
+            Message(X3Utils.Ui("Persist.AverageSectorSize"), avgSectorSize);
+            Message(X3Utils.Ui("Persist.AverageGateOffset"), avgGateOffset);
+            Message(X3Utils.Ui("Persist.MinGateOffset"), minGateOffset);            // +/- 17% of system size.
+            Message(X3Utils.Ui("Persist.MaxGateOffset"), maxGateOffset);
+            Message(X3Utils.Ui("Persist.AverageGateDistance"), avgGateDist);
+            Message(X3Utils.Ui("Persist.MinGateDistance"), minGateDist);            // 55-125% of system size.
+            Message(X3Utils.Ui("Persist.MaxGateDistance"), maxGateDist);
+            Message(X3Utils.Ui("Persist.MinGateDepth.Message", minGateDepth));
+            Message(X3Utils.Ui("Persist.MaxGateDepth.Message", maxGateDepth));
 
 
-            Message($"dejure Count ({dejurect * 100/secct})%", dejurect);
-            Message($"dejure race found in non-Dejure owned systems", numdejurenotinsameracespace);
-            Message($"Argon dejureOwner Count ({argondejurecount * 100/secct})%", argondejurecount);
-            Message($"Boron dejureOwner Count ({borondejurecount * 100 / secct})%", borondejurecount);
-            Message($"Split dejureOwner Count ({splitdejurecount * 100 / secct})%", splitdejurecount);
-            Message($"Paranid dejureOwner Count ({paraniddejurecount * 100 / secct})%", paraniddejurecount);
-            Message($"Teladi dejureOwner Count ({teladidejurecount * 100 / secct})%", teladidejurecount);
-            Message($"Terran dejureOwner Count ({terrandejurecount * 100 / secct})%", terrandejurecount);
-            Message($"Abnormal Signals Min", X3Galaxy.Instance.Sectors.Min(item => item.SectorCreationData.Xenons));
-            Message($"Abnormal Signals at 0", X3Galaxy.Instance.Sectors.Count(item => item.SectorCreationData.Xenons == 0));
-            Message($"Abnormal Signals Max", X3Galaxy.Instance.Sectors.Max(item => item.SectorCreationData.Xenons));
-            Message($"Abnormal Signals Avg", (int)X3Galaxy.Instance.Sectors.Average(item => item.SectorCreationData.Xenons));
-            Message($"Abnormal Signals Avg in Xenon space", (int)X3Galaxy.Instance.Sectors.Where(item => item.r == 6).Select(item => item.SectorCreationData.Xenons).DefaultIfEmpty().Average());
-            Message($"Terran Memory Count ({terrancount * 100 / secct})%", terrancount);
-            Message($"Research Min", X3Galaxy.Instance.Sectors.Min(item => item.SectorCreationData.Research));
-            Message($"Research Max", X3Galaxy.Instance.Sectors.Max(item => item.SectorCreationData.Research));
-            Message($"Research Avg", (int)X3Galaxy.Instance.Sectors.Average(item => item.SectorCreationData.Research));
-            Message($"Support Min", X3Galaxy.Instance.Sectors.Min(item => item.SectorCreationData.Support));
-            Message($"Support at 12", X3Galaxy.Instance.Sectors.Count(item => item.SectorCreationData.Support == 12));
-            Message($"Support at 13", X3Galaxy.Instance.Sectors.Count(item => item.SectorCreationData.Support == 13));
-            Message($"Support above 13", X3Galaxy.Instance.Sectors.Count(item => item.SectorCreationData.Support > 13));
-            Message($"Support Max", X3Galaxy.Instance.Sectors.Max(item => item.SectorCreationData.Support));
-            Message($"Support Avg", (int)X3Galaxy.Instance.Sectors.Average(item => item.SectorCreationData.Support));
-            Message($"Population Min", X3Galaxy.Instance.Sectors.Min(item => item.SectorCreationData.Manpower));
-            Message($"Population Max", X3Galaxy.Instance.Sectors.Max(item => item.SectorCreationData.Manpower));
-            Message($"Population Avg", (int)X3Galaxy.Instance.Sectors.Average(item => item.SectorCreationData.Manpower));
-            Message($"Company Count {(ECompany)company}", companycount);
+            Message(X3Utils.Ui("Persist.DejureCount", dejurect * 100/secct), dejurect);
+            Message(X3Utils.Ui("Persist.DejureRaceFoundInNonDejureOwned"), numdejurenotinsameracespace);
+            Message(X3Utils.Ui("Persist.ArgonDejureOwnerCount", argondejurecount * 100/secct), argondejurecount);
+            Message(X3Utils.Ui("Persist.BoronDejureOwnerCount", borondejurecount * 100 / secct), borondejurecount);
+            Message(X3Utils.Ui("Persist.SplitDejureOwnerCount", splitdejurecount * 100 / secct), splitdejurecount);
+            Message(X3Utils.Ui("Persist.ParanidDejureOwnerCount", paraniddejurecount * 100 / secct), paraniddejurecount);
+            Message(X3Utils.Ui("Persist.TeladiDejureOwnerCount", teladidejurecount * 100 / secct), teladidejurecount);
+            Message(X3Utils.Ui("Persist.TerranDejureOwnerCount", terrandejurecount * 100 / secct), terrandejurecount);
+            Message(X3Utils.Ui("Persist.AbnormalSignalsMin"), X3Galaxy.Instance.Sectors.Min(item => item.SectorCreationData.Xenons));
+            Message(X3Utils.Ui("Persist.AbnormalSignalsAt"), X3Galaxy.Instance.Sectors.Count(item => item.SectorCreationData.Xenons == 0));
+            Message(X3Utils.Ui("Persist.AbnormalSignalsMax"), X3Galaxy.Instance.Sectors.Max(item => item.SectorCreationData.Xenons));
+            Message(X3Utils.Ui("Persist.AbnormalSignalsAvg"), (int)X3Galaxy.Instance.Sectors.Average(item => item.SectorCreationData.Xenons));
+            Message(X3Utils.Ui("Persist.AbnormalSignalsAvgInXenonSpace"), (int)X3Galaxy.Instance.Sectors.Where(item => item.r == 6).Select(item => item.SectorCreationData.Xenons).DefaultIfEmpty().Average());
+            Message(X3Utils.Ui("Persist.TerranMemoryCount", terrancount * 100 / secct), terrancount);
+            Message(X3Utils.Ui("Persist.ResearchMin"), X3Galaxy.Instance.Sectors.Min(item => item.SectorCreationData.Research));
+            Message(X3Utils.Ui("Persist.ResearchMax"), X3Galaxy.Instance.Sectors.Max(item => item.SectorCreationData.Research));
+            Message(X3Utils.Ui("Persist.ResearchAvg"), (int)X3Galaxy.Instance.Sectors.Average(item => item.SectorCreationData.Research));
+            Message(X3Utils.Ui("Persist.SupportMin"), X3Galaxy.Instance.Sectors.Min(item => item.SectorCreationData.Support));
+            Message(X3Utils.Ui("Persist.SupportAt"), X3Galaxy.Instance.Sectors.Count(item => item.SectorCreationData.Support == 12));
+            Message(X3Utils.Ui("Persist.SupportAtDetail"), X3Galaxy.Instance.Sectors.Count(item => item.SectorCreationData.Support == 13));
+            Message(X3Utils.Ui("Persist.SupportAbove"), X3Galaxy.Instance.Sectors.Count(item => item.SectorCreationData.Support > 13));
+            Message(X3Utils.Ui("Persist.SupportMax"), X3Galaxy.Instance.Sectors.Max(item => item.SectorCreationData.Support));
+            Message(X3Utils.Ui("Persist.SupportAvg") + ":  " + X3Galaxy.Instance.Sectors.Average(item => item.SectorCreationData.Support).ToString("0.00"));
+            Message(X3Utils.Ui("Persist.PopulationMin"), X3Galaxy.Instance.Sectors.Min(item => item.SectorCreationData.Manpower));
+            Message(X3Utils.Ui("Persist.PopulationMax"), X3Galaxy.Instance.Sectors.Max(item => item.SectorCreationData.Manpower));
+            Message(X3Utils.Ui("Persist.PopulationAvg"), (int)X3Galaxy.Instance.Sectors.Average(item => item.SectorCreationData.Manpower));
+            Message(X3Utils.Ui("Persist.CompanyCount", (ECompany)company), companycount);
             //Message($"{(ECompany)company} Companies not in their race Space (one found in {(ERace)kk})", companyinNonRaceSpace); 
 
         }
@@ -252,7 +255,7 @@ namespace Azimuth
             }
             else
             {
-                MessageBox.Show($"Warning: The folder you specified for X3 does not appear to be valid.  Can't find X3AP.exe in {m_CurX3RootFolder}");
+                MessageBox.Show(X3Utils.Ui("Persist.WarningTheFolderYouSpecifiedForX", m_CurX3RootFolder));
                 return;
             }
 
@@ -281,7 +284,7 @@ namespace Azimuth
         private static string NormalizeRoot(string path)
         {
             if (string.IsNullOrWhiteSpace(path) || !Path.IsPathRooted(path))
-                throw new InvalidDataException("Invalid X3 installation path.");
+                throw new InvalidDataException(X3Utils.Ui("Persist.InvalidXInstallationPath"));
 
             string full = Path.GetFullPath(path);
             string root = Path.GetPathRoot(full);
@@ -300,7 +303,7 @@ namespace Azimuth
                 File.ReadAllText(OwnerFile));
 
             if (owner == null || !ValidGalaxyName(owner.GalaxyName))
-                throw new InvalidDataException("Invalid Azimuth live-save ownership record.");
+                throw new InvalidDataException(X3Utils.Ui("Persist.InvalidAzimuthLiveSaveOwnershipRecord"));
 
             owner.InstallRoot = NormalizeRoot(owner.InstallRoot);
             return owner;
@@ -353,7 +356,7 @@ namespace Azimuth
         {
             if (lbAvailableGalaxies.SelectedIndex < 0)
             {
-                Message("Select the galaxy that owns the current live saves.");
+                Message(X3Utils.Ui("Persist.SelectTheGalaxyThatOwnsTheCurrent"));
                 return;
             }
             try
@@ -362,25 +365,23 @@ namespace Azimuth
                 int slots = Directory.GetFiles(m_X3SaveFolder, "*.sav").Length;
                 if (slots == 0)
                 {
-                    Message("There are no live saves to identify.");
+                    Message(X3Utils.Ui("Persist.ThereAreNoLiveSavesToIdentify"));
                     return;
                 }
 
                 var previous = ReadLiveOwner();
-                string prior = previous == null ? "Unknown" : previous.GalaxyName + " in " + previous.InstallRoot;
-                string question = $"Save folder: {m_X3SaveFolder}\r\nRecorded owner: {prior}\r\n\r\n" +
-                    $"Do all {slots} live saves belong to '{owner.GalaxyName}' in {owner.InstallRoot}?\r\n" +
-                    "This updates the ownership record only. If the slots are mixed, choose No.";
-                if (MessageBox.Show(this, question, "Identify current saves", MessageBoxButtons.YesNo,
+                string prior = previous == null ? X3Utils.Ui("Persist.Unknown") : previous.GalaxyName + X3Utils.Ui("Persist.In.Message", previous.InstallRoot);
+                string question = X3Utils.Ui("Persist.SaveFolderRecordedOwner.Message", m_X3SaveFolder, prior, slots, owner.GalaxyName, owner.InstallRoot);
+                if (MessageBox.Show(this, question, X3Utils.Ui("Persist.IdentifyCurrentSaves"), MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
                     return;
 
                 GalaxyFileTransaction.Run(tx => WriteLiveOwner(tx, OwnerFile, owner));
-                Message($"Recorded '{owner.GalaxyName}' as the owner of the current live saves.");
+                Message(X3Utils.Ui("Persist.RecordedAsTheOwnerOfTheCurrent", owner.GalaxyName));
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, ex.Message, "Could not identify current saves");
+                MessageBox.Show(this, ex.Message, X3Utils.Ui("Persist.CouldNotIdentifyCurrentSaves"));
             }
         }
 
@@ -412,7 +413,7 @@ namespace Azimuth
             if (!X3Galaxy.HasUnknownEnclave())
             {
                 MessageBox.Show(
-                    "This galaxy cannot be saved because it contains no Unknown Enclaves. Please generate another galaxy.", "Invalid Galaxy", 
+                    X3Utils.Ui("Persist.ThisGalaxyCannotBeSavedBecauseIt"), X3Utils.Ui("Persist.InvalidGalaxy"), 
                     MessageBoxButtons.OK, 
                     MessageBoxIcon.Warning);
                 return;
@@ -424,7 +425,7 @@ namespace Azimuth
             if (network.GatelessSectors > 0 || network.OutsideLargestNetwork > 0 || network.MissingDestinations > 0 || network.MissingReturnGates > 0)
             {
                 MessageBox.Show(
-                    "This galaxy has invalid gate connections. Please resolve the network warnings before saving.", "Invalid Galaxy",
+                    X3Utils.Ui("Persist.ThisGalaxyHasInvalidGateConnectionsPlease"), X3Utils.Ui("Persist.InvalidGalaxy"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
 
@@ -439,7 +440,7 @@ namespace Azimuth
             string name = tbGalaxyName.Text;
             if (!ValidGalaxyName(name))
             {
-                MessageBox.Show("Enter a valid folder name for this galaxy.");
+                MessageBox.Show(X3Utils.Ui("Persist.EnterAValidFolderNameForThis"));
                 return;
             }
 
@@ -456,7 +457,7 @@ namespace Azimuth
                 if (active || exists)
                 {
                     string question = active ? X3Utils.GetLocalizedText("{UpdateActiveMapWarning}")
-                        : $"Overwrite saved galaxy '{name}'?";
+                        : X3Utils.Ui("Persist.OverwriteSavedGalaxy", name);
                     if (MessageBox.Show(this, question, X3Utils.GetLocalizedText("{Warning}"),
                         MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
                         return;
@@ -474,7 +475,7 @@ namespace Azimuth
             catch (Exception ex)
             {
                 galaxy.GalaxyCreationSettings.GalaxyName = previousName;
-                MessageBox.Show("Could not save galaxy: " + ex.Message);
+                MessageBox.Show(X3Utils.Ui("Persist.CouldNotSaveGalaxy.Message", ex.Message));
                 return;
             }
             finally
@@ -487,11 +488,11 @@ namespace Azimuth
             galaxy.HasUnsavedChanges = false;
             galaxy.HasUnsavedManualEdits = false;
             LoadSavedGalaxiesList();
-            Message($"Saved galaxy '{name}'.", true);
+            Message(X3Utils.Ui("Persist.SavedGalaxy", name), true);
             if (active)
-                Message(ActivateMap(name, switchLiveSaves: false) ? "The installed galaxy was updated." : "Saved, but activation failed.");
+                Message(ActivateMap(name, switchLiveSaves: false) ? X3Utils.Ui("Persist.TheInstalledGalaxyWasUpdated") : X3Utils.Ui("Persist.SavedButActivationFailed"));
             else
-                Message("To play this map, first set it Active.");
+                Message(X3Utils.Ui("Persist.ToPlayThisMapFirstSetIt"));
         }
 
         private string[] GalaxyFiles()
@@ -513,14 +514,14 @@ namespace Azimuth
                     if (relative == @"addon\maps\WareTemplate.xml" || relative == @"addon\types\jobs.txt")
                         continue;
                     if (stream.Length == 0)
-                        throw new InvalidDataException("Empty galaxy file: " + path);
+                        throw new InvalidDataException(X3Utils.Ui("Persist.EmptyGalaxyFile.Message", path));
                     if (path.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
                         new XmlDocument().Load(stream);
                 }
             }
             if (!string.Equals(X3Utils.GetSettingsMap(Path.Combine(folder, "GalaxySettings.json")), name,
                 StringComparison.OrdinalIgnoreCase))
-                throw new InvalidDataException("The galaxy name in GalaxySettings.json differs from its folder name.");
+                throw new InvalidDataException(X3Utils.Ui("Persist.TheGalaxyNameInGalaxySettingsJsonDiffers"));
         }
 
         private static void CopyGalaxyFiles(GalaxyFileTransaction tx, IEnumerable<string> files, string source, string destination)
@@ -611,6 +612,7 @@ namespace Azimuth
         }
 
 
+        // Emit names (page 7), descriptions (page 19), and machine-readable parameters (page 9970).
         private void Create9970(string destination)
         {
             List<string> content = new List<string>();
@@ -626,19 +628,19 @@ namespace Azimuth
             content.Add("\t<page id=\"7\" title=\"Boardcomp.Sectornames\" descr=\"Names of all sectors(spoken by Boardcomputer)\" voice=\"yes\">");
             foreach (X3Sector sector in X3Galaxy.Instance.Sectors)
             {
-                content.Add($"\t\t<t id=\"{sector.SectorID}\">{sector.SectorName}</t>");
+                content.Add($"\t\t<t id=\"{sector.SectorID}\">{SecurityElement.Escape(sector.SectorName)}</t>");
             }
             content.Add("\t</page>");
 
             // Section 2 is list of sector data unique to Mayhem and their DISPLAYED strings for stats.  Terran Memory, Max Population for system etc..
             // Many of these are displayed using different colors depending on their value so they have to be specially formatted.
-            string template = Localize9970Template(@"<t id=""{sys_id}"">{sys_name} \(x:{sys_x}, y:{sys_y}\)\n\n{9970Dejure}: {sys_dejure}\n{9970Company}: {sys_corp}\n{9970Abnormal}: {sys_xenon} %\n{9970Terran}: {sys_terran}\n\n{9970Population}: {sys_population}\n{9970Support}: {sys_support}\n{9970Research}: {sys_research} %\n\n{9970Production}: {sys_production}\n{9970Consumption}: {sys_consumption}\n</t>");
+            string template = Localize9970Template(@"{sys_name} \(x:{sys_x}, y:{sys_y}\)\n\n{9970Dejure}: {sys_dejure}\n{9970Company}: {sys_corp}\n{9970Abnormal}: {sys_xenon} %\n{9970Terran}: {sys_terran}\n\n{9970Population}: {sys_population}\n{9970Support}: {sys_support}\n{9970Research}: {sys_research} %\n\n{9970Production}: {sys_production}\n{9970Consumption}: {sys_consumption}\n");
 
             content.Add("\t<page id=\"19\" title=\"Sector description\" descr=\"Long descriptions of all sectors\" voice=\"no\">");
             foreach (X3Sector sector in X3Galaxy.Instance.Sectors)
             {
                 secid = "103" + sector.SectorID.Remove(0, 3);    // All the id's in this section start with 103. Weird.
-                string val = template.Replace("{sys_id}", secid);
+                string val = template;
                 val = val.Replace("{sys_name}", sector.SectorName);
                 val = val.Replace("{sys_x}", sector.x.ToString());
                 val = val.Replace("{sys_y}", sector.y.ToString());
@@ -651,16 +653,16 @@ namespace Azimuth
                 val = val.Replace("{sys_research}", X3Utils.GetFormattedResearchRate(sector.SectorCreationData.Research));
                 val = val.Replace("{sys_production}", X3Utils.GetFormattedFoodName((EFood)sector.SectorCreationData.Production));
                 val = val.Replace("{sys_consumption}", X3Utils.GetFormattedFoodName((EFood)sector.SectorCreationData.Consumption));
-                content.Add("\t\t" + val);
+                content.Add($"\t\t<t id=\"{secid}\">{SecurityElement.Escape(val)}</t>");
             }
             content.Add("\t</page>");
 
             // Section 3 is where actual USED values are stored for the settings.
             content.Add("\t<page id=\"9970\" title=\"Mayhem Galaxy Generator\">");
-            content.Add($"\t\t<t id=\"1\">{(int)X3Galaxy.Instance.GalaxyCreationSettings.GalaxyExpansion}</t>");
-            content.Add($"\t\t<t id=\"2\">{0}</t>");        // mayhem_galaxy.dominance  Not used in game.
-            content.Add($"\t\t<t id=\"3\">{0}</t>");        // mayhem_galaxy.minority   Not used in game.
-            content.Add($"\t\t<t id=\"4\">{SecurityElement.Escape(X3Galaxy.Instance.GalaxyCreationSettings.GalaxyName)}</t>");
+            content.Add($"\t\t<t id=\"1\">{(int)X3Galaxy.Instance.GalaxyCreationSettings.GalaxyExpansion}</t> <!-- Expansion (-1 Origin, 0 Early, 1 Average, 2 Advanced). -->");
+            content.Add($"\t\t<t id=\"2\">{0}</t> <!-- Legacy dominance. -->");        // mayhem_galaxy.dominance  Not used in game.
+            content.Add($"\t\t<t id=\"3\">{0}</t> <!-- Legacy minority. -->");        // mayhem_galaxy.minority   Not used in game.
+            content.Add($"\t\t<t id=\"4\">{SecurityElement.Escape(X3Galaxy.Instance.GalaxyCreationSettings.GalaxyName)}</t> <!-- Galaxy name. IDs 5-40 form a 6x6 relation matrix in Argon, Boron, Split, Paranid, Teladi, Terran order. Values: -1 war, 0 dynamic, 1 alliance. -->");
             // 5-40 are relations.
             int id = 5;
             for (int x=1; x<7; x++)
@@ -671,30 +673,37 @@ namespace Azimuth
                     id++;
                 }
             }
-            content.Add($"\t\t<t id=\"100\">{(X3Galaxy.Instance.GalaxyCreationSettings.ShatteredGalaxy ? 1 : 0)}</t>");        // Not Used in game.
-            content.Add($"\t\t<t id=\"101\">{(X3Galaxy.Instance.GalaxyCreationSettings.ExtraSystemStats ? 1 : 0)}</t>");       // Not Used in game.
-            content.Add($"\t\t<t id=\"102\">{(X3Galaxy.Instance.GalaxyCreationSettings.ClusteredXenons ? 1 : 0)}</t>");        // Not Used in game.
-            content.Add($"\t\t<t id=\"110\">{(X3Galaxy.Instance.GalaxyCreationSettings.HollowedGalaxy ? 1 : 0)}</t>");         // Not Used in game.
-            content.Add($"\t\t<t id=\"111\">{(X3Galaxy.Instance.GalaxyCreationSettings.RandomDistribution ? 1 : 0)}</t>");     // Not Used in game.
-            content.Add($"\t\t<t id=\"113\">{(X3Galaxy.Instance.GalaxyCreationSettings.LimitedEnclaves ? 1 : 0)}</t>");        // Not Used in game.
+
+            // IDs 100-102, 110, 111, and 113 are not used in-game, but they are saved anyway for compatibility with other Mayhem versions.
+            content.Add($"\t\t<t id=\"100\">{(X3Galaxy.Instance.GalaxyCreationSettings.ShatteredGalaxy ? 1 : 0)}</t> <!-- Legacy Shattered Galaxy flag. -->");
+            content.Add($"\t\t<t id=\"101\">{(X3Galaxy.Instance.GalaxyCreationSettings.ExtraSystemStats ? 1 : 0)}</t> <!-- Legacy Extra Sector Stats. -->");  // Other Mayhem editions besides Expanded.
+            content.Add($"\t\t<t id=\"102\">{(X3Galaxy.Instance.GalaxyCreationSettings.ClusteredXenons ? 1 : 0)}</t> <!-- Clustered Xenons. -->");
+            
+            // Exception: Expanded reads 103 to decide whether to validate Saboteur Mode at game start.
+            content.Add($"\t\t<t id=\"103\">{(X3Galaxy.Instance.GalaxyCreationSettings.SaboteurMode ? 1 : 0)}</t> <!-- Expanded Saboteur Mode (1 enabled, 0 disabled). -->"); // Expanded only.
+
+            content.Add($"\t\t<t id=\"110\">{(X3Galaxy.Instance.GalaxyCreationSettings.HollowedGalaxy ? 1 : 0)}</t> <!-- Legacy Hollowed Galaxy. -->");
+            content.Add($"\t\t<t id=\"111\">{(X3Galaxy.Instance.GalaxyCreationSettings.RandomDistribution ? 1 : 0)}</t> <!-- Legacy Random Distribution. -->");
+            content.Add($"\t\t<t id=\"113\">{(X3Galaxy.Instance.GalaxyCreationSettings.LimitedEnclaves ? 1 : 0)}</t> <!-- Limited Enclaves. -->");
+
 
             X3Sector portalSec = X3Galaxy.Instance.Sectors.Find(item => item.IsMaelstromPortal);
             if (portalSec != null)
             {
-                content.Add($"\t\t<t id=\"120\">{portalSec.x},{portalSec.y}</t>");     // Maelstrom startup X,Y if set at all.
+                content.Add($"\t\t<t id=\"120\">{portalSec.x},{portalSec.y}</t> <!-- Optional Maelstrom position, zero-based X,Y. -->");     // Maelstrom startup X,Y if set at all.
             }
 
             if (X3Galaxy.Instance.GalaxyCreationSettings.PeacefulStart)
             {
-                content.Add($"\t\t<t id=\"121\">{0}</t>");   
+                content.Add($"\t\t<t id=\"121\">{0}</t> <!-- Galaxy start (-1 Standard, 0 Peaceful, 1 Chaotic). -->");   
             }
             else if (X3Galaxy.Instance.GalaxyCreationSettings.ChaoticStart)
             {
-                content.Add($"\t\t<t id=\"121\">{1}</t>");
+                content.Add($"\t\t<t id=\"121\">{1}</t> <!-- Galaxy start (-1 Standard, 0 Peaceful, 1 Chaotic). -->");
             }
             else
             {
-                content.Add($"\t\t<t id=\"121\">{-1}</t>");
+                content.Add($"\t\t<t id=\"121\">{-1}</t> <!-- Galaxy start (-1 Standard, 0 Peaceful, 1 Chaotic). -->");
             }
 
 
@@ -795,7 +804,10 @@ namespace Azimuth
 
 
             content.Add("</language>");
-            File.WriteAllLines(dest, content);
+            // The template is an XML fragment. Parse it after adding the language root.
+            var speech = XDocument.Parse(string.Join(Environment.NewLine, content), LoadOptions.PreserveWhitespace);
+            speech.DescendantNodes().OfType<XComment>().Remove();
+            speech.Save(dest, SaveOptions.DisableFormatting);
         }
 
         /// <summary>
@@ -1077,7 +1089,7 @@ namespace Azimuth
         {
             if (lbAvailableGalaxies.SelectedItem == null)
             {
-                Message("Please select a map to activate.");
+                Message(X3Utils.Ui("Persist.PleaseSelectAMapToActivate"));
                 return;
             }
 
@@ -1086,18 +1098,18 @@ namespace Azimuth
 
             if (success)
             {
-                Message($"{GetActiveMap()} is now the Active map in Mayhem 3.\r\nYou can now run Mayhem 3 to play this map.");
+                Message(X3Utils.Ui("Persist.IsNowTheActiveMapInMayhem", GetActiveMap()));
             }
         }
 
+        // Use the activation transaction for both outgoing and incoming slots so partial switches can be undone.
         private void SwitchSaveSlots(GalaxyFileTransaction tx, LiveSaveOwner outgoing, LiveSaveOwner incoming)
         {
             string[] live = Directory.GetFiles(m_X3SaveFolder, "*.sav");
 
             if (outgoing == null && live.Length != 0)
                 throw new InvalidOperationException(
-                    "The shared save folder contains saves whose owner has not been set. " +
-                    "Identify their galaxy before switching.");
+                    X3Utils.Ui("Persist.TheSharedSaveFolderContainsSavesWhose.Message"));
 
             string incomingFolder = SaveBackupFolder(incoming);
             string[] restore = Directory.Exists(incomingFolder)
@@ -1144,8 +1156,8 @@ namespace Azimuth
             if (string.IsNullOrWhiteSpace(language))
             {
                 MessageBox.Show(
-                    "Unable to determine the speech file language.",
-                    "Speech Index Warning",
+                    X3Utils.Ui("Persist.UnableToDetermineTheSpeechFileLanguage"),
+                    X3Utils.Ui("Persist.SpeechIndexWarning"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
                 return;
@@ -1170,16 +1182,14 @@ namespace Azimuth
                 string backupFile = Path.Combine(backupFolder, backupName);
                 File.Move(packedFile, backupFile);
 
-                Message($"Archived legacy speech file {Path.GetFileName(packedFile)}.");
+                Message(X3Utils.Ui("Persist.ArchivedLegacySpeechFile", Path.GetFileName(packedFile)));
                 Message($"Backup: {backupFile}");
             }
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Could not disable the legacy speech file:\r\n{ex.Message}\r\n\r\n" +
-                    "The galaxy files were copied, but the board computer may " +
-                    "continue announcing the original sector names.",
-                    "Speech Index Warning",
+                    X3Utils.Ui("Persist.CouldNotDisableTheLegacySpeechFile.Message", ex.Message),
+                    X3Utils.Ui("Persist.SpeechIndexWarning"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
             }
@@ -1201,7 +1211,7 @@ namespace Azimuth
                 // Check the source before touching any savegames.
                 if (!Directory.Exists(source))
                 {
-                    MessageBox.Show($"Galaxy folder not found: {source}");
+                    MessageBox.Show(X3Utils.Ui("Persist.GalaxyFolderNotFound", source));
                     return false;
                 }
 
@@ -1218,7 +1228,7 @@ namespace Azimuth
                 if (!hasUnknownEnclave || network.GatelessSectors > 0 || network.OutsideLargestNetwork > 0 || network.MissingDestinations > 0 || network.MissingReturnGates > 0)
                 {
                     MessageBox.Show(
-                        "The saved galaxy failed validation and cannot be activated.", "Invalid Galaxy",
+                        X3Utils.Ui("Persist.TheSavedGalaxyFailedValidationAndCannot"), X3Utils.Ui("Persist.InvalidGalaxy"),
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);
 
@@ -1234,8 +1244,7 @@ namespace Azimuth
                 {
                     if (outgoing == null && Directory.GetFiles(m_X3SaveFolder, "*.sav").Length > 0)
                     {
-                        MessageBox.Show(this, "Open Azimuth for the installation that owns the live saves, " +
-                            "select their galaxy, and click Identify Current Saves before switching.");
+                        MessageBox.Show(this, X3Utils.Ui("Persist.OpenAzimuthForTheInstallationThatOwns.Message"));
                         return false;
                     }
 
@@ -1245,10 +1254,8 @@ namespace Azimuth
                         (Directory.Exists(scoped) && Directory.GetFiles(scoped, "*.sav").Length > 0);
                     if (!hasScopedBackup && Directory.Exists(oldFolder) && Directory.GetFiles(oldFolder, "*.sav").Length > 0)
                     {
-                        string question = $"Legacy backup: {oldFolder}\r\n\r\n" +
-                            $"Do these saves belong to '{mapname}' in {target.InstallRoot}?\r\n" +
-                            "Yes imports a copy. No cancels activation.";
-                        if (MessageBox.Show(this, question, "Identify legacy backup", MessageBoxButtons.YesNo,
+                        string question = X3Utils.Ui("Persist.LegacyBackup.Message", oldFolder, mapname, target.InstallRoot);
+                        if (MessageBox.Show(this, question, X3Utils.Ui("Persist.IdentifyLegacyBackup"), MessageBoxButtons.YesNo,
                             MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
                             return false;
                         legacyImport = oldFolder;
@@ -1288,8 +1295,8 @@ namespace Azimuth
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Could not activate galaxy '{mapname}': {ex.Message}",
-                    "Galaxy Activation Failed",
+                    X3Utils.Ui("Persist.CouldNotActivateGalaxy", mapname, ex.Message),
+                    X3Utils.Ui("Persist.GalaxyActivationFailed"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
                 return false;
@@ -1307,7 +1314,7 @@ namespace Azimuth
         {
             if (lbAvailableGalaxies.SelectedItem == null)
             {
-                Message("Please select a map to delete.");
+                Message(X3Utils.Ui("Persist.PleaseSelectAMapToDelete"));
                 return;
             }
 
@@ -1318,8 +1325,8 @@ namespace Azimuth
                 StringComparison.OrdinalIgnoreCase))
             {
                 MessageBox.Show(
-                    "You cannot delete the active galaxy. Activate another galaxy first.",
-                    "Cannot Delete Galaxy",
+                    X3Utils.Ui("Persist.YouCannotDeleteTheActiveGalaxyActivate"),
+                    X3Utils.Ui("Persist.CannotDeleteGalaxy"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
                 return;
@@ -1330,14 +1337,15 @@ namespace Azimuth
 
             if (!Directory.Exists(pathToDelete))
             {
-                Message($"Galaxy folder does not exist: {pathToDelete}");
+                Message(X3Utils.Ui("Persist.GalaxyFolderDoesNotExist", pathToDelete));
                 return;
             }
 
             // Ask if they are sure first!
-            string msg = X3Utils.GetLocalizedText("{DelMapWarning}");
+            string msg = X3Utils.Ui("Persist.ConfirmDeleteMap", selectedGalaxyName);
             string warning = X3Utils.GetLocalizedText("{Warning}");
-            if (MessageBox.Show(msg + selectedGalaxyName + "?", warning, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
+
+            if (MessageBox.Show(msg, warning, MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
             {
                 return;
             }
@@ -1348,17 +1356,17 @@ namespace Azimuth
             }
             catch (Exception ex)
             {
-                Message($"Error deleting galaxy {selectedGalaxyName}: {ex.Message}");
+                Message(X3Utils.Ui("Persist.ErrorDeletingGalaxy", selectedGalaxyName, ex.Message));
                 return;
             }
 
-            Message($"Successfully deleted galaxy {selectedGalaxyName}.");
+            Message(X3Utils.Ui("Persist.SuccessfullyDeletedGalaxy", selectedGalaxyName));
 
             // Preserve existing savegame backups.
             string backupFolder = SaveBackupFolder(OwnerFor(selectedGalaxyName));
 
             if (Directory.Exists(backupFolder))
-                Message($"Savegame backup preserved at: {backupFolder}");
+                Message(X3Utils.Ui("Persist.SavegameBackupPreservedAt", backupFolder));
 
             LoadSavedGalaxiesList();
         }

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿// Holds the background subtype referenced by the X3 universe sector.
+
+using System.Collections.Generic;
 using System.Xml;
 
 namespace Azimuth

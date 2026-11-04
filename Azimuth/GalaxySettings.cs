@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Stores the generator sidecar (GalaxySettings.json). Only the documented subset is exported to page 9970.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,11 +19,11 @@ namespace Azimuth
     {
         // 9970 File, Bottom Section:
         // -----------------------------------------------------------------------
-        // ID 1     mayhem_galaxy.age   1 = normal      (none, early, average, advanced)            Used in Mayhem.GameCreator.Populate.xml and Mayhem.IsGalaxyExpansionNone.xml
-        // ID 2     mayhem_galaxy.dominance         Not Used
-        // ID 3     mayhem_galaxy.minority          Not Used
-        // ID 4     mayhem_galaxy.name              Name of Galaxy.  I.E. whatever the generator made.
-        // ID 5-29  Relations (25 entries)
+        // ID 1     mayhem_galaxy.age                   Used in Mayhem.GameCreator.Populate.xml and Mayhem.IsGalaxyExpansionNone.xml. (-1 = none, 0 = early, 1 = average, 2 = advanced)  
+        // ID 2     mayhem_galaxy.dominance             Not Used - legacy setting
+        // ID 3     mayhem_galaxy.minority              Not Used - legacy setting
+        // ID 4     mayhem_galaxy.name                  Name of Galaxy.  I.E. whatever the generator made.
+        // ID 5-40  Relations (36 entries)
         //  0 = No Change (dynamic)
         //  1 = Permanent Alliance
         // -1 = Permanent War
@@ -37,55 +39,61 @@ namespace Azimuth
         // 23-28  Paranid Relations to same list.
         // 29-34  Teladi Relations to same list.
         // 35-40  Terran
-        // ID 100   mayhem_galaxy.scattered_galaxy  Not Used
-        // ID 101   mayhem_galaxy.extra_stats       Not Used
-        // ID 102   mayhem_galaxy.clustered_xenons  Not Used
-        // ID 110   mayhem_galaxy.hollowed_galaxy   Not Used
-        // ID 111   mayhem_galaxy.random_distribution   Not Used
-        // ID 113   mayhem_galaxy.no_enclaves       Not Used
+        // ID 100   mayhem_galaxy.scattered_galaxy      Not Used
+        // ID 101   mayhem_galaxy.extra_stats           Not Used - only for Mayhem editions besides Expanded.
+        // ID 102   mayhem_galaxy.clustered_xenons      Not Used
+        // ID 103   mayhem_galaxy.saboteur_mode         Used by Mayhem Expanded to request saboteur mode validation at the start of the game.
+        // ID 110   mayhem_galaxy.hollowed_galaxy       Not Used - legacy setting
+        // ID 111   mayhem_galaxy.random_distribution   Not Used - legacy setting
+        // ID 113   mayhem_galaxy.no_enclaves           Not Used
+        // ID 120   Optional Maelstrom sector, zero-based X,Y.
+        // ID 121   mayhem_galaxy.game_start            -1 = Standard Start, 0 = Peaceful Start, 1 = Chaotic Start
+
         // All remaining ID's are System Stats for every system.  I.E. max population etc.
 
 
         // These are referenced in the 9970, but never referenced in the Mayhem 3 script.
         // --------------------------------------------
+        public int Dominance;                       // ID 2 Not used in editor. This editor uses Spread variables.          
+        public int Minority;                        // ID 3 Not used in editor.
         public bool ShatteredGalaxy;                // ID 100
+        public bool ExtraSystemStats;               // ID 101 Not used in editor. Used only for Mayhem editions besides Expanded.
         public bool ClusteredXenons;                // ID 102
         public bool HollowedGalaxy;                 // ID 110 Not used in editor.
         public bool RandomDistribution;             // ID 111 Not used in editor.
         public bool LimitedEnclaves;                // ID 113
-        public bool ExtraSystemStats;               // ID 101
-        public int Dominance;                       // ID 2 Not used in editor.  This editor uses Spread variables.          
-        public int Minority;                        // ID 3 Not used in editor.
-
 
         // These are referenced in the 9970 file and used in Mayhem 3 script.
         // --------------------------------------------
-        public string GalaxyName;          // ID 4
         public EGalaxyExpansion GalaxyExpansion;    // ID 1
+        public string GalaxyName;                   // ID 4
         public int[,] Relations = new int[6, 6]     // ID's 5-40
         { 
-            {0, 0, 0, 0, 0, 0},               // Argon Relations.   See ERelationship above for values.
-            {0, 0, 0, 0, 0, 0},               // Boron
-            {0, 0, 0, 0, 0, 0},               // Split
-            {0, 0, 0, 0, 0, 0},               // Paranid
-            {0, 0, 0, 0, 0, 0},               // Teladi
-            {0, 0, 0, 0, 0, 0}                // Terran
+            {0, 0, 0, 0, 0, 0},                     // Argon Relations.   See ERelationship above for values.
+            {0, 0, 0, 0, 0, 0},                     // Boron
+            {0, 0, 0, 0, 0, 0},                     // Split
+            {0, 0, 0, 0, 0, 0},                     // Paranid
+            {0, 0, 0, 0, 0, 0},                     // Teladi
+            {0, 0, 0, 0, 0, 0}                      // Terran
         };
 
         // Azimuth 1.8.5: Fix Xenon Defect not having manual start location!
         public int[,] StartSectors = new int[7, 2]
         {
-            {-1, -1},                       // Argon Starting Coordinates. 0, 0 for random
-            {-1, -1},                       // Boron
-            {-1, -1},                       // Split
-            {-1, -1},                       // Paranid
-            {-1, -1},                       // Teladi
-            {-1, -1},                       // Terran
-            {-1, -1}                        // Xenon
+            {-1, -1},                               // Argon Starting Coordinates. -1, -1 for random
+            {-1, -1},                               // Boron
+            {-1, -1},                               // Split
+            {-1, -1},                               // Paranid
+            {-1, -1},                               // Teladi
+            {-1, -1},                               // Terran
+            {-1, -1}                                // Xenon
         };
 
-        public bool PeacefulStart;
-        public bool ChaoticStart;
+        public bool SaboteurMode;                   // ID 103
+        public bool PeacefulStart;                  // ID 120   Optional Maelstrom sector, zero-based X,Y.
+        // ID 121
+        public bool ChaoticStart;                   // ID 120   Optional Maelstrom sector, zero-based X,Y.
+        // ID 121
 
         // These are used in this Editor only and not saved in the 9970.
         public bool UseParticles;
@@ -100,6 +108,15 @@ namespace Azimuth
         public int TeladiSpread;
         public int TerranSpread;
         public int FogLevelPercent;
+        public const int MinXenonPercent = 3;
+        public const int MaxXenonPercent = 10;
+        public int? XenonPercent;
+
+        internal static int ResolveXenonPercent(int? percent, int fallback)
+        {
+            return percent >= MinXenonPercent && percent <= MaxXenonPercent ? percent.Value : fallback;
+        }
+
         public int? VoidPercent;
         internal int EffectiveVoidPercent => VoidPercent.HasValue && VoidPercent >= 15 && VoidPercent <= 50
             ? VoidPercent.Value : (ShatteredGalaxy ? 35 : 15);

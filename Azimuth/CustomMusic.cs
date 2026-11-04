@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Validates custom tracks against reserved soundtrack IDs and existing files before importing them into X3.
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -20,12 +22,16 @@ namespace Azimuth
         public CustomMusic()
         {
             InitializeComponent();
+            X3Utils.SetControlChildrenText(this);
+            Text = X3Utils.Ui("CustomMusic.Title");
             btnOk.DialogResult = DialogResult.None;
         }
 
         public CustomMusic(string existingFolder, string x3root)
         {
             InitializeComponent();
+            X3Utils.SetControlChildrenText(this);
+            Text = X3Utils.Ui("CustomMusic.Title");
             btnOk.DialogResult = DialogResult.None;
             lblFolderName.Text = existingFolder;
             m_x3root = x3root;
@@ -42,7 +48,7 @@ namespace Azimuth
                 }
                 else
                 {
-                    lblFolderName.Text = "None";
+                    lblFolderName.Text = X3Utils.Ui("CustomMusic.None");
                 }
             }
         }
@@ -53,7 +59,7 @@ namespace Azimuth
 
             if (!Directory.Exists(folder))
             {
-                MessageBox.Show("Custom Music folder does not exist.");
+                MessageBox.Show(X3Utils.Ui("CustomMusic.CustomMusicFolderDoesNotExist"));
                 return;
             }
 
@@ -64,7 +70,7 @@ namespace Azimuth
                 if (sources.Length < 10)
                 {
                     MessageBox.Show(
-                        "You need at least 10 MP3 files in the custom music folder.");
+                        X3Utils.Ui("CustomMusic.YouNeedAtLeastMPFilesIn"));
                     return;
                 }
 
@@ -104,8 +110,7 @@ namespace Azimuth
                     if (!X3Utils.IsSectorMusicTrack(numericName))
                     {
                         throw new InvalidOperationException(
-                            $"'{originalName}' maps to reserved or invalid soundtrack ID " +
-                            $"'{numericName}'. Only ID 12 and IDs 15+ are permitted.");
+                            X3Utils.Ui("CustomMusic.MapsToReservedOrInvalidSoundtrackID.Message", originalName, numericName));
                     }
 
                     int trackId = int.Parse(numericName);
@@ -114,8 +119,7 @@ namespace Azimuth
                     if (sourceById.TryGetValue(trackId, out string previous))
                     {
                         throw new InvalidOperationException(
-                            $"'{Path.GetFileName(previous)}' and '{originalName}' both " +
-                            $"map to soundtrack ID {trackId}. Rename or remove one file.");
+                            X3Utils.Ui("CustomMusic.AndBoth.Message", Path.GetFileName(previous), originalName, trackId));
                     }
 
                     sourceById.Add(trackId, source);
@@ -129,9 +133,7 @@ namespace Azimuth
                         if (matches.Count != 1 || !string.Equals(matches[0], destination, StringComparison.OrdinalIgnoreCase) || !FilesAreIdentical(source, matches[0]))
                         {
                             throw new InvalidOperationException(
-                                $"'{originalName}' conflicts with an existing MP3 " +
-                                $"for soundtrack ID {trackId}. Existing game audio " +
-                                "was not changed.");
+                                X3Utils.Ui("CustomMusic.ConflictsWithAnExistingMP.Message", originalName, trackId));
                         }
 
                         continue;
@@ -143,7 +145,7 @@ namespace Azimuth
 
                 if (sourceById.Count < 10)
                 {
-                    MessageBox.Show("Custom Music requires at least 10 unique, usable tracks.");
+                    MessageBox.Show(X3Utils.Ui("CustomMusic.CustomMusicRequiresAtLeastUniqueUsable"));
                     return;
                 }
 
@@ -158,8 +160,8 @@ namespace Azimuth
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    "Custom music import rejected: " + ex.Message,
-                    "Custom Music",
+                    X3Utils.Ui("CustomMusic.CustomMusicImportRejected.Message", ex.Message),
+                    X3Utils.Ui("CustomMusic.CustomMusic"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
             }

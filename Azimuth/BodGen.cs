@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Builds the 00749 scene that draws connections in the in-game galaxy map from the current gate network.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

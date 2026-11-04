@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿// Stores one gate endpoint and its destination. The destination coordinates also identify incoming gates during deletion.
+
+using System.Collections.Generic;
 using System.Xml;
 
 namespace Azimuth

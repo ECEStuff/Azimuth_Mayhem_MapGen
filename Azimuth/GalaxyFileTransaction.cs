@@ -1,3 +1,5 @@
+// Stages file replacements and removals with a reverse-order undo stack so a failed activation can roll back.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -59,7 +61,7 @@ namespace Azimuth
                     catch (Exception ex) { errors.Add(ex.Message); }
                 }
                 if (errors.Count != 0)
-                    throw new IOException("Rollback incomplete. Keep the .azimuth-* recovery files. " +
+                    throw new IOException(X3Utils.Ui("GalaxyFileTransaction.RollbackIncompleteKeepTheAzimuthRecoveryFiles") +
                         original.Message + Environment.NewLine + string.Join(Environment.NewLine, errors), original);
 
                 transaction.Cleanup();

@@ -1,4 +1,6 @@
-﻿namespace Azimuth
+﻿// X3 race identifiers. Terran uses 18 in universe data but the sixth slot of the relations matrix.
+
+namespace Azimuth
 {
     // This order must remain unchanged.
     public enum ERace

@@ -55,6 +55,8 @@
             this.lblSysSize = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.cbSunLevel = new System.Windows.Forms.ComboBox();
+            this.lblPlanets = new System.Windows.Forms.Label();
+            this.lblPlanetCount = new System.Windows.Forms.Label();
             this.lblSunLevel = new System.Windows.Forms.Label();
             this.btnGateSouth = new System.Windows.Forms.Button();
             this.btnGateWest = new System.Windows.Forms.Button();
@@ -213,12 +215,12 @@
             // 
             this.nudResearch.Location = new System.Drawing.Point(146, 98);
             this.nudResearch.Maximum = new decimal(new int[] {
-            150,
+            100,
             0,
             0,
             0});
             this.nudResearch.Minimum = new decimal(new int[] {
-            40,
+            32,
             0,
             0,
             0});
@@ -235,12 +237,12 @@
             // 
             this.nudSupport.Location = new System.Drawing.Point(146, 72);
             this.nudSupport.Maximum = new decimal(new int[] {
-            18,
+            15,
             0,
             0,
             0});
             this.nudSupport.Minimum = new decimal(new int[] {
-            8,
+            6,
             0,
             0,
             0});
@@ -257,12 +259,12 @@
             // 
             this.nudManpower.Location = new System.Drawing.Point(146, 46);
             this.nudManpower.Maximum = new decimal(new int[] {
-            180,
+            130,
             0,
             0,
             0});
             this.nudManpower.Minimum = new decimal(new int[] {
-            60,
+            48,
             0,
             0,
             0});
@@ -369,6 +371,8 @@
             this.panel1.Controls.Add(this.lblMusicFile);
             this.panel1.Controls.Add(this.label1);
             this.panel1.Controls.Add(this.cbSunLevel);
+            this.panel1.Controls.Add(this.lblPlanets);
+            this.panel1.Controls.Add(this.lblPlanetCount);
             this.panel1.Controls.Add(this.lblSunLevel);
             this.panel1.Controls.Add(this.btnGateSouth);
             this.panel1.Controls.Add(this.btnGateWest);
@@ -421,6 +425,14 @@
             // 
             // lblSunLevel
             // 
+            this.lblPlanets.AutoSize = true;
+            this.lblPlanets.Location = new System.Drawing.Point(15, 205);
+            this.lblPlanets.Name = "lblPlanets";
+            this.lblPlanets.Text = "Planets";
+            this.lblPlanetCount.AutoSize = true;
+            this.lblPlanetCount.Location = new System.Drawing.Point(146, 205);
+            this.lblPlanetCount.Name = "lblPlanetCount";
+            this.lblPlanetCount.Text = "0";
             this.lblSunLevel.AutoSize = true;
             this.lblSunLevel.Location = new System.Drawing.Point(238, 182);
             this.lblSunLevel.Name = "lblSunLevel";
@@ -637,6 +649,8 @@
         private System.Windows.Forms.Button btnGateSouth;
         private System.Windows.Forms.Button btnGateWest;
         private System.Windows.Forms.Button btnGateNorth;
+        private System.Windows.Forms.Label lblPlanets;
+        private System.Windows.Forms.Label lblPlanetCount;
         private System.Windows.Forms.Label lblSunLevel;
         private System.Windows.Forms.ComboBox cbSunLevel;
         private System.Windows.Forms.Button btnChangeMusicFile;

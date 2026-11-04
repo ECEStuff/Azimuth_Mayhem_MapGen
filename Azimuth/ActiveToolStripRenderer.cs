@@ -1,4 +1,6 @@
-﻿using System.Drawing;
+﻿// Draws the checked state of map toolbar buttons that toggle persistent display options.
+
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace Azimuth

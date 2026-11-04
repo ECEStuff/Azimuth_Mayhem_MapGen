@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Applies or restores ship and weapon type overrides in the selected game installation.
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -34,6 +36,8 @@ namespace Azimuth
         public WeaponsEditor()
         {
             InitializeComponent();
+            X3Utils.SetControlChildrenText(this);
+            Text = X3Utils.Ui("WeaponsEditor.Title");
             Icon = new System.Drawing.Icon(typeof(WeaponsEditor), "ShipsWeapons.ico");
         }
 
@@ -52,7 +56,7 @@ namespace Azimuth
                 }
                 catch(Exception)
                 {
-                    MessageBox.Show("Unable to create " + MayhemFolder + ".  This is likely a permissions issue.  You will need to create this folder.");
+                    MessageBox.Show(X3Utils.Ui("WeaponsEditor.UnableToCreate.Message", MayhemFolder));
                     Close();
                     return;
                 }
@@ -63,33 +67,33 @@ namespace Azimuth
 
             cbRace.DisplayMember = "Key";
             cbRace.ValueMember = "Value";
-            cbRace.DataSource = racedd.Where(item => item.Value != 0).ToList();
+            cbRace.DataSource = racedd.Select(item => new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{" + item.Key + "}") ?? item.Key, item.Value)).ToList();
 
         }
 
         private void rbRandomizeAllWeapons_Click(object sender, EventArgs e)
         {
-            lblNote.Text = "All weapon damage values (Hull, Shield, and Lifetime/Range) are modified by a random value between -20% to +20% or -30% to +30% computed uniquely for EACH weapon";
+            lblNote.Text = X3Utils.Ui("WeaponsEditor.AllWeaponDamageValuesHullShieldAnd");
         }
 
         private void rbAllShipStats_Click(object sender, EventArgs e)
         {
-            lblNote.Text = "Primary ship statistics are modified by a single unique random value between -20% to +20% or -30% to +30% generated for each ship";
+            lblNote.Text = X3Utils.Ui("WeaponsEditor.PrimaryShipStatisticsAreModifiedByA");
         }
 
         private void rbAllShipStatsForRace_Click(object sender, EventArgs e)
         {
-            lblNote.Text = "Primary ship statistics FOR THE SELECTED RACE are each modified by a single unique random value between -20% to +20% or -30% to +30% generated for each ship";
+            lblNote.Text = X3Utils.Ui("WeaponsEditor.PrimaryShipStatisticsFORTHESELECTEDRACE");
         }
 
         private void rbLowerShipStatsForRace_Click(object sender, EventArgs e)
         {
-            lblNote.Text = "Primary ship statistics FOR THE SELECTED RACE are each LOWERED by a single unique random value between -10% to -20% or -10% to -30% generated for each ship";
+            lblNote.Text = X3Utils.Ui("WeaponsEditor.PrimaryShipStatisticsFORTHESELECTEDRACEDetail");
         }
 
         private void rbRaiseShipStatsForRace_Click(object sender, EventArgs e)
         {
-            lblNote.Text = "Primary ship statistics FOR THE SELECTED RACE are each RAISED by a single unique random value between 10% to 20% or 10% to 30% generated for each ship";
+            lblNote.Text = X3Utils.Ui("WeaponsEditor.PrimaryShipStatisticsFORTHESELECTEDRACEDetailDetail");
         }
 
 
@@ -101,7 +105,7 @@ namespace Azimuth
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Unable to load TBullets.txt file.  Error: " + ex.Message);
+                MessageBox.Show(X3Utils.Ui("WeaponsEditor.UnableToLoadTBulletsTxtFileError.Message", ex.Message));
                 return;
             }
 
@@ -111,7 +115,7 @@ namespace Azimuth
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Unable to load TShips.txt file.  Error: " + ex.Message);
+                MessageBox.Show(X3Utils.Ui("WeaponsEditor.UnableToLoadTShipsTxtFileError.Message", ex.Message));
                 return;
             }
 
@@ -183,7 +187,7 @@ namespace Azimuth
             m_Ships = newShips;
             File.WriteAllLines(MayhemFolder + "TShips.txt", m_Ships);
 
-            MessageBox.Show($"{countmodified} ships were modified successfully. Adjustments made to Cargo space, Yaw, Pitch, Roll, Hull Strength, Power, Speed, Shield Count, Acceleration and Weapons Energy.");
+            MessageBox.Show(X3Utils.Ui("WeaponsEditor.ShipsWereModifiedSuccessfullyAdjustmentsMadeTo", countmodified));
         }
 
 
@@ -306,7 +310,7 @@ namespace Azimuth
             m_Bullets = newBullets;
 
             File.WriteAllLines(MayhemFolder + "TBullets.txt", m_Bullets);
-            MessageBox.Show($"{count} Weapons were modified successfully.  Each has a maximum change of +\\-20 or +\\-30% change applied to Hull and Shield damage as well as range.");
+            MessageBox.Show(X3Utils.Ui("WeaponsEditor.WeaponsWereModifiedSuccessfullyEachHasA", count));
         }
 
         private string AdjustBullet(string line, int amount)
@@ -392,12 +396,12 @@ namespace Azimuth
             {
                 File.Delete(MayhemFolder + "TShips.txt");
             }
-            MessageBox.Show("\\addon\\TBullets.txt + \\addon\\TShips.txt have been deleted and will no longer override your game's normal values");
+            MessageBox.Show(X3Utils.Ui("WeaponsEditor.AddonTBulletsTxtAddonTShipsTxtHave"));
         }
 
         private void btnHelpMain_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process.Start("HelpMain.txt");
+            System.Diagnostics.Process.Start(X3Utils.HelpFile());
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Historical English tooltip constants. The active interface reads localized tooltip text from the JSON catalog.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,7 +19,7 @@ namespace X3_Mayhem_Galaxy_Generator
         public const string CbClusteredXenon = "Attempts to Group Xenon sectors together rather than sprinkle empty systems randomly.";
         public const string CbShattered = "Changes empty (void) map percentage from 15% to 35% resulting in far less systems for the same map dimensions.";
         public const string CbLimitedEnclaves = "When NOT checked, the gate generator will attempt to remove 'some' gates where doing so will result in a system having only 1 gate in or out.";
-        public const string CbExtraSystemStats = "Adds extra Population, Research, and Support to every system.";
+        public const string CbSaboteurMode = "-20% sector stats. In Expanded, this is compensated by increasing production speed by 40% (overall 12% faster than average) and +1 additional perk slot.";
         public const string CbParticles = "Turns on the particle system";
         public const string SlFog = "Sets average fog level across the galaxy.";
         public const string GbExpansion = "Determines ratio of unknown sectors to populated sectors for a map. Higher expansion results in far less unknown sectors at game start.";

@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Edits one existing sector and its gates. Planet count is derived from its scenery objects.
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -35,6 +37,7 @@ namespace Azimuth
             ctl.Value = value;
         }
 
+        // Populate the dialog from the selected sector after localizing captions; raw race IDs differ from dropdown positions.
         public void Initialize(X3Sector sector)
         {
             m_Sector = sector;
@@ -47,6 +50,7 @@ namespace Azimuth
             lblSectorId.Text = sector.SectorID;
             lblSystemName.Text = sector.SectorName;
             lblMusicFile.Text = sector.m_MusicFileName + ".mp3";
+            lblPlanetCount.Text = sector.PlanetCount.ToString();
 
 
             // Set drop down list values.
@@ -129,37 +133,37 @@ namespace Azimuth
         {
             X3Utils.SetControlChildrenText(this);
             
-            Dictionary<string, int> racedd = new Dictionary<string, int>
+            var racedd = new[]
             {
-                {X3Utils.GetLocalizedText("{none}"), 0 },
-                {X3Utils.GetLocalizedText("{Argon}"), 1 },
-                {X3Utils.GetLocalizedText("{Boron}"), 2 },
-                {X3Utils.GetLocalizedText("{Split}"), 3 },
-                {X3Utils.GetLocalizedText("{Paranid}"), 4 },
-                {X3Utils.GetLocalizedText("{Teladi}"), 5 },
-                {X3Utils.GetLocalizedText("{Xenon}"), 6 },
-                {X3Utils.GetLocalizedText("{Unknown}"), 14 },
-                {X3Utils.GetLocalizedText("{Terran}"), 18 }
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{none}"), 0),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Argon}"), 1),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Boron}"), 2),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Split}"), 3),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Paranid}"), 4),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Teladi}"), 5),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Xenon}"), 6),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Unknown}"), 14),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Terran}"), 18)
             };
 
-            Dictionary<string, int> productsdd = new Dictionary<string, int>
+            var productsdd = new[]
             {
-                {X3Utils.GetLocalizedText("{Fish}"), 0 },
-                {X3Utils.GetLocalizedText("{Fruit}"), 1 },
-                {X3Utils.GetLocalizedText("{Meat}"), 2 },
-                {X3Utils.GetLocalizedText("{Vegetables}"), 3 },
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Fish}"), 0),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Fruit}"), 1),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Meat}"), 2),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Vegetables}"), 3)
             };
 
 
-            Dictionary<string, int> companydd = new Dictionary<string, int>
+            var companydd = new[]
             {
-                {X3Utils.GetLocalizedText("{none}"), -1 },
-                {X3Utils.GetLocalizedText("{Markus}"), 0 },
-                {X3Utils.GetLocalizedText("{Oceana}"), 1 },
-                {X3Utils.GetLocalizedText("{Pontifex}"), 2 },
-                {X3Utils.GetLocalizedText("{Thurok}"), 3 },
-                {X3Utils.GetLocalizedText("{Salecrest}"), 4 },
-                {X3Utils.GetLocalizedText("{Industritech}"), 5 }
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{none}"), -1),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Markus}"), 0),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Oceana}"), 1),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Pontifex}"), 2),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Thurok}"), 3),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Salecrest}"), 4),
+                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Industritech}"), 5)
             };
 
             Dictionary<string, int> sunlevels = new Dictionary<string, int>
@@ -391,8 +395,8 @@ namespace Azimuth
             if (occupiedSide != null)
             {
                 MessageBox.Show(
-                    $"Cannot add a {direction} gate. The destination sector's {opposite} gate is already occupied.",
-                    "Gate Already In Use",
+                    X3Utils.Ui("SectorEdit.CannotAddAGateTheDestinationSector", direction, opposite),
+                    X3Utils.Ui("SectorEdit.GateAlreadyInUse"),
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
 
@@ -412,14 +416,14 @@ namespace Azimuth
         {
             // Show File Choose Dialog, restricting the file name to the X3/soundtrack folder.
             openFileDialog1.InitialDirectory = X3Utils.GetSetting("X3Root") + "soundtrack";
-            openFileDialog1.Filter = "Music Files|*.mp3";
+            openFileDialog1.Filter = X3Utils.Ui("SectorEdit.MusicFilesMp");
             openFileDialog1.FileName = m_Sector.m_MusicFileName + ".mp3";
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
             {
                 string directory = Path.GetDirectoryName(openFileDialog1.FileName);
                 if (directory != openFileDialog1.InitialDirectory)
                 {
-                    MessageBox.Show("Please choose a file from the soundtrack folder.");
+                    MessageBox.Show(X3Utils.Ui("SectorEdit.PleaseChooseAFileFromTheSoundtrack"));
                     return;
                 }
                 string src = Path.GetFileName(openFileDialog1.FileName);
@@ -428,8 +432,8 @@ namespace Azimuth
                 if (!X3Utils.IsSectorMusicTrack(srcFile))
                 {
                     MessageBox.Show(
-                        "This file cannot be assigned as sector music. Soundtrack IDs below 15, except 12, are reserved.",
-                        "Invalid Sector Music",
+                        X3Utils.Ui("SectorEdit.ThisFileCannotBeAssignedAsSector"),
+                        X3Utils.Ui("SectorEdit.InvalidSectorMusic"),
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);
 

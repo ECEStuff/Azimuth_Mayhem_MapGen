@@ -1,4 +1,6 @@
-﻿namespace Azimuth
+﻿// Company IDs stored per sector in page 9970. The explicit values are part of the exported map format.
+
+namespace Azimuth
 {
     public enum ECompany
     {

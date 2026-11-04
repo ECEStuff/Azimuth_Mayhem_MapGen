@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Shared X3 conversions, localization lookup, settings loading and file helpers used by the editor and generators.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -74,12 +76,63 @@ namespace Azimuth
         {
             foreach (Control ctl in parent.Controls)
             {
-                ctl.Text = GetLocalizedText(ctl.Name) ?? ctl.Text;
+                var form = ctl.FindForm();
+                ctl.Text = GetLocalizedText(form?.Name + "." + ctl.Name) ?? GetLocalizedText(ctl.Name) ?? ctl.Text;
+                if (ctl is ToolStrip strip)
+                    LocalizeItems(strip.Items, form?.Name);
                 if (ctl.HasChildren)
                 {
                     SetControlChildrenText(ctl);    // recurse.
                 }
             }
+        }
+
+        private static void LocalizeItems(ToolStripItemCollection items, string scope)
+        {
+            foreach (ToolStripItem item in items)
+            {
+                string text = GetLocalizedText(scope + "." + item.Name);
+                if (text != null) item.Text = text;
+                if (item is ToolStripDropDownItem menu)
+                    LocalizeItems(menu.DropDownItems, scope);
+            }
+        }
+
+        public static string HelpFile()
+        {
+            string root = AppDomain.CurrentDomain.BaseDirectory;
+            string language = GetLocalizedText("language_id_file");
+            int code;
+            if (int.TryParse(language, out code))
+            {
+                string localized = Path.Combine(root, "HelpMain_" + language + ".txt");
+                if (File.Exists(localized)) return localized;
+            }
+            return Path.Combine(root, "HelpMain.txt");
+        }
+
+        public static void LoadLocalization()
+        {
+            Dictionary<string, string> catalog;
+            using (var stream = typeof(X3Utils).Assembly.GetManifestResourceStream("Azimuth.English.json"))
+            using (var reader = new StreamReader(stream))
+                catalog = JsonConvert.DeserializeObject<Dictionary<string, string>>(reader.ReadToEnd());
+
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Localizations.json");
+            if (File.Exists(path))
+            {
+                var active = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(path));
+                foreach (var entry in active)
+                    if (!string.IsNullOrEmpty(entry.Value))
+                        catalog[entry.Key] = entry.Value;
+            }
+            X3Galaxy.Instance.LocalizationDictionary = catalog;
+        }
+
+        public static string Ui(string key, params object[] values)
+        {
+            string text = GetLocalizedText(key) ?? key;
+            return values.Length == 0 ? text : string.Format(text, values);
         }
 
         public static string GetLocalizedText(string token)
@@ -168,17 +221,17 @@ namespace Azimuth
             int attrindex = src.IndexOf(searchfor, StringComparison.Ordinal);
 
             if (attrindex == -1)
-                throw new Exception($"Attribute {attr} not found in: {src}");
+                throw new Exception(X3Utils.Ui("X3Utils.AttributeNotFoundIn", attr, src));
 
             int start = attrindex + searchfor.Length;
 
             if (start >= src.Length || src[start] != '"')
-                throw new Exception($"Attribute {attr} is not properly quoted in: {src}");
+                throw new Exception(X3Utils.Ui("X3Utils.AttributeIsNotProperlyQuotedIn", attr, src));
 
             int end = src.IndexOf('"', start + 1);
 
             if (end == -1)
-                throw new Exception($"Attribute {attr} is not properly quoted in: {src}");
+                throw new Exception(X3Utils.Ui("X3Utils.AttributeIsNotProperlyQuotedIn", attr, src));
 
             return src.Substring(start + 1, end - start - 1);
         }
@@ -213,7 +266,7 @@ namespace Azimuth
                 case ECompany.Industritech:
                     return ERace.Terran;
                 default:
-                    throw new Exception("Invalid Company in GetRaceForCompany()");
+                    throw new Exception(X3Utils.Ui("X3Utils.InvalidCompanyInGetRaceForCompany"));
             }
         }
 
@@ -234,7 +287,7 @@ namespace Azimuth
                 case ERace.Terran:
                     return ECompany.Industritech;
                 default:
-                    throw new Exception("Invalid Race in GetCompanyForRace()");
+                    throw new Exception(X3Utils.Ui("X3Utils.InvalidRaceInGetCompanyForRace"));
             }
         }
 
@@ -268,7 +321,7 @@ namespace Azimuth
                 case 5:
                     return @"\033C" + GetLocalizedText("{Industritech}");
                 default:
-                    throw new Exception($"Invalid Company Name Index {index} in GetFormattedCompanyName()");
+                    throw new Exception(X3Utils.Ui("X3Utils.InvalidCompanyNameIndexInGetFormattedCompanyName", index));
             }
         }
 
@@ -294,7 +347,7 @@ namespace Azimuth
                 case 18:
                     return @"\033C" + GetLocalizedText("{Terran}");
                 default:
-                    throw new Exception($"Invalid Race Name Index {index} in GetFormattedRaceName()");
+                    throw new Exception(X3Utils.Ui("X3Utils.InvalidRaceNameIndexInGetFormattedRaceName", index));
             }
         }
 
@@ -311,7 +364,7 @@ namespace Azimuth
                 case EFood.Vegetables:
                     return GetLocalizedText("{Vegetables}");
                 default:
-                    throw new Exception($"Invalid food name {food} in GetFormattedFoodName()");
+                    throw new Exception(X3Utils.Ui("X3Utils.InvalidFoodNameInGetFormattedFoodName", food));
             }
 
         }
@@ -407,7 +460,7 @@ namespace Azimuth
                     return setting.Replace(settingName + "|", string.Empty);
                 }
             }
-            throw new Exception($"Setting {settingName} not found.");
+            throw new Exception(X3Utils.Ui("X3Utils.SettingNotFound", settingName));
         }
 
         public static void EnsureSetting(string settingName, string defaultValue)
@@ -426,7 +479,7 @@ namespace Azimuth
             List<string> settings = File.ReadAllLines("Settings.txt").ToList();
 
             int index = settings.FindIndex(item => item.StartsWith(settingName + "|"));
-            if (index == -1) throw new Exception($"Setting {settingName} not found in Settings.txt");
+            if (index == -1) throw new Exception(X3Utils.Ui("X3Utils.SettingNotFoundInSettingsTxt", settingName));
 
             settings[index] = settingName + "|" + value;
             File.WriteAllLines("Settings.txt", settings);
@@ -482,7 +535,7 @@ namespace Azimuth
             }
             else
             {
-                throw new Exception($"CopyFolder:  source folder {sourceFolder} does not exist.");
+                throw new Exception(X3Utils.Ui("X3Utils.CopyFolderSourceFolderDoesNotExist", sourceFolder));
             }
         }
 

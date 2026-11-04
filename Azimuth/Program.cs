@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Loads the effective localization catalog before creating the first WinForms window.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,6 +18,7 @@ namespace Azimuth
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            X3Utils.LoadLocalization();
             Application.Run(new Form1());
         }
     }

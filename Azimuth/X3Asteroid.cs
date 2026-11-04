@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿// Reads and writes asteroid objects embedded in a sector of x3_universe.xml.
+
+using System.Collections.Generic;
 using System.Xml;
 
 namespace Azimuth

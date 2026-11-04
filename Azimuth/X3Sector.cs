@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Owns a sector’s coordinates, scenery, gates, name and voice pointer; planet count is derived from the planet list.
+
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -48,6 +50,7 @@ namespace Azimuth
         private X3Background m_Background = new X3Background();
         public X3Sun Sun;
         private List<X3Planet> m_Planets = new List<X3Planet>();
+        public int PlanetCount => m_Planets.Count;
         public List<X3Gate> Gates = new List<X3Gate>();
         private List<X3Asteroid> m_Asteroids = new List<X3Asteroid>();
         private List<X3Special> m_Specials = new List<X3Special>();
@@ -71,7 +74,7 @@ namespace Azimuth
                 if (objtype == 3)       // type 3 is a Sun
                 {
                     // test
-                    if (Sun != null) throw new Exception("Found 2 suns for a system in the template.");
+                    if (Sun != null) throw new Exception(X3Utils.Ui("X3Sector.FoundSunsForASystemInThe"));
                     Sun = new X3Sun(rawxml);
                 }
                 else  // type 4 is Planet
@@ -140,7 +143,7 @@ namespace Azimuth
 
         /// <summary>
         /// Creates XML in the "contents" list constructed from the galaxy elements.
-        /// Note, that Suns and planets come from a template file as XML and we do not attempt to represent them within the Galaxy class.  They are treated as XML lines only.
+        /// Emit the sun and planets held by this sector, whether originally generated from templates or loaded from a saved universe.
         /// Note, that Asteroids are created from templates, but we DO represent them within the Galaxy.
         /// </summary>
         /// <param name="contents"></param>

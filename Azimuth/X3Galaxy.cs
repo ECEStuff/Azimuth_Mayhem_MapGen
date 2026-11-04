@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Holds sector topology and imports the universe, text and speech files that together describe a saved map.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -171,7 +173,7 @@ namespace Azimuth
                 SystemListItem nextAvailable = masterSystemList.Find(item => !usedNames.Contains(item.Name));
                 if (nextAvailable == null)
                 {
-                    throw new Exception("Couldn't find another available system name to use from the sector_names templates");
+                    throw new Exception(X3Utils.Ui("X3Galaxy.CouldnTFindAnotherAvailableSystemName"));
                 }
 
                 // Store it all into the sector for ease of retrieval when creating the output files.
@@ -235,46 +237,22 @@ namespace Azimuth
 
         public void Load00044_XML(string path)
         {
-            int streamID = 0;
-            // Here, we're interested in loading the bottom 2 sections containing stream 1 and stream 2 sound pointers/lengths for the systems.
-            // Find sector by matching the ID.
-            // These are loaded into the matching sector.
-            // 1.  Must set Sector's StreamID to 1 or 2.
-            // 2.  Must set Sector's Stream Location and Stream Length
-
-            List<string> content = File.ReadAllLines(path).ToList();
-
-            foreach (string line in content)
+            // Older maps can contain comments or unrelated pages after the sector pointers.
+            var speech = new XmlDocument();
+            speech.Load(path);
+            foreach (XmlElement entry in speech.SelectNodes("/language/page[@id='7' and (@stream='1' or @stream='2')]/t"))
             {
-                string trimmedline = line.TrimStart();
-                trimmedline = trimmedline.TrimStart('\t');
-
-                if (trimmedline.StartsWith("<page id=\"7\" stream=\"1\">"))
-                {
-                    streamID = 1;
-                    continue;
-                }
-
-                if (trimmedline.StartsWith("<page id=\"7\" stream=\"2\">"))
-                {
-                    streamID = 2;
-                    continue;
-                }
-
-                if (streamID == 0) continue;
-                if (trimmedline.StartsWith("</")) continue;
-                if (trimmedline == "") continue;
-
-                string id = X3Utils.GetXMLAttribute(trimmedline, "id");
-                string s = X3Utils.GetXMLAttribute(trimmedline, "s");
-                string l = X3Utils.GetXMLAttribute(trimmedline, "l");
-
+                string id = entry.GetAttribute("id");
+                if (id.Length != 7 || !id.StartsWith("102", StringComparison.Ordinal)) continue;
+                int streamID = int.Parse(((XmlElement)entry.ParentNode).GetAttribute("stream"));
+                string s = entry.GetAttribute("s");
+                string l = entry.GetAttribute("l");
                 int xloc = int.Parse(id.Substring(5, 2));       // 1 - based locations.
                 int yloc = int.Parse(id.Substring(3, 2));
                 // Find the sector at this location and set it's Id and Name from the data we just retrieved.
                 X3Sector sector = Sectors.Find(item => item.x == xloc - 1 && item.y == yloc - 1);
                 if (sector == null)
-                    throw new Exception($"Error reading 00044 file. System located at {xloc}:{yloc} not found in the loaded map.");
+                    throw new Exception(X3Utils.Ui("X3Galaxy.ErrorReadingFileSystemLocatedAtNot", xloc, yloc));
 
                 sector.StreamID = streamID;
                 sector.StreamLocation = int.Parse(s);
@@ -288,156 +266,135 @@ namespace Azimuth
         /// <param name="path"></param>
         public void Load9970_XML(string path)
         {
-            // This beast is going to be far easier to parse manually than with an xml doc..  
-            List<string> content = File.ReadAllLines(path).ToList();
-            int section = 0;
-
-            foreach (string line in content)
+            // Page 7 indexes names by one-based YYXX. Page 19 contains generated display strings.
+            // Page 9970 supplies game settings and indexes individual sector stats by XXYY.
+            var doc = new XmlDocument();
+            doc.Load(path);
+            foreach (XmlElement entry in doc.SelectNodes("/language/page[@id='7']/t"))
             {
-                string trimmedline = line.TrimStart();
-                trimmedline = trimmedline.TrimStart('\t');
+                string id = entry.GetAttribute("id");
+                int x = int.Parse(id.Substring(5, 2));
+                int y = int.Parse(id.Substring(3, 2));
+                var sector = GetSectorAt(x - 1, y - 1);
+                if (sector == null)
+                    throw new InvalidDataException(X3Utils.Ui("X3Galaxy.ErrorReadingFileSystemLocatedAtNotDetail", x, y));
+                sector.SectorID = id;
+                sector.SectorName = entry.InnerText;
+            }
 
-                if (trimmedline.StartsWith("<page id=\"7\"") || trimmedline.StartsWith("<page id=\"19\"") || trimmedline.StartsWith("<page id=\"9970\""))
+            // The short-lived test exporter used 101 for Saboteur and recorded SaboteurMode in JSON.
+            // Only that explicit sidecar evidence can disambiguate a test map without a 103 entry.
+            bool interimSaboteur = GalaxyCreationSettings.SaboteurMode &&
+                doc.SelectSingleNode("/language/page[@id='9970']/t[@id='103']") == null;
+            foreach (XmlElement entry in doc.SelectNodes("/language/page[@id='9970']/t"))
+            {
+                string id = entry.GetAttribute("id");
+                string value = entry.InnerText;
+                switch (id)
                 {
-                    section++;
+                    case "1":
+                        if (!Enum.TryParse(value, out GalaxyCreationSettings.GalaxyExpansion))
+                            throw new InvalidDataException(X3Utils.Ui("X3Galaxy.InvalidValueFoundInFileForGalaxy", value));
+                        continue;
+                    case "4":
+                        GalaxyCreationSettings.GalaxyName = value;
+                        continue;
+                    case "101":
+                        if (!interimSaboteur) GalaxyCreationSettings.ExtraSystemStats = ReadGalaxyFlag(id, value);
+                        continue;
+                    case "103":
+                        GalaxyCreationSettings.SaboteurMode = ReadGalaxyFlag(id, value);
+                        continue;
+                    case "100": GalaxyCreationSettings.ShatteredGalaxy = ReadGalaxyFlag(id, value); continue;
+                    case "102": GalaxyCreationSettings.ClusteredXenons = ReadGalaxyFlag(id, value); continue;
+                    case "110": GalaxyCreationSettings.HollowedGalaxy = ReadGalaxyFlag(id, value); continue;
+                    case "111": GalaxyCreationSettings.RandomDistribution = ReadGalaxyFlag(id, value); continue;
+                    case "113": GalaxyCreationSettings.LimitedEnclaves = ReadGalaxyFlag(id, value); continue;
+                    case "121":
+                        GalaxyCreationSettings.PeacefulStart = value.Trim() == "0";
+                        GalaxyCreationSettings.ChaoticStart = value.Trim() == "1";
+                        continue;
+                }
+                int intId = int.Parse(id);
+                int intValue;
+                int.TryParse(value, out intValue);
+                if (intId >= 5 && intId <= 40)
+                {
+                    // Both axes use Argon, Boron, Split, Paranid, Teladi, Terran.
+                    GalaxyCreationSettings.Relations[(intId - 5) / 6, (intId - 5) % 6] = intValue;
                     continue;
                 }
-                if (trimmedline.StartsWith("</")) continue;
-                if (trimmedline == "") continue;
-                if (section == 0) continue;
-                else if (section == 1)
+                if (intId == 120)       // Maelstrom portal location, 0-based in format "X,Y"
                 {
-                    // Note:  This section has locations in format YYXX, which is normal. 
-                    // <t id="1020101">Lasting Vengeance</t>   List of system ID' and names.  These names should match those we found in the MasterSystemList list which is what we actually use.
-                    // For this section, we're just going to look up the Id in the sector list and make sure the name matches.
-                    string id = X3Utils.GetXMLAttribute(trimmedline, "id");
-                    string sectorname = X3Utils.GetXMLValue(trimmedline);
+                    string[] split = value.Split(',');
+                    int x = int.Parse(split[0]);
+                    int y = int.Parse(split[1]);
+                    X3Sector set = Sectors.Find(item => item.x == x && item.y == y);
+                    if (set != null)
+                    {
+                        set.IsMaelstromPortal = true;
+                    }
 
-                    int xloc = int.Parse(id.Substring(5, 2));       // 1 - based locations. ...YYXX format.
-                    int yloc = int.Parse(id.Substring(3, 2));
-                    // Find the sector at this location and set it's Id and Name from the data we just retrieved.
+                }
+
+                // Now we get into actual Sector Stat Values that are used in the game.
+                // <t id="10060101">107</t>
+                if (intId > 10000000)       
+                {
+                    int yloc = int.Parse(id.Substring(6, 2));   // Last 4       1-based system location in format XXYY
+                    int xloc = int.Parse(id.Substring(4, 2));
+                    string prefix = id.Remove(4);               // First 4      Determines which type of setting this is.  See switch below.
+
+                    // Find the sector with the coordinate found here.
                     X3Sector sector = Sectors.Find(item => item.x == xloc - 1 && item.y == yloc - 1);
                     if (sector == null)
-                        throw new Exception($"Error reading 9970 file. System located at {xloc}:{yloc} not found in the loaded map.");
-                    sector.SectorID = id;                   // format 102YYXX
-                    sector.SectorName = sectorname;
-                }
-                else if (section == 2)
-                {
-                    // Note:  This section has locations in format YYXX, which is normal. 
+                        throw new Exception(X3Utils.Ui("X3Galaxy.UnknownSectorFoundInSectionOfFile", id));
 
-                    // <t id="1030101">Lasting Vengeance \(x:0, y:0\)\n\nDejure owner: \033YTeladi\nCompany: \033YSalecrest Corp.\nAbnormal signals: \033Y48 %\nTerran memory: \033Ano\n\nMax. population: \033W107\nStation support: 9\nResearch rate: \033W99 %\n\nOutpost production: Vegetables\nOutpost consumption: Fruit\n</t>
-                    // This is just DISPLAY data.  We are not going to verify it.  It is generated from the actual Sector Data in section 3.
-                }
-                else if (section == 3)
-                {
-                    // Note:  This section has locations in format XXYY, which is back-asswards.  Since it's his custom section, I guess he figured he'd be different.
-
-                    string id = X3Utils.GetXMLAttribute(trimmedline, "id");
-                    string value = X3Utils.GetXMLValue(trimmedline);
-
-                    switch (id)
+                    switch(prefix)
                     {
-                        case "1":       // Galaxy Age
-                            if (!Enum.TryParse(value, out GalaxyCreationSettings.GalaxyExpansion))
-                                throw new Exception($"Invalid value found in 9970 file for galaxy age: {value}");
-                            continue;
-                        case "4":        // Universe Name
-                            GalaxyCreationSettings.GalaxyName = System.Net.WebUtility.HtmlDecode(value);
-                            continue;
-                    }
-                    int intId = int.Parse(id);
-                    int yIndex = (intId - 5) % 6;
-                    int intValue = -1;
-
-                    int.TryParse(value, out intValue);
-
-                    if (intId > 4 && intId < 11)        // Argon relation.  Set GalaxyCreationSettings.Relations[Race][Race];
-                    {
-                        GalaxyCreationSettings.Relations[(int)ERace.Argon - 1, yIndex] = intValue;
-                    }
-                    if (intId > 10 && intId < 17)
-                    {
-                        GalaxyCreationSettings.Relations[(int)ERace.Boron - 1, yIndex] = intValue;
-                    }
-                    if (intId > 16 && intId < 23)
-                    {
-                        GalaxyCreationSettings.Relations[(int)ERace.Split - 1, yIndex] = intValue;
-                    }
-                    if (intId > 22 && intId < 29) 
-                    {
-                        GalaxyCreationSettings.Relations[(int)ERace.Paranid - 1, yIndex] = intValue;
-                    }
-                    if (intId > 28 && intId < 35)
-                    {
-                        GalaxyCreationSettings.Relations[(int)ERace.Teladi - 1, yIndex] = intValue;
-                    }
-                    if (intId > 34 && intId < 41)
-                    {
-                        GalaxyCreationSettings.Relations[5, yIndex] = intValue;
-                    }
-                    if (intId == 120)       // Maelstrom portal location, 0-based in format "X,Y"
-                    {
-                        string[] split = value.Split(',');
-                        int x = int.Parse(split[0]);
-                        int y = int.Parse(split[1]);
-                        X3Sector set = Sectors.Find(item => item.x == x && item.y == y);
-                        if (set != null)
-                        {
-                            set.IsMaelstromPortal = true;
-                        }
-
-                    }
-
-                    // Now we get into actual Sector Stat Values that are used in the game.
-                    // <t id="10060101">107</t>
-                    if (intId > 10000000)       
-                    {
-                        int yloc = int.Parse(id.Substring(6, 2));   // Last 4       1-based system location in format XXYY
-                        int xloc = int.Parse(id.Substring(4, 2));
-                        string prefix = id.Remove(4);               // First 4      Determines which type of setting this is.  See switch below.
-
-                        // Find the sector with the coordinate found here.
-                        X3Sector sector = Sectors.Find(item => item.x == xloc - 1 && item.y == yloc - 1);
-                        if (sector == null)
-                            throw new Exception($"Unknown sector {id} found in section 3 of 9970 file.");
-
-                        switch(prefix)
-                        {
-                            case "1000":            // Dejure Owner
-                                sector.SectorCreationData.DejureOwner = intValue;
-                                break;
-                            case "1001":            // Smugglers (not used)
-                                break;
-                            case "1002":            // Xenons (abnormal signals)
-                                sector.SectorCreationData.Xenons = intValue;
-                                break;
-                            case "1003":            // Terran memory
-                                sector.SectorCreationData.Terrans = intValue;
-                                break;
-                            case "1004":            // Research
-                                sector.SectorCreationData.Research = intValue;
-                                break;
-                            case "1005":            // Station Support
-                                sector.SectorCreationData.Support = intValue;
-                                break;
-                            case "1006":            // Manpower (system population)
-                                sector.SectorCreationData.Manpower = intValue;
-                                break;
-                            case "1007":            // Cluster (not used)
-                                break;
-                            case "1008":            // Production
-                                sector.SectorCreationData.Production = intValue;
-                                break;
-                            case "1009":            // Consumption
-                                sector.SectorCreationData.Consumption = intValue;
-                                break;
-                            case "1010":            // Company
-                                sector.SectorCreationData.Company = intValue;
-                                break;
-                        }
+                        case "1000":            // Dejure Owner
+                            sector.SectorCreationData.DejureOwner = intValue;
+                            break;
+                        case "1001":            // Smugglers (not used)
+                            break;
+                        case "1002":            // Xenons (abnormal signals)
+                            sector.SectorCreationData.Xenons = intValue;
+                            break;
+                        case "1003":            // Terran memory
+                            sector.SectorCreationData.Terrans = intValue;
+                            break;
+                        case "1004":            // Research
+                            sector.SectorCreationData.Research = intValue;
+                            break;
+                        case "1005":            // Station Support
+                            sector.SectorCreationData.Support = intValue;
+                            break;
+                        case "1006":            // Manpower (system population)
+                            sector.SectorCreationData.Manpower = intValue;
+                            break;
+                        case "1007":            // Cluster (not used)
+                            break;
+                        case "1008":            // Production
+                            sector.SectorCreationData.Production = intValue;
+                            break;
+                        case "1009":            // Consumption
+                            sector.SectorCreationData.Consumption = intValue;
+                            break;
+                        case "1010":            // Company
+                            sector.SectorCreationData.Company = intValue;
+                            break;
                     }
                 }
+            }
+        }
+
+        private static bool ReadGalaxyFlag(string id, string value)
+        {
+            switch (value.Trim())
+            {
+                case "0": return false;
+                case "1": return true;
+                default: throw new InvalidDataException(X3Utils.Ui("X3Galaxy.InvalidGalaxyFlag", id, value));
             }
         }
 
@@ -532,7 +489,7 @@ namespace Azimuth
             }
             else
             {
-                throw new Exception("GetSectorsBetween() does not work for diagnonal sectors");
+                throw new Exception(X3Utils.Ui("X3Galaxy.GetSectorsBetweenDoesNotWorkForDiagnonalSectors"));
             }
         }
 
@@ -548,7 +505,7 @@ namespace Azimuth
             }
             else
             {
-                throw new Exception("HasNonVoidSectorsBetween() does not work for diagnonal sectors");
+                throw new Exception(X3Utils.Ui("X3Galaxy.HasNonVoidSectorsBetweenDoesNotWorkForDiagnonalSectors"));
             }
         }
 
@@ -612,7 +569,7 @@ namespace Azimuth
             foreach (X3Gate gate in sector.Gates)
             {
                 X3Sector dest = Sectors.Find(item => item.x == gate.gx && item.y == gate.gy);
-                if (dest == null) throw new Exception("GetConnectedNeigbors not able to find connected gate.");
+                if (dest == null) throw new Exception(X3Utils.Ui("X3Galaxy.GetConnectedNeigborsNotAbleToFindConnectedGate"));
                 connected.Add(dest);
             }
 

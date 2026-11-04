@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿// Represents a planet from an X3 universe node or scenery template for subsequent map export.
+
+using System.Collections.Generic;
 using System.Xml;
 
 namespace Azimuth

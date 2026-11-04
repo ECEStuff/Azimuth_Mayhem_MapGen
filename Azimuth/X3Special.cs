@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿// Serializes special sector objects such as signs, retaining their subtype, position and orientation.
+
+using System.Collections.Generic;
 using System.Xml;
 
 namespace Azimuth

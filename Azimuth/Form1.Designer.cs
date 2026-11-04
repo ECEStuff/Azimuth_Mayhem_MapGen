@@ -35,9 +35,18 @@ namespace Azimuth
             this.rtb1 = new System.Windows.Forms.RichTextBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.btnCustomMusic = new System.Windows.Forms.Button();
-            this.btnHelpMain = new System.Windows.Forms.Button();
-            this.cbChaoticStart = new System.Windows.Forms.CheckBox();
-            this.cbPeacefulStart = new System.Windows.Forms.CheckBox();
+            this.gbMapOptions = new System.Windows.Forms.GroupBox();
+            this.cbUseParticles = new System.Windows.Forms.CheckBox();
+            this.cbLimitedEnclaves = new System.Windows.Forms.CheckBox();
+            this.cbClusteredXenon = new System.Windows.Forms.CheckBox();
+            this.cbClusteredVoids = new System.Windows.Forms.CheckBox();
+            this.gbMapLevels = new System.Windows.Forms.GroupBox();
+            this.xenonSlider = new System.Windows.Forms.TrackBar();
+            this.xenonLabel = new System.Windows.Forms.Label();
+            this.lblFog = new System.Windows.Forms.Label();
+            this.tbFog = new System.Windows.Forms.TrackBar();
+            this.voidSlider = new System.Windows.Forms.TrackBar();
+            this.voidLabel = new System.Windows.Forms.Label();
             this.lblMayhemSave = new System.Windows.Forms.Label();
             this.lblMayhemRoot = new System.Windows.Forms.Label();
             this.btnGenerateStats = new System.Windows.Forms.Button();
@@ -97,10 +106,6 @@ namespace Azimuth
             this.lblTeladi2 = new System.Windows.Forms.Label();
             this.lblSplit2 = new System.Windows.Forms.Label();
             this.lblParanid2 = new System.Windows.Forms.Label();
-            this.cbExtraSystemStats = new System.Windows.Forms.CheckBox();
-            this.lblFog = new System.Windows.Forms.Label();
-            this.tbFog = new System.Windows.Forms.TrackBar();
-            this.cbUseParticles = new System.Windows.Forms.CheckBox();
             this.gbMusic = new System.Windows.Forms.GroupBox();
             this.rbCustom = new System.Windows.Forms.RadioButton();
             this.rbAllMusic = new System.Windows.Forms.RadioButton();
@@ -127,12 +132,13 @@ namespace Azimuth
             this.rbAverage = new System.Windows.Forms.RadioButton();
             this.rbEarly = new System.Windows.Forms.RadioButton();
             this.rbOrigin = new System.Windows.Forms.RadioButton();
-            this.cbLimitedEnclaves = new System.Windows.Forms.CheckBox();
-            this.cbClusteredXenon = new System.Windows.Forms.CheckBox();
-            this.voidSlider = new System.Windows.Forms.TrackBar();
-            this.voidLabel = new System.Windows.Forms.Label();
-            this.cbClusteredVoids = new System.Windows.Forms.CheckBox();
             this.btnGenerateSystems = new System.Windows.Forms.Button();
+            this.gbGalaxyStart = new System.Windows.Forms.GroupBox();
+            this.rbStandardStart = new System.Windows.Forms.RadioButton();
+            this.rbChaoticStart = new System.Windows.Forms.RadioButton();
+            this.rbPeacefulStart = new System.Windows.Forms.RadioButton();
+            this.gbChallenge = new System.Windows.Forms.GroupBox();
+            this.cbSaboteurMode = new System.Windows.Forms.CheckBox();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.btnConfig = new System.Windows.Forms.ToolStripDropDownButton();
@@ -151,11 +157,19 @@ namespace Azimuth
             this.btnExportPng = new System.Windows.Forms.ToolStripButton();
             this.lblWarning = new System.Windows.Forms.ToolStripLabel();
             this.lblSectorCount = new System.Windows.Forms.ToolStripLabel();
+            this.btnHelpMenu = new System.Windows.Forms.ToolStripDropDownButton();
+            this.miUserGuide = new System.Windows.Forms.ToolStripMenuItem();
+            this.miAboutAzimuth = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            this.gbMapOptions.SuspendLayout();
+            this.gbMapLevels.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.xenonSlider)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.tbFog)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.voidSlider)).BeginInit();
             this.gbSystemSpread.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.udTerran)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.udSplit)).BeginInit();
@@ -164,13 +178,13 @@ namespace Azimuth
             ((System.ComponentModel.ISupportInitialize)(this.udParanid)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.udTeladi)).BeginInit();
             this.gbRelations.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.tbFog)).BeginInit();
             this.gbMusic.SuspendLayout();
             this.gbMapType.SuspendLayout();
             this.gbGateDensity.SuspendLayout();
             this.gbGalaxySize.SuspendLayout();
             this.gbExpansion.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.voidSlider)).BeginInit();
+            this.gbGalaxyStart.SuspendLayout();
+            this.gbChallenge.SuspendLayout();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -185,14 +199,14 @@ namespace Azimuth
             this.pictureBox1.TabStop = false;
             this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
             this.pictureBox1.Paint += new System.Windows.Forms.PaintEventHandler(this.pictureBox1_Paint);
-            this.pictureBox1.DoubleClick += new System.EventHandler(this.pictureBox1_DoubleClick);
+            this.pictureBox1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseDoubleClick);
             this.pictureBox1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseMove);
             // 
             // rtb1
             // 
-            this.rtb1.Location = new System.Drawing.Point(6, 776);
+            this.rtb1.Location = new System.Drawing.Point(6, 818);
             this.rtb1.Name = "rtb1";
-            this.rtb1.Size = new System.Drawing.Size(425, 177);
+            this.rtb1.Size = new System.Drawing.Size(425, 135);
             this.rtb1.TabIndex = 24;
             this.rtb1.Text = "";
             // 
@@ -207,18 +221,13 @@ namespace Azimuth
             // 
             this.splitContainer1.Panel1.BackColor = System.Drawing.SystemColors.Control;
             this.splitContainer1.Panel1.Controls.Add(this.btnCustomMusic);
-            this.splitContainer1.Panel1.Controls.Add(this.btnHelpMain);
-            this.splitContainer1.Panel1.Controls.Add(this.cbChaoticStart);
-            this.splitContainer1.Panel1.Controls.Add(this.cbPeacefulStart);
+            this.splitContainer1.Panel1.Controls.Add(this.gbMapOptions);
+            this.splitContainer1.Panel1.Controls.Add(this.gbMapLevels);
             this.splitContainer1.Panel1.Controls.Add(this.lblMayhemSave);
             this.splitContainer1.Panel1.Controls.Add(this.lblMayhemRoot);
             this.splitContainer1.Panel1.Controls.Add(this.btnGenerateStats);
             this.splitContainer1.Panel1.Controls.Add(this.gbSystemSpread);
             this.splitContainer1.Panel1.Controls.Add(this.gbRelations);
-            this.splitContainer1.Panel1.Controls.Add(this.cbExtraSystemStats);
-            this.splitContainer1.Panel1.Controls.Add(this.lblFog);
-            this.splitContainer1.Panel1.Controls.Add(this.tbFog);
-            this.splitContainer1.Panel1.Controls.Add(this.cbUseParticles);
             this.splitContainer1.Panel1.Controls.Add(this.gbMusic);
             this.splitContainer1.Panel1.Controls.Add(this.btnSaveGalaxy);
             this.splitContainer1.Panel1.Controls.Add(this.lblCurGalaxyName);
@@ -231,12 +240,9 @@ namespace Azimuth
             this.splitContainer1.Panel1.Controls.Add(this.gbGateDensity);
             this.splitContainer1.Panel1.Controls.Add(this.gbGalaxySize);
             this.splitContainer1.Panel1.Controls.Add(this.gbExpansion);
-            this.splitContainer1.Panel1.Controls.Add(this.cbLimitedEnclaves);
-            this.splitContainer1.Panel1.Controls.Add(this.cbClusteredXenon);
-            this.splitContainer1.Panel1.Controls.Add(this.voidSlider);
-            this.splitContainer1.Panel1.Controls.Add(this.voidLabel);
-            this.splitContainer1.Panel1.Controls.Add(this.cbClusteredVoids);
             this.splitContainer1.Panel1.Controls.Add(this.btnGenerateSystems);
+            this.splitContainer1.Panel1.Controls.Add(this.gbGalaxyStart);
+            this.splitContainer1.Panel1.Controls.Add(this.gbChallenge);
             // 
             // splitContainer1.Panel2
             // 
@@ -251,7 +257,7 @@ namespace Azimuth
             // btnCustomMusic
             // 
             this.btnCustomMusic.BackColor = System.Drawing.Color.Linen;
-            this.btnCustomMusic.Location = new System.Drawing.Point(286, 536);
+            this.btnCustomMusic.Location = new System.Drawing.Point(286, 578);
             this.btnCustomMusic.Name = "btnCustomMusic";
             this.btnCustomMusic.Size = new System.Drawing.Size(134, 23);
             this.btnCustomMusic.TabIndex = 94;
@@ -259,42 +265,136 @@ namespace Azimuth
             this.btnCustomMusic.UseVisualStyleBackColor = false;
             this.btnCustomMusic.Click += new System.EventHandler(this.btnCustomMusic_Click);
             // 
-            // btnHelpMain
+            // gbMapOptions
             // 
-            this.btnHelpMain.BackColor = System.Drawing.Color.LightGray;
-            this.btnHelpMain.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnHelpMain.ForeColor = System.Drawing.Color.DarkRed;
-            this.btnHelpMain.Location = new System.Drawing.Point(69, 38);
-            this.btnHelpMain.Name = "btnHelpMain";
-            this.btnHelpMain.Size = new System.Drawing.Size(142, 23);
-            this.btnHelpMain.TabIndex = 93;
-            this.btnHelpMain.Text = "Help";
-            this.btnHelpMain.UseVisualStyleBackColor = false;
-            this.btnHelpMain.Click += new System.EventHandler(this.btnHelpMain_Click);
+            this.gbMapOptions.Controls.Add(this.cbUseParticles);
+            this.gbMapOptions.Controls.Add(this.cbLimitedEnclaves);
+            this.gbMapOptions.Controls.Add(this.cbClusteredXenon);
+            this.gbMapOptions.Controls.Add(this.cbClusteredVoids);
+            this.gbMapOptions.Location = new System.Drawing.Point(16, 159);
+            this.gbMapOptions.Name = "gbMapOptions";
+            this.gbMapOptions.Size = new System.Drawing.Size(164, 102);
+            this.gbMapOptions.TabIndex = 95;
+            this.gbMapOptions.TabStop = false;
+            this.gbMapOptions.Text = "Map options";
             // 
-            // cbChaoticStart
+            // cbUseParticles
             // 
-            this.cbChaoticStart.AutoSize = true;
-            this.cbChaoticStart.ForeColor = System.Drawing.Color.Maroon;
-            this.cbChaoticStart.Location = new System.Drawing.Point(16, 320);
-            this.cbChaoticStart.Name = "cbChaoticStart";
-            this.cbChaoticStart.Size = new System.Drawing.Size(87, 17);
-            this.cbChaoticStart.TabIndex = 92;
-            this.cbChaoticStart.Text = "Chaotic Start";
-            this.cbChaoticStart.UseVisualStyleBackColor = true;
-            this.cbChaoticStart.CheckedChanged += new System.EventHandler(this.cbChaoticStart_CheckedChanged);
+            this.cbUseParticles.AutoSize = true;
+            this.cbUseParticles.Location = new System.Drawing.Point(8, 76);
+            this.cbUseParticles.Name = "cbUseParticles";
+            this.cbUseParticles.Size = new System.Drawing.Size(122, 17);
+            this.cbUseParticles.TabIndex = 77;
+            this.cbUseParticles.Text = "Use Space Particles";
+            this.cbUseParticles.UseVisualStyleBackColor = true;
             // 
-            // cbPeacefulStart
+            // cbLimitedEnclaves
             // 
-            this.cbPeacefulStart.AutoSize = true;
-            this.cbPeacefulStart.ForeColor = System.Drawing.Color.Maroon;
-            this.cbPeacefulStart.Location = new System.Drawing.Point(16, 298);
-            this.cbPeacefulStart.Name = "cbPeacefulStart";
-            this.cbPeacefulStart.Size = new System.Drawing.Size(93, 17);
-            this.cbPeacefulStart.TabIndex = 91;
-            this.cbPeacefulStart.Text = "Peaceful Start";
-            this.cbPeacefulStart.UseVisualStyleBackColor = true;
-            this.cbPeacefulStart.CheckedChanged += new System.EventHandler(this.cbPeacefulStart_CheckedChanged);
+            this.cbLimitedEnclaves.AutoSize = true;
+            this.cbLimitedEnclaves.Location = new System.Drawing.Point(8, 56);
+            this.cbLimitedEnclaves.Name = "cbLimitedEnclaves";
+            this.cbLimitedEnclaves.Size = new System.Drawing.Size(106, 17);
+            this.cbLimitedEnclaves.TabIndex = 50;
+            this.cbLimitedEnclaves.Text = "Limited Enclaves";
+            this.cbLimitedEnclaves.UseVisualStyleBackColor = true;
+            // 
+            // cbClusteredXenon
+            // 
+            this.cbClusteredXenon.AutoSize = true;
+            this.cbClusteredXenon.Location = new System.Drawing.Point(8, 36);
+            this.cbClusteredXenon.Name = "cbClusteredXenon";
+            this.cbClusteredXenon.Size = new System.Drawing.Size(109, 17);
+            this.cbClusteredXenon.TabIndex = 49;
+            this.cbClusteredXenon.Text = "Clustered Xenons";
+            this.cbClusteredXenon.UseVisualStyleBackColor = true;
+            // 
+            // cbClusteredVoids
+            // 
+            this.cbClusteredVoids.AutoSize = true;
+            this.cbClusteredVoids.Location = new System.Drawing.Point(8, 16);
+            this.cbClusteredVoids.Name = "cbClusteredVoids";
+            this.cbClusteredVoids.Size = new System.Drawing.Size(99, 17);
+            this.cbClusteredVoids.TabIndex = 47;
+            this.cbClusteredVoids.Text = "Clustered Voids";
+            this.cbClusteredVoids.UseVisualStyleBackColor = true;
+            // 
+            // gbMapLevels
+            // 
+            this.gbMapLevels.Controls.Add(this.xenonSlider);
+            this.gbMapLevels.Controls.Add(this.xenonLabel);
+            this.gbMapLevels.Controls.Add(this.lblFog);
+            this.gbMapLevels.Controls.Add(this.tbFog);
+            this.gbMapLevels.Controls.Add(this.voidSlider);
+            this.gbMapLevels.Controls.Add(this.voidLabel);
+            this.gbMapLevels.Location = new System.Drawing.Point(184, 159);
+            this.gbMapLevels.Name = "gbMapLevels";
+            this.gbMapLevels.Size = new System.Drawing.Size(225, 95);
+            this.gbMapLevels.TabIndex = 96;
+            this.gbMapLevels.TabStop = false;
+            this.gbMapLevels.Text = "Map sliders";
+            // 
+            // xenonSlider
+            // 
+            this.xenonSlider.AutoSize = false;
+            this.xenonSlider.LargeChange = 1;
+            this.xenonSlider.Location = new System.Drawing.Point(88, 43);
+            this.xenonSlider.Minimum = 3;
+            this.xenonSlider.Name = "xenonSlider";
+            this.xenonSlider.Size = new System.Drawing.Size(130, 22);
+            this.xenonSlider.TabIndex = 49;
+            this.xenonSlider.TickStyle = System.Windows.Forms.TickStyle.None;
+            this.xenonSlider.Value = 3;
+            // 
+            // xenonLabel
+            // 
+            this.xenonLabel.AutoSize = true;
+            this.xenonLabel.Location = new System.Drawing.Point(8, 46);
+            this.xenonLabel.Name = "xenonLabel";
+            this.xenonLabel.Size = new System.Drawing.Size(55, 13);
+            this.xenonLabel.TabIndex = 50;
+            this.xenonLabel.Text = "Xenon 3%";
+            // 
+            // lblFog
+            // 
+            this.lblFog.AutoSize = true;
+            this.lblFog.Location = new System.Drawing.Point(8, 71);
+            this.lblFog.Name = "lblFog";
+            this.lblFog.Size = new System.Drawing.Size(25, 13);
+            this.lblFog.TabIndex = 79;
+            this.lblFog.Text = "Fog";
+            // 
+            // tbFog
+            // 
+            this.tbFog.AutoSize = false;
+            this.tbFog.LargeChange = 1;
+            this.tbFog.Location = new System.Drawing.Point(88, 68);
+            this.tbFog.Maximum = 4;
+            this.tbFog.Name = "tbFog";
+            this.tbFog.Size = new System.Drawing.Size(130, 22);
+            this.tbFog.TabIndex = 78;
+            this.tbFog.TickStyle = System.Windows.Forms.TickStyle.None;
+            this.tbFog.Scroll += new System.EventHandler(this.tbFog_Scroll);
+            // 
+            // voidSlider
+            // 
+            this.voidSlider.AutoSize = false;
+            this.voidSlider.Location = new System.Drawing.Point(88, 18);
+            this.voidSlider.Maximum = 50;
+            this.voidSlider.Minimum = 15;
+            this.voidSlider.Name = "voidSlider";
+            this.voidSlider.Size = new System.Drawing.Size(130, 22);
+            this.voidSlider.TabIndex = 48;
+            this.voidSlider.TickStyle = System.Windows.Forms.TickStyle.None;
+            this.voidSlider.Value = 15;
+            // 
+            // voidLabel
+            // 
+            this.voidLabel.AutoSize = true;
+            this.voidLabel.Location = new System.Drawing.Point(8, 21);
+            this.voidLabel.Name = "voidLabel";
+            this.voidLabel.Size = new System.Drawing.Size(51, 13);
+            this.voidLabel.TabIndex = 95;
+            this.voidLabel.Text = "Void 15%";
             // 
             // lblMayhemSave
             // 
@@ -302,9 +402,9 @@ namespace Azimuth
             this.lblMayhemSave.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblMayhemSave.Location = new System.Drawing.Point(12, 104);
             this.lblMayhemSave.Name = "lblMayhemSave";
-            this.lblMayhemSave.Size = new System.Drawing.Size(150, 13);
+            this.lblMayhemSave.Size = new System.Drawing.Size(141, 13);
             this.lblMayhemSave.TabIndex = 90;
-            this.lblMayhemSave.Text = "Mayhem 3 Save Game Folder:";
+            this.lblMayhemSave.Text = "Mayhem Save Game Folder:";
             // 
             // lblMayhemRoot
             // 
@@ -312,17 +412,17 @@ namespace Azimuth
             this.lblMayhemRoot.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblMayhemRoot.Location = new System.Drawing.Point(12, 69);
             this.lblMayhemRoot.Name = "lblMayhemRoot";
-            this.lblMayhemRoot.Size = new System.Drawing.Size(117, 13);
+            this.lblMayhemRoot.Size = new System.Drawing.Size(108, 13);
             this.lblMayhemRoot.TabIndex = 89;
-            this.lblMayhemRoot.Text = "Mayhem 3 Root Folder:";
+            this.lblMayhemRoot.Text = "Mayhem Root Folder:";
             // 
             // btnGenerateStats
             // 
             this.btnGenerateStats.BackColor = System.Drawing.Color.Linen;
             this.btnGenerateStats.Enabled = false;
-            this.btnGenerateStats.Location = new System.Drawing.Point(275, 41);
+            this.btnGenerateStats.Location = new System.Drawing.Point(212, 41);
             this.btnGenerateStats.Name = "btnGenerateStats";
-            this.btnGenerateStats.Size = new System.Drawing.Size(122, 23);
+            this.btnGenerateStats.Size = new System.Drawing.Size(185, 23);
             this.btnGenerateStats.TabIndex = 88;
             this.btnGenerateStats.Text = "Regenerate Stats";
             this.btnGenerateStats.UseVisualStyleBackColor = false;
@@ -342,12 +442,12 @@ namespace Azimuth
             this.gbSystemSpread.Controls.Add(this.lblParanidSpread);
             this.gbSystemSpread.Controls.Add(this.udTeladi);
             this.gbSystemSpread.Controls.Add(this.lblTeladiSpread);
-            this.gbSystemSpread.Location = new System.Drawing.Point(16, 352);
+            this.gbSystemSpread.Location = new System.Drawing.Point(16, 394);
             this.gbSystemSpread.Name = "gbSystemSpread";
             this.gbSystemSpread.Size = new System.Drawing.Size(381, 61);
             this.gbSystemSpread.TabIndex = 87;
             this.gbSystemSpread.TabStop = false;
-            this.gbSystemSpread.Text = "System Spread";
+            this.gbSystemSpread.Text = "Sector Spread";
             // 
             // udTerran
             // 
@@ -579,7 +679,7 @@ namespace Azimuth
             this.gbRelations.Controls.Add(this.lblTeladi2);
             this.gbRelations.Controls.Add(this.lblSplit2);
             this.gbRelations.Controls.Add(this.lblParanid2);
-            this.gbRelations.Location = new System.Drawing.Point(7, 573);
+            this.gbRelations.Location = new System.Drawing.Point(7, 615);
             this.gbRelations.Name = "gbRelations";
             this.gbRelations.Size = new System.Drawing.Size(424, 197);
             this.gbRelations.TabIndex = 86;
@@ -1036,52 +1136,13 @@ namespace Azimuth
             this.lblParanid2.TabIndex = 83;
             this.lblParanid2.Text = "Paranid";
             // 
-            // cbExtraSystemStats
-            // 
-            this.cbExtraSystemStats.AutoSize = true;
-            this.cbExtraSystemStats.Location = new System.Drawing.Point(16, 254);
-            this.cbExtraSystemStats.Name = "cbExtraSystemStats";
-            this.cbExtraSystemStats.Size = new System.Drawing.Size(114, 17);
-            this.cbExtraSystemStats.TabIndex = 80;
-            this.cbExtraSystemStats.Text = "Extra System Stats";
-            this.cbExtraSystemStats.UseVisualStyleBackColor = true;
-            // 
-            // lblFog
-            // 
-            this.lblFog.AutoSize = true;
-            this.lblFog.Location = new System.Drawing.Point(172, 293);
-            this.lblFog.Name = "lblFog";
-            this.lblFog.Size = new System.Drawing.Size(25, 13);
-            this.lblFog.TabIndex = 79;
-            this.lblFog.Text = "Fog";
-            // 
-            // tbFog
-            // 
-            this.tbFog.LargeChange = 1;
-            this.tbFog.Location = new System.Drawing.Point(211, 288);
-            this.tbFog.Maximum = 4;
-            this.tbFog.Name = "tbFog";
-            this.tbFog.Size = new System.Drawing.Size(154, 45);
-            this.tbFog.TabIndex = 78;
-            this.tbFog.Scroll += new System.EventHandler(this.tbFog_Scroll);
-            // 
-            // cbUseParticles
-            // 
-            this.cbUseParticles.AutoSize = true;
-            this.cbUseParticles.Location = new System.Drawing.Point(16, 276);
-            this.cbUseParticles.Name = "cbUseParticles";
-            this.cbUseParticles.Size = new System.Drawing.Size(122, 17);
-            this.cbUseParticles.TabIndex = 77;
-            this.cbUseParticles.Text = "Use Space Particles";
-            this.cbUseParticles.UseVisualStyleBackColor = true;
-            // 
             // gbMusic
             // 
             this.gbMusic.Controls.Add(this.rbCustom);
             this.gbMusic.Controls.Add(this.rbAllMusic);
             this.gbMusic.Controls.Add(this.rbLitcubeMusic);
             this.gbMusic.Controls.Add(this.rbBasicMusic);
-            this.gbMusic.Location = new System.Drawing.Point(20, 520);
+            this.gbMusic.Location = new System.Drawing.Point(20, 562);
             this.gbMusic.Name = "gbMusic";
             this.gbMusic.Size = new System.Drawing.Size(260, 48);
             this.gbMusic.TabIndex = 66;
@@ -1134,9 +1195,9 @@ namespace Azimuth
             // btnSaveGalaxy
             // 
             this.btnSaveGalaxy.BackColor = System.Drawing.Color.Linen;
-            this.btnSaveGalaxy.Location = new System.Drawing.Point(147, 12);
+            this.btnSaveGalaxy.Location = new System.Drawing.Point(212, 12);
             this.btnSaveGalaxy.Name = "btnSaveGalaxy";
-            this.btnSaveGalaxy.Size = new System.Drawing.Size(119, 23);
+            this.btnSaveGalaxy.Size = new System.Drawing.Size(185, 23);
             this.btnSaveGalaxy.TabIndex = 76;
             this.btnSaveGalaxy.Text = "Save/Load Galaxy";
             this.btnSaveGalaxy.UseVisualStyleBackColor = false;
@@ -1158,7 +1219,7 @@ namespace Azimuth
             this.lblActiveGal.Name = "lblActiveGal";
             this.lblActiveGal.Size = new System.Drawing.Size(127, 13);
             this.lblActiveGal.TabIndex = 74;
-            this.lblActiveGal.Text = "Active Mayhem 3 Galaxy:";
+            this.lblActiveGal.Text = "Active Mayhem Galaxy:";
             // 
             // lblX3SaveGameFolder
             // 
@@ -1178,7 +1239,7 @@ namespace Azimuth
             // 
             this.gbMapType.Controls.Add(this.rbRectMap);
             this.gbMapType.Controls.Add(this.rbSquareMap);
-            this.gbMapType.Location = new System.Drawing.Point(197, 468);
+            this.gbMapType.Location = new System.Drawing.Point(197, 510);
             this.gbMapType.Name = "gbMapType";
             this.gbMapType.Size = new System.Drawing.Size(200, 48);
             this.gbMapType.TabIndex = 70;
@@ -1225,9 +1286,9 @@ namespace Azimuth
             // 
             this.btnGenerateGates.BackColor = System.Drawing.Color.Linen;
             this.btnGenerateGates.Enabled = false;
-            this.btnGenerateGates.Location = new System.Drawing.Point(275, 12);
+            this.btnGenerateGates.Location = new System.Drawing.Point(18, 41);
             this.btnGenerateGates.Name = "btnGenerateGates";
-            this.btnGenerateGates.Size = new System.Drawing.Size(122, 23);
+            this.btnGenerateGates.Size = new System.Drawing.Size(185, 23);
             this.btnGenerateGates.TabIndex = 66;
             this.btnGenerateGates.Text = "Regenerate Gates";
             this.btnGenerateGates.UseVisualStyleBackColor = false;
@@ -1237,7 +1298,7 @@ namespace Azimuth
             // 
             this.gbGateDensity.Controls.Add(this.rbHighGateDensity);
             this.gbGateDensity.Controls.Add(this.rbLowGateDensity);
-            this.gbGateDensity.Location = new System.Drawing.Point(19, 468);
+            this.gbGateDensity.Location = new System.Drawing.Point(19, 510);
             this.gbGateDensity.Name = "gbGateDensity";
             this.gbGateDensity.Size = new System.Drawing.Size(172, 48);
             this.gbGateDensity.TabIndex = 65;
@@ -1271,7 +1332,7 @@ namespace Azimuth
             this.gbGalaxySize.Controls.Add(this.rbLargeGalaxy);
             this.gbGalaxySize.Controls.Add(this.rbMediumGalaxy);
             this.gbGalaxySize.Controls.Add(this.rbSmallGalaxy);
-            this.gbGalaxySize.Location = new System.Drawing.Point(18, 416);
+            this.gbGalaxySize.Location = new System.Drawing.Point(18, 458);
             this.gbGalaxySize.Name = "gbGalaxySize";
             this.gbGalaxySize.Size = new System.Drawing.Size(379, 48);
             this.gbGalaxySize.TabIndex = 64;
@@ -1284,10 +1345,10 @@ namespace Azimuth
             this.rbLargeGalaxy.Checked = true;
             this.rbLargeGalaxy.Location = new System.Drawing.Point(267, 19);
             this.rbLargeGalaxy.Name = "rbLargeGalaxy";
-            this.rbLargeGalaxy.Size = new System.Drawing.Size(85, 17);
+            this.rbLargeGalaxy.Size = new System.Drawing.Size(86, 17);
             this.rbLargeGalaxy.TabIndex = 2;
             this.rbLargeGalaxy.TabStop = true;
-            this.rbLargeGalaxy.Text = "Large (<256)";
+            this.rbLargeGalaxy.Text = "Large (~246)";
             this.rbLargeGalaxy.UseVisualStyleBackColor = true;
             // 
             // rbMediumGalaxy
@@ -1316,9 +1377,9 @@ namespace Azimuth
             this.gbExpansion.Controls.Add(this.rbAverage);
             this.gbExpansion.Controls.Add(this.rbEarly);
             this.gbExpansion.Controls.Add(this.rbOrigin);
-            this.gbExpansion.Location = new System.Drawing.Point(176, 166);
+            this.gbExpansion.Location = new System.Drawing.Point(184, 255);
             this.gbExpansion.Name = "gbExpansion";
-            this.gbExpansion.Size = new System.Drawing.Size(221, 115);
+            this.gbExpansion.Size = new System.Drawing.Size(225, 92);
             this.gbExpansion.TabIndex = 53;
             this.gbExpansion.TabStop = false;
             this.gbExpansion.Text = "Galaxy Expansion";
@@ -1326,7 +1387,7 @@ namespace Azimuth
             // rbAdvanced
             // 
             this.rbAdvanced.AutoSize = true;
-            this.rbAdvanced.Location = new System.Drawing.Point(6, 88);
+            this.rbAdvanced.Location = new System.Drawing.Point(6, 70);
             this.rbAdvanced.Name = "rbAdvanced";
             this.rbAdvanced.Size = new System.Drawing.Size(182, 17);
             this.rbAdvanced.TabIndex = 3;
@@ -1337,7 +1398,7 @@ namespace Azimuth
             // 
             this.rbAverage.AutoSize = true;
             this.rbAverage.Checked = true;
-            this.rbAverage.Location = new System.Drawing.Point(6, 65);
+            this.rbAverage.Location = new System.Drawing.Point(6, 52);
             this.rbAverage.Name = "rbAverage";
             this.rbAverage.Size = new System.Drawing.Size(173, 17);
             this.rbAverage.TabIndex = 2;
@@ -1348,7 +1409,7 @@ namespace Azimuth
             // rbEarly
             // 
             this.rbEarly.AutoSize = true;
-            this.rbEarly.Location = new System.Drawing.Point(6, 42);
+            this.rbEarly.Location = new System.Drawing.Point(6, 34);
             this.rbEarly.Name = "rbEarly";
             this.rbEarly.Size = new System.Drawing.Size(156, 17);
             this.rbEarly.TabIndex = 1;
@@ -1358,74 +1419,89 @@ namespace Azimuth
             // rbOrigin
             // 
             this.rbOrigin.AutoSize = true;
-            this.rbOrigin.Location = new System.Drawing.Point(6, 19);
+            this.rbOrigin.Location = new System.Drawing.Point(6, 16);
             this.rbOrigin.Name = "rbOrigin";
             this.rbOrigin.Size = new System.Drawing.Size(144, 17);
             this.rbOrigin.TabIndex = 0;
             this.rbOrigin.Text = "Origin (1 system per race)";
             this.rbOrigin.UseVisualStyleBackColor = true;
             // 
-            // cbLimitedEnclaves
-            // 
-            this.cbLimitedEnclaves.AutoSize = true;
-            this.cbLimitedEnclaves.Location = new System.Drawing.Point(16, 232);
-            this.cbLimitedEnclaves.Name = "cbLimitedEnclaves";
-            this.cbLimitedEnclaves.Size = new System.Drawing.Size(106, 17);
-            this.cbLimitedEnclaves.TabIndex = 50;
-            this.cbLimitedEnclaves.Text = "Limited Enclaves";
-            this.cbLimitedEnclaves.UseVisualStyleBackColor = true;
-            // 
-            // cbClusteredXenon
-            // 
-            this.cbClusteredXenon.AutoSize = true;
-            this.cbClusteredXenon.Location = new System.Drawing.Point(16, 210);
-            this.cbClusteredXenon.Name = "cbClusteredXenon";
-            this.cbClusteredXenon.Size = new System.Drawing.Size(109, 17);
-            this.cbClusteredXenon.TabIndex = 49;
-            this.cbClusteredXenon.Text = "Clustered Xenons";
-            this.cbClusteredXenon.UseVisualStyleBackColor = true;
-            // 
-            // voidSlider
-            // 
-            this.voidSlider.AutoSize = false;
-            this.voidSlider.Location = new System.Drawing.Point(76, 185);
-            this.voidSlider.Maximum = 50;
-            this.voidSlider.Minimum = 15;
-            this.voidSlider.Name = "voidSlider";
-            this.voidSlider.Size = new System.Drawing.Size(96, 22);
-            this.voidSlider.TabIndex = 48;
-            this.voidSlider.TickStyle = System.Windows.Forms.TickStyle.None;
-            this.voidSlider.Value = 15;
-            // 
-            // voidLabel
-            // 
-            this.voidLabel.AutoSize = true;
-            this.voidLabel.Location = new System.Drawing.Point(16, 188);
-            this.voidLabel.Name = "voidLabel";
-            this.voidLabel.Size = new System.Drawing.Size(51, 13);
-            this.voidLabel.TabIndex = 95;
-            this.voidLabel.Text = "Void 15%";
-            // 
-            // cbClusteredVoids
-            // 
-            this.cbClusteredVoids.AutoSize = true;
-            this.cbClusteredVoids.Location = new System.Drawing.Point(16, 166);
-            this.cbClusteredVoids.Name = "cbClusteredVoids";
-            this.cbClusteredVoids.Size = new System.Drawing.Size(99, 17);
-            this.cbClusteredVoids.TabIndex = 47;
-            this.cbClusteredVoids.Text = "Clustered Voids";
-            this.cbClusteredVoids.UseVisualStyleBackColor = true;
-            // 
             // btnGenerateSystems
             // 
             this.btnGenerateSystems.BackColor = System.Drawing.Color.Linen;
             this.btnGenerateSystems.Location = new System.Drawing.Point(18, 12);
             this.btnGenerateSystems.Name = "btnGenerateSystems";
-            this.btnGenerateSystems.Size = new System.Drawing.Size(120, 23);
+            this.btnGenerateSystems.Size = new System.Drawing.Size(185, 23);
             this.btnGenerateSystems.TabIndex = 46;
-            this.btnGenerateSystems.Text = "Generate Systems";
+            this.btnGenerateSystems.Text = "Generate Sectors";
             this.btnGenerateSystems.UseVisualStyleBackColor = false;
             this.btnGenerateSystems.Click += new System.EventHandler(this.btnGenerate_Click);
+            // 
+            // gbGalaxyStart
+            // 
+            this.gbGalaxyStart.Controls.Add(this.rbStandardStart);
+            this.gbGalaxyStart.Controls.Add(this.rbChaoticStart);
+            this.gbGalaxyStart.Controls.Add(this.rbPeacefulStart);
+            this.gbGalaxyStart.Location = new System.Drawing.Point(16, 265);
+            this.gbGalaxyStart.Name = "gbGalaxyStart";
+            this.gbGalaxyStart.Size = new System.Drawing.Size(164, 82);
+            this.gbGalaxyStart.TabIndex = 97;
+            this.gbGalaxyStart.TabStop = false;
+            this.gbGalaxyStart.Text = "Galaxy start";
+            // 
+            // rbStandardStart
+            // 
+            this.rbStandardStart.AutoSize = true;
+            this.rbStandardStart.Checked = true;
+            this.rbStandardStart.Location = new System.Drawing.Point(8, 17);
+            this.rbStandardStart.Name = "rbStandardStart";
+            this.rbStandardStart.Size = new System.Drawing.Size(68, 17);
+            this.rbStandardStart.TabIndex = 0;
+            this.rbStandardStart.TabStop = true;
+            this.rbStandardStart.Text = "Standard";
+            // 
+            // rbChaoticStart
+            // 
+            this.rbChaoticStart.AutoSize = true;
+            this.rbChaoticStart.ForeColor = System.Drawing.Color.DarkRed;
+            this.rbChaoticStart.Location = new System.Drawing.Point(8, 57);
+            this.rbChaoticStart.Name = "rbChaoticStart";
+            this.rbChaoticStart.Size = new System.Drawing.Size(61, 17);
+            this.rbChaoticStart.TabIndex = 2;
+            this.rbChaoticStart.Text = "Chaotic";
+            this.rbChaoticStart.UseVisualStyleBackColor = true;
+            // 
+            // rbPeacefulStart
+            // 
+            this.rbPeacefulStart.AutoSize = true;
+            this.rbPeacefulStart.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(106)))), ((int)(((byte)(105)))));
+            this.rbPeacefulStart.Location = new System.Drawing.Point(8, 37);
+            this.rbPeacefulStart.Name = "rbPeacefulStart";
+            this.rbPeacefulStart.Size = new System.Drawing.Size(67, 17);
+            this.rbPeacefulStart.TabIndex = 1;
+            this.rbPeacefulStart.Text = "Peaceful";
+            this.rbPeacefulStart.UseVisualStyleBackColor = true;
+            // 
+            // gbChallenge
+            // 
+            this.gbChallenge.Controls.Add(this.cbSaboteurMode);
+            this.gbChallenge.Location = new System.Drawing.Point(16, 350);
+            this.gbChallenge.Name = "gbChallenge";
+            this.gbChallenge.Size = new System.Drawing.Size(393, 40);
+            this.gbChallenge.TabIndex = 98;
+            this.gbChallenge.TabStop = false;
+            this.gbChallenge.Text = "Challenge modifiers";
+            // 
+            // cbSaboteurMode
+            // 
+            this.cbSaboteurMode.AutoSize = true;
+            this.cbSaboteurMode.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(85)))), ((int)(((byte)(0)))));
+            this.cbSaboteurMode.Location = new System.Drawing.Point(8, 16);
+            this.cbSaboteurMode.Name = "cbSaboteurMode";
+            this.cbSaboteurMode.Size = new System.Drawing.Size(99, 17);
+            this.cbSaboteurMode.TabIndex = 80;
+            this.cbSaboteurMode.Text = "Saboteur Mode";
+            this.cbSaboteurMode.UseVisualStyleBackColor = true;
             // 
             // btnConfig
             // 
@@ -1454,6 +1530,7 @@ namespace Azimuth
             // 
             // toolStrip1
             // 
+            this.toolStrip1.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.btnShowTerran,
             this.btnShowSectorStats,
@@ -1467,7 +1544,8 @@ namespace Azimuth
             this.lblFindStatus,
             this.btnExportPng,
             this.lblWarning,
-            this.lblSectorCount});
+            this.lblSectorCount,
+            this.btnHelpMenu});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1514, 25);
@@ -1575,6 +1653,31 @@ namespace Azimuth
             this.lblSectorCount.Text = "Sectors: 0";
             this.lblSectorCount.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
+            // btnHelpMenu
+            // 
+            this.btnHelpMenu.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.btnHelpMenu.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.btnHelpMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.miUserGuide,
+            this.miAboutAzimuth});
+            this.btnHelpMenu.Name = "btnHelpMenu";
+            this.btnHelpMenu.Size = new System.Drawing.Size(45, 22);
+            this.btnHelpMenu.Text = "Help";
+            // 
+            // miUserGuide
+            // 
+            this.miUserGuide.Name = "miUserGuide";
+            this.miUserGuide.Size = new System.Drawing.Size(155, 22);
+            this.miUserGuide.Text = "User Guide";
+            this.miUserGuide.Click += new System.EventHandler(this.btnHelpMain_Click);
+            // 
+            // miAboutAzimuth
+            // 
+            this.miAboutAzimuth.Name = "miAboutAzimuth";
+            this.miAboutAzimuth.Size = new System.Drawing.Size(155, 22);
+            this.miAboutAzimuth.Text = "About Azimuth";
+            this.miAboutAzimuth.Click += new System.EventHandler(this.btnAbout_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -1595,6 +1698,13 @@ namespace Azimuth
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
+            this.gbMapOptions.ResumeLayout(false);
+            this.gbMapOptions.PerformLayout();
+            this.gbMapLevels.ResumeLayout(false);
+            this.gbMapLevels.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.xenonSlider)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.tbFog)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.voidSlider)).EndInit();
             this.gbSystemSpread.ResumeLayout(false);
             this.gbSystemSpread.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.udTerran)).EndInit();
@@ -1605,7 +1715,6 @@ namespace Azimuth
             ((System.ComponentModel.ISupportInitialize)(this.udTeladi)).EndInit();
             this.gbRelations.ResumeLayout(false);
             this.gbRelations.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.tbFog)).EndInit();
             this.gbMusic.ResumeLayout(false);
             this.gbMusic.PerformLayout();
             this.gbMapType.ResumeLayout(false);
@@ -1616,7 +1725,10 @@ namespace Azimuth
             this.gbGalaxySize.PerformLayout();
             this.gbExpansion.ResumeLayout(false);
             this.gbExpansion.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.voidSlider)).EndInit();
+            this.gbGalaxyStart.ResumeLayout(false);
+            this.gbGalaxyStart.PerformLayout();
+            this.gbChallenge.ResumeLayout(false);
+            this.gbChallenge.PerformLayout();
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -1653,6 +1765,13 @@ namespace Azimuth
         private System.Windows.Forms.NumericUpDown udArgon;
         private System.Windows.Forms.CheckBox cbLimitedEnclaves;
         private System.Windows.Forms.CheckBox cbClusteredXenon;
+        private System.Windows.Forms.GroupBox gbGalaxyStart;
+        private System.Windows.Forms.GroupBox gbChallenge;
+        private System.Windows.Forms.RadioButton rbStandardStart;
+        private System.Windows.Forms.GroupBox gbMapOptions;
+        private System.Windows.Forms.GroupBox gbMapLevels;
+        private System.Windows.Forms.TrackBar xenonSlider;
+        private System.Windows.Forms.Label xenonLabel;
         private System.Windows.Forms.TrackBar voidSlider;
         private System.Windows.Forms.Label voidLabel;
         private System.Windows.Forms.CheckBox cbClusteredVoids;
@@ -1672,7 +1791,7 @@ namespace Azimuth
         private System.Windows.Forms.CheckBox cbUseParticles;
         private System.Windows.Forms.Label lblFog;
         private System.Windows.Forms.TrackBar tbFog;
-        private System.Windows.Forms.CheckBox cbExtraSystemStats;
+        private System.Windows.Forms.CheckBox cbSaboteurMode;
         private System.Windows.Forms.GroupBox gbRelations;
         private System.Windows.Forms.Label label39;
         private System.Windows.Forms.Label label41;
@@ -1716,8 +1835,8 @@ namespace Azimuth
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripButton btnShowTerran;
         private System.Windows.Forms.ToolStripButton btnShowSectorStats;
-        private System.Windows.Forms.CheckBox cbChaoticStart;
-        private System.Windows.Forms.CheckBox cbPeacefulStart;
+        private System.Windows.Forms.RadioButton rbChaoticStart;
+        private System.Windows.Forms.RadioButton rbPeacefulStart;
         private System.Windows.Forms.NumericUpDown udTerran;
         private System.Windows.Forms.Label lblTerranSpread;
         private System.Windows.Forms.Label lblTerran1;
@@ -1732,11 +1851,13 @@ namespace Azimuth
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Button btnHelpMain;
         private System.Windows.Forms.ToolStripButton btnLaunchWeaponsEditor;
         private System.Windows.Forms.ToolStripLabel lblWarning;
         private System.Windows.Forms.Button btnCustomMusic;
         private System.Windows.Forms.RadioButton rbCustom;
+        private System.Windows.Forms.ToolStripDropDownButton btnHelpMenu;
+        private System.Windows.Forms.ToolStripMenuItem miUserGuide;
+        private System.Windows.Forms.ToolStripMenuItem miAboutAzimuth;
         private System.Windows.Forms.ToolStripLabel lblSectorCount;
         private System.Windows.Forms.ToolStripButton btnShowSectorNames;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparatorFind;

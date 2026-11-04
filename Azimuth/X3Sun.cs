@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Stores the sector sun and its subtype, used for the Sun level control and universe export.
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml;

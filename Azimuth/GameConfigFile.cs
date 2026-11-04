@@ -1,3 +1,5 @@
+// Maps editable XML entries to their original text offsets and replaces validated values without reformatting the file.
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -37,10 +39,10 @@ namespace Azimuth
             lineStarts = starts.ToArray();
             XDocument doc = XDocument.Parse(source, LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo);
             var settings = doc.Root.Elements("page").SingleOrDefault(p => (string)p.Attribute("id") == page);
-            if (doc.Root.Name != "language" || settings == null) throw new InvalidDataException("Missing configuration page " + page);
+            if (doc.Root.Name != "language" || settings == null) throw new InvalidDataException(X3Utils.Ui("GameConfigFile.MissingConfigurationPage.Message", page));
             Entries = settings.Elements("t").Where(IsSetting).ToList();
             if (Entries.Count == 0 || Entries.GroupBy(Id).Any(group => group.Count() > 1))
-                throw new InvalidDataException("Missing settings or duplicate setting IDs on page " + page);
+                throw new InvalidDataException(X3Utils.Ui("GameConfigFile.MissingSettingsOrDuplicateSettingIDsOn.Message", page));
             string section = null;
             foreach (var node in settings.Nodes())
             {
@@ -75,7 +77,7 @@ namespace Azimuth
         {
             XmlConvert.VerifyXmlChars(value);
             if (!(Page == "9973" && Id(entry) == "71") && !IsInteger(value))
-                throw new InvalidDataException("Setting " + Id(entry) + " requires a whole number.");
+                throw new InvalidDataException(X3Utils.Ui("GameConfigFile.Setting.Message", Id(entry)));
         }
 
         public static string Description(XElement entry)
@@ -105,7 +107,7 @@ namespace Azimuth
                 if (start <= tag || end < start || source[tag] != '<' ||
                     string.CompareOrdinal(source, end, "</t>", 0, 4) != 0 ||
                     source[start - 2] == '/')
-                    throw new InvalidDataException("Unsupported XML layout for setting " + Id(entry));
+                    throw new InvalidDataException(X3Utils.Ui("GameConfigFile.UnsupportedXMLLayoutForSetting.Message", Id(entry)));
                 string escaped = value.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
                 output.Remove(start, end - start).Insert(start, escaped);
             }
@@ -120,14 +122,14 @@ namespace Azimuth
                 {
                     string expected;
                     if (values.TryGetValue(Id(t), out expected) && t.Value != expected)
-                        throw new InvalidDataException("Could not verify setting " + Id(t));
+                        throw new InvalidDataException(X3Utils.Ui("GameConfigFile.CouldNotVerifySetting.Message", Id(t)));
                 }
                 File.WriteAllText(temp, rendered, new UTF8Encoding(hasBom, true));
                 // Serialize comparison and replacement across Azimuth processes.
                 bool ownsLock;
                 using (var gate = new System.Threading.Mutex(true, @"Local\AzimuthConfigWrite", out ownsLock))
                 {
-                    if (!ownsLock) throw new IOException("Another editor is saving a configuration. Try again.");
+                    if (!ownsLock) throw new IOException(X3Utils.Ui("GameConfigFile.AnotherEditorIsSavingAConfigurationTry"));
                     try
                     {
                         using (var guard = new FileStream(PathName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete))
@@ -135,7 +137,7 @@ namespace Azimuth
                         {
                             guard.CopyTo(bytes);
                             if (!original.SequenceEqual(bytes.ToArray()))
-                                throw new IOException("The configuration changed on disk. Reopen it before saving.");
+                                throw new IOException(X3Utils.Ui("GameConfigFile.TheConfigurationChangedOnDiskReopenIt"));
                             File.Replace(temp, PathName, null);
                         }
                     }

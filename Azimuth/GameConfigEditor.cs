@@ -1,3 +1,5 @@
+﻿// Edits one installed configuration page at a time. Each row retains its original XML entry and reference default.
+
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -9,93 +11,65 @@ using Newtonsoft.Json;
 
 namespace Azimuth
 {
-    internal sealed class GameConfigEditor : Form
+    internal sealed partial class GameConfigEditor : Form
     {
         private readonly GameConfigFile file;
-        private readonly DataGridView grid = new DataGridView();
         private readonly GameConfigFile defaults;
-        private readonly TextBox details = new TextBox {
-            Dock = DockStyle.Bottom, Height = 105, Multiline = true, ReadOnly = true,
-            ScrollBars = ScrollBars.Vertical, BackColor = SystemColors.Window
-        };
-        private readonly ToolStripButton restoreSelected = new ToolStripButton("Restore selected");
         private bool saved;
 
-        public GameConfigEditor(string path, string page)
+        public GameConfigEditor()
+        {
+            InitializeComponent();
+        }
+
+        public GameConfigEditor(string path, string page) : this()
         {
             file = new GameConfigFile(path, page);
             defaults = new GameConfigFile(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ConfigDefaults", page + "-L044.xml"), page);
-            Icon = new Icon(typeof(GameConfigEditor), "Config.ico");
-            Text = "Azimuth configuration — " + path;
-            ClientSize = new Size(900, 540);
-            MinimumSize = new Size(650, 360);
-            StartPosition = FormStartPosition.CenterParent;
-            grid.Dock = DockStyle.Fill;
-            grid.AllowUserToAddRows = grid.AllowUserToDeleteRows = false;
-            grid.AllowUserToResizeRows = false;
-            grid.RowHeadersVisible = false;
-            grid.Columns.Add("ID", "ID");
-            grid.Columns.Add("Value", "Current");
-            grid.Columns.Add("Section", "Section");
-            grid.Columns.Add("Title", "Setting");
-            grid.Columns.Add("Default", "Default");
-            grid.Columns.Add("Status", "Status");
-            grid.Columns["Title"].DisplayIndex = 0;
-            grid.Columns["Value"].DisplayIndex = 1;
-            grid.Columns["Default"].DisplayIndex = 2;
-            grid.Columns["ID"].Visible = false;
-            grid.Columns["Default"].ReadOnly = grid.Columns["Status"].ReadOnly = true;
-            grid.Columns["Value"].Width = grid.Columns["Default"].Width = 78;
-            grid.Columns["Status"].Width = 160;
-            grid.MultiSelect = false;
+            Text = X3Utils.Ui("GameConfigEditor.AzimuthConfiguration.Message", path);
+            X3Utils.SetControlChildrenText(this);
+            sections.Items[0] = X3Utils.Ui("Config.AllSections");
+            foreach (DataGridViewColumn column in grid.Columns)
+                column.HeaderText = X3Utils.Ui("Config.Column." + column.Name);
+            sections.SelectedIndex = 0;
             var baseline = defaults.Entries.ToDictionary(GameConfigFile.Id, entry => entry.Value);
             string catalogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ConfigDefaults", "SettingNames.json");
             var titles = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string,string>>>(File.ReadAllText(catalogPath))[page];
-            grid.Columns[0].Width = 65;
-            grid.Columns[2].Width = 145;
-            grid.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            grid.Columns[0].ReadOnly = grid.Columns[2].ReadOnly = grid.Columns[3].ReadOnly = true;
-            var sections = new ToolStripComboBox { DropDownStyle = ComboBoxStyle.DropDownList, AutoSize = false, Width = 155 };
-            sections.Items.Add("All sections");
-            sections.SelectedIndex = 0;
             foreach (var entry in file.Entries)
             {
-                string description = GameConfigFile.Description(entry);
+                string description = GameConfigFile.Description(entry).Replace("manoeuvre", "maneuver");
                 string id = GameConfigFile.Id(entry);
                 string section = file.Sections[id];
                 if (string.IsNullOrEmpty(section)) defaults.Sections.TryGetValue(id, out section);
-                if (string.IsNullOrEmpty(section)) section = "General";
+                if (string.IsNullOrEmpty(section)) section = X3Utils.Ui("GameConfigEditor.General");
                 string heading = section;
                 section = section.Split(':')[0].Trim();
                 if (!sections.Items.Contains(section)) sections.Items.Add(section);
                 string title, defaultValue;
-                if (!titles.TryGetValue(id, out title)) title = description.Length > 0 ? description : "Setting " + id;
+                title = X3Utils.GetLocalizedText("Config.Setting." + page + "." + id);
+                if (title == null && !titles.TryGetValue(id, out title))
+                    title = description.Length > 0 ? description : X3Utils.Ui("GameConfigEditor.Setting.Message", id);
                 bool knownDefault = baseline.TryGetValue(id, out defaultValue);
-                var row = grid.Rows[grid.Rows.Add(id, entry.Value, section, title, knownDefault ? defaultValue : "—")];
+                var row = grid.AddSettingRow(id, entry.Value, section, title, knownDefault ? defaultValue : "—");
                 row.Cells["Default"].Tag = defaultValue;
                 row.Cells["Section"].Tag = heading;
                 row.Cells["Section"].ToolTipText = heading;
                 row.Tag = entry;
-                row.Cells[3].ToolTipText = description;
+                row.Cells["Title"].ToolTipText = description;
                 UpdateStatus(row);
             }
-            var bar = new ToolStrip { Dock = DockStyle.Top, GripStyle = ToolStripGripStyle.Hidden };
-            bar.Items.Add(sections);
-            bar.Items.Add("Filter");
-            var search = new ToolStripTextBox();
-            bar.Items.Add(search);
             EventHandler filter = (s, e) =>
             {
                 grid.EndEdit();
                 grid.CurrentCell = null;
                 foreach (DataGridViewRow row in grid.Rows)
-                    row.Visible = (sections.SelectedIndex == 0 || Equals(row.Cells[2].Value, sections.SelectedItem)) && new[] { Convert.ToString(row.Cells[0].Value), Convert.ToString(row.Cells[2].Value), Convert.ToString(row.Cells[3].Value), row.Cells[3].ToolTipText }.Any(term => term
+                    row.Visible = (sections.SelectedIndex == 0 || Equals(row.Cells["Section"].Value, sections.SelectedItem)) && new[] { Convert.ToString(row.Cells["ID"].Value), Convert.ToString(row.Cells["Section"].Value), Convert.ToString(row.Cells["Title"].Value), row.Cells["Title"].ToolTipText }.Any(term => term
                         .IndexOf(search.Text, StringComparison.OrdinalIgnoreCase) >= 0);
             };
             sections.SelectedIndexChanged += filter;
             search.TextChanged += filter;
-            bar.Items.Add("Load preset", null, (s, e) => Run(Import));
-            bar.Items.Add("Save preset", null, (s, e) => Run(Export));
+            loadPreset.Click += (s, e) => Run(Import);
+            savePreset.Click += (s, e) => Run(Export);
             restoreSelected.Click += (s, e) =>
             {
                 var row = grid.CurrentRow;
@@ -103,24 +77,19 @@ namespace Azimuth
                 grid.EndEdit();
                 row.Cells["Value"].Value = row.Cells["Default"].Tag;
             };
-            bar.Items.Add(restoreSelected);
-            bar.Items.Add("Restore file defaults", null, (s, e) => Run(() =>
+            restoreFile.Click += (s, e) => Run(() =>
             {
-                if (MessageBox.Show(this, "Restore all matching settings in " + file.Page +
-                    ", including hidden rows? Changes take effect when you save.", "Restore file defaults",
+                if (MessageBox.Show(this, X3Utils.Ui("GameConfigEditor.RestoreAllMatchingSettingsIn.Message", file.Page), X3Utils.Ui("GameConfigEditor.RestoreFileDefaults"),
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
                     ApplyValues(defaults.Entries.ToDictionary(GameConfigFile.Id, entry => entry.Value));
-            }));
-            bar.Items.Add("Save and close", null, (s, e) => Run(() =>
+            });
+            saveClose.Click += (s, e) => Run(() =>
             {
                 var values = Values();
                 if (IsDirty()) file.Save(values);
                 saved = true;
                 Close();
-            }));
-            Controls.Add(grid);
-            Controls.Add(details);
-            Controls.Add(bar);
+            });
             grid.SelectionChanged += (s, e) => UpdateDetails();
             grid.CellValueChanged += (s, e) =>
             {
@@ -135,18 +104,19 @@ namespace Azimuth
             {
                 grid.EndEdit();
                 if (!saved && IsDirty())
-                    e.Cancel = MessageBox.Show(this, "Discard unsaved configuration changes?", "Close editor",
+                    e.Cancel = MessageBox.Show(this, X3Utils.Ui("GameConfigEditor.DiscardUnsavedConfigurationChanges"), X3Utils.Ui("GameConfigEditor.CloseEditor"),
                         MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes;
             };
         }
 
+        // Compare against both baselines: the reference default controls Customized; the installed XML controls Unsaved.
         private static void UpdateStatus(DataGridViewRow row)
         {
             string value = Convert.ToString(row.Cells["Value"].Value);
             string baseline = row.Cells["Default"].Tag as string;
             bool edited = value != ((XElement)row.Tag).Value;
-            string comparison = baseline == null ? "No reference" : value == baseline ? "Default" : "Customized";
-            row.Cells["Status"].Value = edited ? comparison + " · Unsaved" : comparison;
+            string comparison = baseline == null ? X3Utils.Ui("GameConfigEditor.NoReference") : value == baseline ? X3Utils.Ui("GameConfigEditor.Default") : X3Utils.Ui("GameConfigEditor.Customized");
+            row.Cells["Status"].Value = edited ? comparison + X3Utils.Ui("GameConfigEditor.Unsaved") : comparison;
         }
 
         private void UpdateDetails()
@@ -155,18 +125,23 @@ namespace Azimuth
             restoreSelected.Enabled = row != null && row.Cells["Default"].Tag != null;
             if (row == null)
             {
+                detailTitle.Text = detailMeta.Text = string.Empty;
                 details.Clear();
                 return;
             }
             string heading = Convert.ToString(row.Cells["Section"].Tag);
-            details.Text = string.Join(Environment.NewLine, new[] {
-                row.Cells["Title"].Value + "  (" + file.Page + " / " + row.Cells["ID"].Value + ")",
-                heading, row.Cells["Title"].ToolTipText
-            });
+            detailTitle.Text = Convert.ToString(row.Cells["Title"].Value);
+            detailMeta.Text = row.Cells["Section"].Value + "  ·  " + file.Page + " / " + row.Cells["ID"].Value;
+            int separator = heading.IndexOf(':');
+            details.Text = row.Cells["Title"].ToolTipText;
+            if (separator >= 0)
+                details.AppendText(Environment.NewLine + Environment.NewLine + heading.Substring(separator + 1).Trim());
+            details.Select(0, 0);
+            details.ScrollToCaret();
         }
 
         private bool IsDirty() => grid.Rows.Cast<DataGridViewRow>().Any(row =>
-            Convert.ToString(row.Cells[1].Value) != ((XElement)row.Tag).Value);
+            Convert.ToString(row.Cells["Value"].Value) != ((XElement)row.Tag).Value);
 
         private Dictionary<string, string> Values()
         {
@@ -175,7 +150,7 @@ namespace Azimuth
             foreach (DataGridViewRow row in grid.Rows)
             {
                 var entry = (XElement)row.Tag;
-                string value = Convert.ToString(row.Cells[1].Value);
+                string value = Convert.ToString(row.Cells["Value"].Value);
                 file.Validate(entry, value);
                 values.Add(GameConfigFile.Id(entry), value);
             }
@@ -184,7 +159,7 @@ namespace Azimuth
 
         private void Export()
         {
-            using (var dialog = new SaveFileDialog { Filter = "Azimuth preset|*.json", FileName = file.Page + "-preset.json" })
+            using (var dialog = new SaveFileDialog { Filter = X3Utils.Ui("GameConfigEditor.AzimuthPresetJson"), FileName = file.Page + "-preset.json" })
             {
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
                 var preset = new Dictionary<string, Dictionary<string, string>> { { file.Page, Values() } };
@@ -194,46 +169,33 @@ namespace Azimuth
 
         private void Import()
         {
-            using (var dialog = new OpenFileDialog { Title = "Load Azimuth preset", Filter = "Azimuth preset|*.json" })
+            using (var dialog = new OpenFileDialog { Title = X3Utils.Ui("GameConfigEditor.LoadAzimuthPreset"), Filter = X3Utils.Ui("GameConfigEditor.AzimuthPresetJson") })
             {
                 if (dialog.ShowDialog(this) != DialogResult.OK) return;
                 var preset = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(File.ReadAllText(dialog.FileName));
                 Dictionary<string, string> values;
                 if (preset == null || !preset.TryGetValue(file.Page, out values) || values == null)
-                    throw new InvalidDataException("This preset does not contain page " + file.Page);
+                    throw new InvalidDataException(X3Utils.Ui("GameConfigEditor.ThisPresetDoesNotContainPage.Message", file.Page));
                 ApplyValues(values);
             }
         }
 
+        // Validate every matching setting before changing any row, including settings hidden by the active filter.
         private void ApplyValues(Dictionary<string, string> values)
         {
-            var matching = grid.Rows.Cast<DataGridViewRow>().Where(row => values.ContainsKey((string)row.Cells[0].Value)).ToList();
-            if (matching.Count == 0) throw new InvalidDataException("No matching setting IDs.");
+            var matching = grid.Rows.Cast<DataGridViewRow>().Where(row => values.ContainsKey((string)row.Cells["ID"].Value)).ToList();
+            if (matching.Count == 0) throw new InvalidDataException(X3Utils.Ui("GameConfigEditor.NoMatchingSettingIDs"));
             foreach (var row in matching)
-                file.Validate((XElement)row.Tag, values[(string)row.Cells[0].Value]);
+                file.Validate((XElement)row.Tag, values[(string)row.Cells["ID"].Value]);
             grid.EndEdit();
             foreach (var row in matching)
-                row.Cells[1].Value = values[(string)row.Cells[0].Value];
+                row.Cells["Value"].Value = values[(string)row.Cells["ID"].Value];
         }
 
         private void Run(Action action)
         {
             try { action(); }
-            catch (Exception ex) { MessageBox.Show(this, ex.Message, "Configuration editor"); }
-        }
-
-        private void InitializeComponent()
-        {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(GameConfigEditor));
-            this.SuspendLayout();
-            // 
-            // GameConfigEditor
-            // 
-            this.ClientSize = new System.Drawing.Size(284, 261);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Name = "GameConfigEditor";
-            this.ResumeLayout(false);
-
+            catch (Exception ex) { MessageBox.Show(this, ex.Message, X3Utils.Ui("GameConfigEditor.ConfigurationEditor")); }
         }
     }
 }

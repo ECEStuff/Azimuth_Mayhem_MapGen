@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Builds territories, voids, Xenon space, gates and economic statistics for the in-memory galaxy.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -16,18 +18,25 @@ namespace Azimuth
         private X3Sector m_FirstRaceSectorCreated;
         private int m_GlobID;
         private List<List<X3Sector>> m_Globs;
-        private bool m_Extrastats;
         private struct Match { public X3Sector Source; public X3Sector Dest; public int Distance; };
 
         public delegate void Message(string msg);
         public event Message OnMessage;
 
 
+        private static int ReducedStat(int value)
+        {
+            // Round 80% to the nearest whole stat.
+            return (4 * value + 2) / 5;
+        }
+
         public void GenerateSystemStats()
         {
-            Msg("Generating new attributes for each sector.");
+            Msg(X3Utils.Ui("Generator.GeneratingNewAttributesForEachSector"));
 
-            m_Extrastats = X3Galaxy.Instance.GalaxyCreationSettings.ExtraSystemStats;
+            var settings = X3Galaxy.Instance.GalaxyCreationSettings;
+            // New rolls replace any boosted values imported from a legacy galaxy.
+            settings.ExtraSystemStats = false;
             
 
             //<t id="10000101">5</t>            // Dejure Owner:   20% chance galaxy wide and always in same race's system.  Some races up to 5% dejure, while others at 1%.  odd.
@@ -35,7 +44,7 @@ namespace Azimuth
             //<t id="10020101">48</t>           // Xenons:         Abnormal signals.  0-60.   30% of these are at 0. The other 70% average 32% signal level.
             //<t id="10030101">0</t>            // Terrans:        20% chance galaxy wide.
             //<t id="10040101">99</t>           // research:       40-100, average 70
-            //<t id="10050101">9</t>            // support         Number of stations supported in system.  8-15, Average 9.
+            //<t id="10050101">10</t>           // support         Number of stations supported in system. 8-15, expected average 10.
             //<t id="10060101">107</t>          // manpower        Population of system (60-130, average 95)
             //<t id="10070101">-1</t>           // cluster         Not Used.  Set to -1 to duplicate old program.
             //<t id="10080101">3 </t >          // production      Type of Food produced.  See EFood above for enumeration.
@@ -65,41 +74,49 @@ namespace Azimuth
             target.ForEach(item => item.SectorCreationData.Terrans = 1);
 
 
-            // Research from 40-100 on all sectors
-            if (m_Extrastats)
-            {
-                allSectors.ForEach(item => item.SectorCreationData.Research = m_Rand.Next(60, 151));
-            }
-            else
-            {
-                allSectors.ForEach(item => item.SectorCreationData.Research = m_Rand.Next(40, 101));
-            }
-
-            // Support levels 8-15, Average 9. So this is an odd distribution.  25% are at 8.  33% are at 9.  30% are at 10.  0% are at 11.  3% are 12 to 13.  6% are above 13.  
-            int extrastations = m_Extrastats ? 3 : 0;
+            // Each full block totals 200. Its three high rolls total 39;
+            // remaining sectors outside a full block receive 10 each.
             allSectors.Shuffle();
-            int p25 = (int)(allSectors.Count * 0.25);
-            int p30 = (int)(allSectors.Count * 0.30);
-            int p15 = (int)(allSectors.Count * 0.15);
-            target = allSectors.Where(item => item.SectorCreationData.Support == 0).Take(p25).ToList();
-            target.ForEach(item => item.SectorCreationData.Support = 8 + extrastations);
-            target = allSectors.Where(item => item.SectorCreationData.Support == 0).Take(p30).ToList();
-            target.ForEach(item => item.SectorCreationData.Support = 9 + extrastations);
-            target = allSectors.Where(item => item.SectorCreationData.Support == 0).Take(p30).ToList();
-            target.ForEach(item => item.SectorCreationData.Support = 10 + extrastations);
-            target = allSectors.Where(item => item.SectorCreationData.Support == 0).Take(p15).ToList();
-            target.ForEach(item => item.SectorCreationData.Support = m_Rand.Next(11, 16) + extrastations);
-            target = allSectors.Where(item => item.SectorCreationData.Support == 0).ToList();
-            target.ForEach(item => item.SectorCreationData.Support = 9);        // If any remain.. set them to 9.
-
-            // Manpower
-            if (m_Extrastats)
+            int fullBlockSectors = allSectors.Count / 20 * 20;
+            int spread = 0;
+            for (int i = 0; i < allSectors.Count; i++)
             {
-                allSectors.ForEach(item => item.SectorCreationData.Manpower = m_Rand.Next(85, 181));
+                var data = allSectors[i].SectorCreationData;
+                int slot = i % 20;
+                data.Support = 10;
+                if (i < fullBlockSectors)
+                {
+                    if (slot < 2) data.Support = 8;
+                    else if (slot < 7) data.Support = 9;
+                    else if (slot == 7)
+                    {
+                        spread = m_Rand.Next(3);
+                        data.Support = 13 - spread;
+                    }
+                    else if (slot == 8) data.Support = 13;
+                    else if (slot == 9) data.Support = 13 + spread;
+                }
+                data.Research = m_Rand.Next(40, 101);
+                data.Manpower = m_Rand.Next(60, 131);
+                if (settings.SaboteurMode)
+                {
+                    data.Research = ReducedStat(data.Research);
+                    data.Manpower = ReducedStat(data.Manpower);
+                }
             }
-            else
+
+            if (settings.SaboteurMode)
             {
-                allSectors.ForEach(item => item.SectorCreationData.Manpower = m_Rand.Next(60, 131));
+                // Round down first, then award the remaining whole stations to the
+                // largest fractional shares. Equal shares follow the shuffled order.
+                var roundingOrder = allSectors.OrderByDescending(
+                    sector => sector.SectorCreationData.Support * 4 % 5).ToList();
+                foreach (var sector in allSectors)
+                    sector.SectorCreationData.Support = sector.SectorCreationData.Support * 4 / 5;
+
+                int remaining = 8 * allSectors.Count - allSectors.Sum(sector => sector.SectorCreationData.Support);
+                foreach (var sector in roundingOrder.Take(remaining))
+                    sector.SectorCreationData.Support++;
             }
 
             // Production.
@@ -208,7 +225,7 @@ namespace Azimuth
 
             // Mark Remaining space as unknown.
             int unknown = X3Galaxy.Instance.Sectors.Count(item => !item.IsInitialized);
-            Msg($"Generated {unknown} Unknown sectors.");
+            Msg(X3Utils.Ui("Generator.GeneratedUnknownSectors", unknown));
             X3Galaxy.Instance.Sectors.Where(item => !item.IsInitialized).ToList().ForEach(i => i.MarkSectorRace(ERace.Unknown));
 
             // remove any empty/void sectors.
@@ -226,7 +243,7 @@ namespace Azimuth
             }
 
             int sectorCount = X3Galaxy.Instance.Sectors.Count;
-            Msg($"Created {sectorCount} total sectors.");
+            Msg(X3Utils.Ui("Generator.CreatedTotalSectors", sectorCount));
         }
 
 
@@ -250,7 +267,7 @@ namespace Azimuth
             X3Galaxy.Instance.ClearAllGates();
 
             // 1. Create gates to every possible direct neighbor.
-            Msg("Creating gates.");
+            Msg(X3Utils.Ui("Generator.CreatingGates"));
             for (int x = 0; x < X3Galaxy.Instance.MaxX; x++)
             {
                 for (int y = 0; y < X3Galaxy.Instance.MaxY; y++)
@@ -282,12 +299,12 @@ namespace Azimuth
             // 3.
             if (!X3Galaxy.Instance.GalaxyCreationSettings.LimitedEnclaves)
             {
-                Msg("Creating additional enclaves. Removing gates.");
+                Msg(X3Utils.Ui("Generator.CreatingAdditionalEnclavesRemovingGates"));
                 CreateMoreEnclaves();
             }
 
             // An individual sector is sitting there with no gates.
-            Msg("Connecting orphaned sectors.");
+            Msg(X3Utils.Ui("Generator.ConnectingOrphanedSectors"));
             ConnectOrphanedSectors();
 
             // Everything up to now has been used to create groupings of systems and give them group ID's.  Each group being a Glob.
@@ -298,7 +315,7 @@ namespace Azimuth
             CombineGlobs();
 
             int gateCount = X3Galaxy.Instance.Sectors.Sum(item => item.Gates.Count);
-            Msg($"Created {gateCount} gates.");
+            Msg(X3Utils.Ui("Generator.CreatedGates", gateCount));
         }
 
         /// <summary>
@@ -467,7 +484,7 @@ namespace Azimuth
         {
             if (m_Globs.Count == 1)
             {
-                throw new Exception("CombineGlobs was given 1 glob to combine");
+                throw new Exception(X3Utils.Ui("Generator.CombineGlobsWasGivenGlobToCombine"));
             }
             int homeId = combinelist[0];
             combinelist.Remove(homeId);
@@ -585,7 +602,7 @@ namespace Azimuth
                     }
                 }
             }
-            Msg($"Connected {numorphaned} Orphaned Sectors.");
+            Msg(X3Utils.Ui("Generator.ConnectedOrphanedSectors", numorphaned));
         }
 
 
@@ -612,7 +629,7 @@ namespace Azimuth
                     }
                 }
             }
-            Msg($"Removed {numremoved} gates to produce more Enclaves.");
+            Msg(X3Utils.Ui("Generator.RemovedGatesToProduceMoreEnclaves", numremoved));
         }
 
         /// <summary>
@@ -711,7 +728,7 @@ namespace Azimuth
             }
             m_AvgSystemsPerRace =  totalsystemsAvailable / 6;   // number of systems each race would get if all left at equal spreads.
             Debug.WriteLine($"Average sectors per race: {m_AvgSystemsPerRace}");
-            Msg($"Average sectors per race: { m_AvgSystemsPerRace}");
+            Msg(X3Utils.Ui("Generator.AverageSectorsPerRace", m_AvgSystemsPerRace));
 
             GenerateRaceSector(ERace.Argon, X3Galaxy.Instance.GalaxyCreationSettings.ArgonSpread);
             GenerateRaceSector(ERace.Boron, X3Galaxy.Instance.GalaxyCreationSettings.BoronSpread);
@@ -752,7 +769,7 @@ namespace Azimuth
             {
                 created4 = CreateGlob(EQuadrant.None, race, remaining);
             }
-            Msg($"{race} - {created1 + created2 + created3 + created4} sectors created");
+            Msg(X3Utils.Ui("Generator.SectorsCreated", race, created1 + created2 + created3 + created4));
         }
 
 
@@ -825,24 +842,9 @@ namespace Azimuth
             bool isChaotic = X3Galaxy.Instance.GalaxyCreationSettings.ChaoticStart;
             X3Sector sector;
 
-            // xenon space override
-            int xenonpct = 3;
-            string xenonpercentsetting = X3Utils.GetSetting("XenonPercent");    // override the standard values.  Only usable overrides are 4-10
-            int xps;
-            if (int.TryParse(xenonpercentsetting, out xps))
-            {
-                if (xps > 3 && xps < 11)
-                {
-                    xenonpct = xps;
-                }
-            }
-            if (isChaotic)
-            {
-                xenonpct = 50;
-            }
-
-
             var galaxy = X3Galaxy.Instance;
+            int xenonpct = isChaotic ? 50 : GalaxySettings.ResolveXenonPercent(
+                galaxy.GalaxyCreationSettings.XenonPercent, GalaxySettings.MinXenonPercent);
             int cells = galaxy.MaxX * galaxy.MaxY;
             int numSectors = isXenon ? cells * xenonpct / 100 : cells - galaxy.GalaxyCreationSettings.SectorTarget(cells, voidpct);
 
@@ -859,8 +861,8 @@ namespace Azimuth
                 }
             }
 
-            string action = isXenon ? "Xenon" : "Void (gaps)";
-            Msg($"Generating {numSectors} {action} sectors.");
+            string action = isXenon ? X3Utils.Ui("Generator.Xenon") : X3Utils.Ui("Generator.VoidGaps");
+            Msg(X3Utils.Ui("Generator.GeneratingSectors", numSectors, action));
 
             for (int x = 0; x < numSectors; x++)
             {
@@ -873,7 +875,7 @@ namespace Azimuth
                 }
 
                 sector = X3Galaxy.Instance.GetRandomUninitializedSector();
-                if (sector == null) throw new Exception("Unable to place sector. No unitialized sectors left.");
+                if (sector == null) throw new Exception(X3Utils.Ui("Generator.UnableToPlaceSectorNoUnitializedSectors"));
 
                 bool clustered = isXenon ? X3Galaxy.Instance.GalaxyCreationSettings.ClusteredXenons : X3Galaxy.Instance.GalaxyCreationSettings.ClusteredVoids;
                 if (clustered)

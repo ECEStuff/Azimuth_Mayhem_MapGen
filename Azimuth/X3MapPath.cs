@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Checks reachability by traversing gate destinations, including gates spanning more than one grid cell.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -91,7 +93,7 @@ namespace Azimuth
             var proposedLocations = new List<Location>();
 
             X3Sector source = X3Galaxy.Instance.GetSectorAt(x, y);
-            if (source == null) throw new Exception($"GetWalkableAdjacentSquares() - sector at {x}:{y} does not exist");
+            if (source == null) throw new Exception(X3Utils.Ui("X3MapPath.GetWalkableAdjacentSquaresSectorAtDoesNotExist", x, y));
 
             // return list of connected sectors. Note, these are not always 1 jump away.
             foreach(X3Gate gate in source.Gates)

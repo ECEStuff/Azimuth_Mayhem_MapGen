@@ -1,4 +1,6 @@
-﻿namespace Azimuth
+﻿// Serialized galaxy expansion presets. Origin starts at -1; Average is 1.
+
+namespace Azimuth
 {
     public enum EGalaxyExpansion
     {

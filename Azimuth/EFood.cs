@@ -1,4 +1,6 @@
-﻿namespace Azimuth
+﻿// Food identifiers used by sector production and consumption. X3 reads these integer values from page 9970.
+
+namespace Azimuth
 {
     public enum EFood
     {

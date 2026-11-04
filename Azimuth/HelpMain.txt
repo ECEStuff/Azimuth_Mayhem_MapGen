@@ -1,29 +1,20 @@
-﻿1. FIRST, the program should have asked you for your Mayhem 3 folders.  Please ensure these are correct.
-	If they are not set and shown correctly at the top left of your main screen, click on the fields to Set them.
+﻿Azimuth User Guide
 
-	Normally, these look like this, but you'll need to ensure they match YOUR installation:
-	Mayhem 3 Root Folder		-	C:\Mayhem\
-	Mayhem 3 Save Game Folder	-	C:\Users\mylogin\Documents\Egosoft\X3AP\save\
+Getting started
+Choose your Mayhem root folder and X3 save folder on the left. Click either path to change it. Back up existing saves before switching galaxies for the first time.
 
-2. SECOND, click the "Generate Systems" Button.
-	This generates a map according to all the settings you have shown on this screen.
-	If you don't like what it generated, change some settings and click it again and again.
-	You can click icons at the top of the form to turn ON/OFF the display of system Statistics and Terran Memory sectors.
+Generate a galaxy
+Choose a galaxy size, shape and expansion stage. Void sets the target percentage of empty cells within the selected size limits. Xenon sets the target percentage of all grid cells for a standard start. Peaceful Start places one Xenon sector and Chaotic Start targets 50%. Click Generate Systems to build the map.
 
-3. If you like the Map as it is, but don't like the ways the Gates are connecting each sector,
-	click "Re-Generate Gates" over and over until you do like it.  Alternately, you can
-	Double-Click on a system in the map, and from there, you can add or remove gates connected to it.
+Edit the map
+Double-click an occupied sector to edit its stats or gates. Double-click a void to add a sector. Right-click a tile to add or remove a sector within the size limits. New sectors start without gates. Check the network warnings after editing, or use Regenerate Gates to rebuild connections.
+Regenerate Stats rerolls sector attributes across the galaxy. Saboteur Mode reduces population, station support and research by 20%. Use Find to locate a sector and Export PNG to save an image of the current map.
 
-4. If you like everything, but don't like the system Statistics generated you can randomize them all again
-	without changing the map layout by clicking the "Re-Generate Stats" button.  Alternately, you can
-	double click on a system in the map and change most of the system stats.
+Save and play
+Open Save/Load Galaxy, enter a name and click Save. Load reopens a saved galaxy in the editor. Set Active installs the selected galaxy for X3. If Azimuth cannot identify your existing save slots, select the galaxy those saves belong to and click Identify Current Saves before switching.
 
-5. Finally, once you like everything, click the "Save/Load Galaxy" button.
-	Here, you should do 2 things:
-	1. SAVE your map. Give it a name and save it.
-	2. Make that map ACTIVE.  This actually copies the map files to your working X3 game folder and now a new game uses it!
-
-
+Edit game settings
+Open Config and choose page 9972 or 9973. Select a section or filter by text, then edit the Current value. Restore Selected uses the reference default for one setting. Save and Close writes the installed configuration file. Save Preset writes a separate JSON file.
 
 Ships and Weapons Editor
 -------------------------
@@ -43,8 +34,8 @@ of the "X3 Editor 2".
 Note:  If something doesn't appear to be working, check your /addon/types/ folder and ensure there are no TShips.pck or TBullets.pck files there. 
 	If you find any, either delete or rename them to .temp or something else.
 
-This editor works by allowing you to graphically edit the Default TShips.txt and TBullets.txt files. (These were extracted from Mayhem 3's 10.cat file.)
-Once these files are adjusted by this editor, it writes them out to the /addon/types/ folder in your Mayhem 3 install folder, where
+This editor works by allowing you to graphically edit the default TShips.txt and TBullets.txt files. Note: these were extracted from Mayhem's 10.cat file.
+Once these files are adjusted by this editor, it writes them out to the /addon/types/ folder in your Mayhem install folder, where
 these settings will automatically Override the default values found in the 10.cat file in the game.  You can certainly modify these values
 by hand, but they are a bit hard to parse and read.  The editor does this for you, and also allows the important values to be randomized globally
 or by Race.

@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Shared collection and numeric helpers, including the in-place shuffle used for sector and name allocation.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

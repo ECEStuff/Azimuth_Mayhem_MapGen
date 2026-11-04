@@ -1,4 +1,6 @@
-﻿namespace Azimuth
+﻿// Maps X3 universe XML object type numbers to the sector objects Azimuth can read and write.
+
+namespace Azimuth
 {
     public enum ENodeType
     {

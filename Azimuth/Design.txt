@@ -260,8 +260,8 @@ Swap token from template file:  {galaxyname}
 
 2. Sector description
 	List of all sector names along with their long description.  Length varies depending on size of galaxy generated.
-	a. coordinates
-	b. Dejure owner status
+	a. Coordinates
+	b. De Jure owner status
 	c. Company name if any
 	d. Abnormal Signals
 	e. Terran memory

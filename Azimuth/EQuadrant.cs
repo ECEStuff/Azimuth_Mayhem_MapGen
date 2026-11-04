@@ -1,4 +1,6 @@
-﻿namespace Azimuth
+﻿// Identifies placement regions used to distribute starting territories across the grid.
+
+namespace Azimuth
 {
     public enum EQuadrant
     {

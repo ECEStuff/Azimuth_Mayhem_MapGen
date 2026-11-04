@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Orchestrates map generation, interaction and preview. Generation settings are captured separately from display toggles.
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -43,10 +45,16 @@ namespace Azimuth
 
         private X3Sector m_HoveredSector;
 
+        private int configuredXenonPercent = GalaxySettings.MinXenonPercent;
+
         public Form1()
         {
             InitializeComponent();
             voidSlider.ValueChanged += UpdateVoidPreview;
+            xenonSlider.ValueChanged += UpdateXenonPreview;
+            rbStandardStart.CheckedChanged += GalaxyStartChanged;
+            rbPeacefulStart.CheckedChanged += GalaxyStartChanged;
+            rbChaoticStart.CheckedChanged += GalaxyStartChanged;
             foreach (var option in new[] { rbSmallGalaxy, rbMediumGalaxy, rbLargeGalaxy, rbSquareMap, rbRectMap })
                 option.CheckedChanged += UpdateVoidPreview;
             pictureBox1.MouseClick += MapCellMouseClick;
@@ -214,6 +222,7 @@ namespace Azimuth
             lblFindStatus.ToolTipText = m_SelectedSearchSector.SectorName;
         }
 
+        // Render to a separate bitmap so export dimensions cannot change the on-screen click rectangles.
         private void ExportGalaxyPng()
         {
             if (X3Galaxy.Instance.Sectors.Count == 0)
@@ -221,8 +230,8 @@ namespace Azimuth
 
             using (SaveFileDialog dialog = new SaveFileDialog())
             {
-                dialog.Title = "Export galaxy map";
-                dialog.Filter = "PNG images (*.png)|*.png";
+                dialog.Title = X3Utils.Ui("Form1.ExportGalaxyMap");
+                dialog.Filter = X3Utils.Ui("Form1.PNGImagesPngPng");
                 dialog.DefaultExt = "png";
                 dialog.AddExtension = true;
                 dialog.OverwritePrompt = true;
@@ -244,11 +253,11 @@ namespace Azimuth
                         RenderGalaxy(graphics, bitmap.Size, false, false);
                         bitmap.Save(dialog.FileName, ImageFormat.Png);
                     }
-                    Message("Exported galaxy map: " + dialog.FileName);
+                    Message(X3Utils.Ui("Form1.ExportedGalaxyMap.Message", dialog.FileName));
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(this, ex.Message, "PNG export failed",
+                    MessageBox.Show(this, ex.Message, X3Utils.Ui("Form1.PNGExportFailed"),
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -272,14 +281,10 @@ namespace Azimuth
             if (m_CurSaveGameFolder == string.Empty)
             {
                 m_CurSaveGameFolder = X3Utils.GetSetting("X3Save");
-                if (m_CurSaveGameFolder.Trim() == string.Empty)
-                {
-                    m_CurSaveGameFolder = "Click HERE to set folder.";
-                }
 #if DEBUG
                 lblX3SaveGameFolder.Text = "Done";
 #else
-                lblX3SaveGameFolder.Text = m_CurSaveGameFolder;
+                lblX3SaveGameFolder.Text = string.IsNullOrWhiteSpace(m_CurSaveGameFolder) ? X3Utils.Ui("Form1.SetFolder") : m_CurSaveGameFolder;
 #endif
             }
 
@@ -290,12 +295,8 @@ namespace Azimuth
                 m_CurX3RootFolder = @"C:\Mayhem 3\";
                 X3Utils.SaveSetting("X3Root", m_CurX3RootFolder);
 #endif
-                if (m_CurX3RootFolder.Trim() == string.Empty)
-                {
-                    m_CurX3RootFolder = "Click HERE to set folder.";
-                }
 
-                lblX3RootFolder.Text = m_CurX3RootFolder;
+                lblX3RootFolder.Text = string.IsNullOrWhiteSpace(m_CurX3RootFolder) ? X3Utils.Ui("Form1.SetFolder") : m_CurX3RootFolder;
             }
 
             UpdateActiveGalaxyName();
@@ -330,15 +331,27 @@ namespace Azimuth
             btnShowSectorNames.Checked = m_ShowNames == 1;
 
             string ver = X3Utils.GetVersion();
-            this.Text = $"Azimuth v{ver} by herobetty | Based on ZMap by Mordan (Hairless-Ape)";
+            this.Text = X3Utils.Ui("Form1.AzimuthVByHerobettyBasedOnZMap", ver);
 
             SetupLocalization();
             int configured;
             if (int.TryParse(X3Utils.GetSetting("EmptySpacePercent"), out configured) && configured >= 15 && configured <= 50)
                 voidSlider.Value = configured;
+            X3Utils.EnsureSetting("XenonPercent", "");
+            if (int.TryParse(X3Utils.GetSetting("XenonPercent"), out configured))
+                configuredXenonPercent = GalaxySettings.ResolveXenonPercent(configured, GalaxySettings.MinXenonPercent);
+            xenonSlider.Value = configuredXenonPercent;
+            UpdateXenonPreview(this, EventArgs.Empty);
             UpdateVoidPreview(this, EventArgs.Empty);
             UpdateRelationsGrid();
             EnableButtons();
+        }
+
+        private void UpdateXenonPreview(object sender, EventArgs e)
+        {
+            xenonSlider.Enabled = !rbPeacefulStart.Checked && !rbChaoticStart.Checked;
+            xenonLabel.Text = rbPeacefulStart.Checked ? X3Utils.Ui("Form1.XenonOneSector") :
+                X3Utils.Ui("Form1.XenonPercent", rbChaoticStart.Checked ? 50 : xenonSlider.Value);
         }
 
         private void UpdateVoidPreview(object sender, EventArgs e)
@@ -357,15 +370,7 @@ namespace Azimuth
 
         private void SetupLocalization()
         {
-            if (File.Exists("Localizations.json"))
-            {
-                string locz = File.ReadAllText("Localizations.json");
-                X3Galaxy.Instance.LocalizationDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(locz);
-                // Set this form's child controls to the dictionary values, and recurse into all subcontainers as well.
-                X3Utils.SetControlChildrenText(this);
-            }
-            else
-                throw new Exception("Localization file not found.");
+            X3Utils.SetControlChildrenText(this);
 
             toolTip1.SetToolTip(btnGenerateSystems, X3Utils.GetLocalizedText("{Tips.BtnGenerateSystems}"));
             toolTip1.SetToolTip(btnGenerateGates, X3Utils.GetLocalizedText("{Tips.BtnGenerateGates}"));
@@ -374,9 +379,12 @@ namespace Azimuth
             toolTip1.SetToolTip(lblMayhemSave, X3Utils.GetLocalizedText("{Tips.BtnX3Save}"));
             toolTip1.SetToolTip(cbClusteredVoids, X3Utils.GetLocalizedText("{Tips.CbClusteredVoids}"));
             toolTip1.SetToolTip(cbClusteredXenon, X3Utils.GetLocalizedText("{Tips.CbClusteredXenon}"));
+            string xenonTip = X3Utils.Ui("Form1.XenonPercentTip");
+            toolTip1.SetToolTip(xenonSlider, xenonTip);
+            toolTip1.SetToolTip(xenonLabel, xenonTip);
             toolTip1.SetToolTip(voidSlider, X3Utils.GetLocalizedText("{Tips.VoidSlider}") ?? "Target percentage of empty cells. The sector count stays within the selected galaxy size limits.");
             toolTip1.SetToolTip(cbLimitedEnclaves, X3Utils.GetLocalizedText("{Tips.CbLimitedEnclaves}"));
-            toolTip1.SetToolTip(cbExtraSystemStats, X3Utils.GetLocalizedText("{Tips.CbExtraSystemStats}"));
+            toolTip1.SetToolTip(cbSaboteurMode, X3Utils.GetLocalizedText("{Tips.CbSaboteurMode}"));
             toolTip1.SetToolTip(cbUseParticles, X3Utils.GetLocalizedText("{Tips.CbParticles}"));
             toolTip1.SetToolTip(tbFog, X3Utils.GetLocalizedText("{Tips.SlFog}"));
             toolTip1.SetToolTip(gbExpansion, X3Utils.GetLocalizedText("{Tips.GbExpansion}"));
@@ -386,8 +394,8 @@ namespace Azimuth
             toolTip1.SetToolTip(gbMapType, X3Utils.GetLocalizedText("{Tips.GbMapType}"));
             toolTip1.SetToolTip(gbMusic, X3Utils.GetLocalizedText("{Tips.GbMusic}"));
             toolTip1.SetToolTip(gbRelations, X3Utils.GetLocalizedText("{Tips.GbRelations}"));
-            toolTip1.SetToolTip(cbChaoticStart, X3Utils.GetLocalizedText("{Tips.cbChaotic}"));
-            toolTip1.SetToolTip(cbPeacefulStart, X3Utils.GetLocalizedText("{Tips.cbPeaceful}"));
+            toolTip1.SetToolTip(rbChaoticStart, X3Utils.GetLocalizedText("{Tips.cbChaotic}"));
+            toolTip1.SetToolTip(rbPeacefulStart, X3Utils.GetLocalizedText("{Tips.cbPeaceful}"));
 
             ToolStripItem[] toolbarItems =
             {
@@ -443,15 +451,15 @@ namespace Azimuth
         internal static bool ConfirmDiscard(IWin32Window owner, string action)
         {
             return !X3Galaxy.Instance.HasUnsavedChanges ||
-                MessageBox.Show(owner, $"This galaxy has unsaved changes. Continue and {action}?",
-                    "Unsaved galaxy", MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
+                MessageBox.Show(owner, X3Utils.Ui("Form1.ThisGalaxyHasUnsavedChangesContinueAnd", action),
+                    X3Utils.Ui("Form1.UnsavedGalaxy"), MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
                     MessageBoxDefaultButton.Button2) == DialogResult.Yes;
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
-            if (!e.Cancel && !ConfirmDiscard(this, "close Azimuth"))
+            if (!e.Cancel && !ConfirmDiscard(this, X3Utils.Ui("Form1.CloseAzimuth")))
                 e.Cancel = true;
         }
 
@@ -491,9 +499,9 @@ namespace Azimuth
             var tracks = files.Select(file => file.Trim()).Where(X3Utils.IsSectorMusicTrack)
                 .GroupBy(file => int.Parse(file)).Select(group => group.First()).ToList();
             if (tracks.Count == 0)
-                throw new InvalidDataException("No eligible sector tracks in the selected music source. Use ID 12 or IDs 15 and above.");
+                throw new InvalidDataException(X3Utils.Ui("Form1.NoEligibleSectorTracksInTheSelected"));
             if (rbCustom.Checked && tracks.Count < 10)
-                throw new InvalidDataException("Custom Music requires at least 10 distinct eligible soundtrack IDs.");
+                throw new InvalidDataException(X3Utils.Ui("Form1.CustomMusicRequiresAtLeastDistinctEligible"));
             return tracks;
         }
 
@@ -536,8 +544,8 @@ namespace Azimuth
             var galaxy = X3Galaxy.Instance;
             if (galaxy.HasUnsavedManualEdits &&
                 MessageBox.Show(this,
-                    "Generate a new galaxy and discard your unsaved edits to this one?",
-                    "Replace galaxy",
+                    X3Utils.Ui("Form1.GenerateANewGalaxyAndDiscardYour"),
+                    X3Utils.Ui("Form1.ReplaceGalaxy"),
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Warning,
                     MessageBoxDefaultButton.Button2) != DialogResult.Yes)
@@ -548,6 +556,7 @@ namespace Azimuth
             X3Galaxy.Instance.HasUnsavedChanges = true;
             X3Galaxy.Instance.GalaxyCreationSettings.UseParticles = cbUseParticles.Checked;
             X3Galaxy.Instance.GalaxyCreationSettings.ClusteredVoids = cbClusteredVoids.Checked;
+            galaxy.GalaxyCreationSettings.XenonPercent = xenonSlider.Value;
             galaxy.GalaxyCreationSettings.VoidPercent = voidSlider.Value;
             galaxy.GalaxyCreationSettings.ShatteredGalaxy = voidSlider.Value >= 35;
             X3Galaxy.Instance.GalaxyCreationSettings.ClusteredXenons = cbClusteredXenon.Checked;
@@ -557,9 +566,9 @@ namespace Azimuth
             X3Galaxy.Instance.GalaxyCreationSettings.ParanidSpread = (int)udParanid.Value;
             X3Galaxy.Instance.GalaxyCreationSettings.TeladiSpread = (int)udTeladi.Value;
             X3Galaxy.Instance.GalaxyCreationSettings.TerranSpread = (int)udTerran.Value;
-            X3Galaxy.Instance.GalaxyCreationSettings.ExtraSystemStats = cbExtraSystemStats.Checked;
-            X3Galaxy.Instance.GalaxyCreationSettings.PeacefulStart = cbPeacefulStart.Checked;
-            X3Galaxy.Instance.GalaxyCreationSettings.ChaoticStart = cbChaoticStart.Checked;
+            X3Galaxy.Instance.GalaxyCreationSettings.SaboteurMode = cbSaboteurMode.Checked;
+            X3Galaxy.Instance.GalaxyCreationSettings.PeacefulStart = rbPeacefulStart.Checked;
+            X3Galaxy.Instance.GalaxyCreationSettings.ChaoticStart = rbChaoticStart.Checked;
 
             if (rbOrigin.Checked) X3Galaxy.Instance.GalaxyCreationSettings.GalaxyExpansion = EGalaxyExpansion.Origin;
             if (rbEarly.Checked) X3Galaxy.Instance.GalaxyCreationSettings.GalaxyExpansion = EGalaxyExpansion.Early;
@@ -679,7 +688,7 @@ namespace Azimuth
 
             lblSectorCount.ToolTipText = count > 0
                 ? Localize("{Tips.SectorCount}",
-                    "Right-click a map cell to add or remove a sector. Allowed: {0}–{1}.",
+                    "Double-click a void to add a sector, or right-click a cell to add or remove one. Allowed: {0}–{1}.",
                     X3Galaxy.Instance.MinimumSectorCount, X3Galaxy.Instance.MaximumSectorCount)
                 : string.Empty;
 
@@ -705,11 +714,8 @@ namespace Azimuth
             List<string> s1 = File.ReadAllLines(stream1).ToList();
             List<string> s2 = File.ReadAllLines(stream2).ToList();
 
-            s1.RemoveAll(item => item.StartsWith("//"));    // 212 names in stream 1
-            s2.RemoveAll(item => item.StartsWith("//"));    // 44 names in stream 2
-
-            s1.Shuffle();
-            s2.Shuffle();
+            s1.RemoveAll(item => item.StartsWith("//"));    // 226 names in stream 1
+            s2.RemoveAll(item => item.StartsWith("//"));    // 48 names in stream 2
 
             // Populate the master System List from our 2 templates.
             foreach (string val in s1)
@@ -734,6 +740,8 @@ namespace Azimuth
                     StreamLength = int.Parse(splt[2])
                 });
             }
+
+            m_MasterSystemList.Shuffle();
         }
 
 
@@ -1058,7 +1066,7 @@ namespace Azimuth
                 if (File.Exists(folderBrowserDialog1.SelectedPath + "\\X3AP.exe"))
                 {
                     m_CurX3RootFolder = folderBrowserDialog1.SelectedPath + "\\";
-                    lblX3RootFolder.Text = m_CurX3RootFolder;
+                    lblX3RootFolder.Text = string.IsNullOrWhiteSpace(m_CurX3RootFolder) ? X3Utils.Ui("Form1.SetFolder") : m_CurX3RootFolder;
 
                     // SAVE IT TO SETTINGS.
                     X3Utils.SaveSetting("X3Root", lblX3RootFolder.Text);
@@ -1093,7 +1101,7 @@ namespace Azimuth
 #if DEBUG
                 lblX3SaveGameFolder.Text = "Done";
 #else
-                lblX3SaveGameFolder.Text = m_CurSaveGameFolder;
+                lblX3SaveGameFolder.Text = string.IsNullOrWhiteSpace(m_CurSaveGameFolder) ? X3Utils.Ui("Form1.SetFolder") : m_CurSaveGameFolder;
 #endif
 
                 X3Utils.SaveSetting("X3Save", m_CurSaveGameFolder);
@@ -1155,7 +1163,7 @@ namespace Azimuth
             {
                 if (!ownsDialog)
                 {
-                    MessageBox.Show("Another Azimuth window already has Save/Load open.");
+                    MessageBox.Show(X3Utils.Ui("Form1.AnotherAzimuthWindowAlreadyHasSaveLoad"));
                     return;
                 }
                 try
@@ -1240,8 +1248,14 @@ namespace Azimuth
                     break;
             }
             cbClusteredVoids.Checked = X3Galaxy.Instance.GalaxyCreationSettings.ClusteredVoids;
-            cbClusteredXenon.Checked = X3Galaxy.Instance.GalaxyCreationSettings.ClusteredXenons;
-            cbExtraSystemStats.Checked = X3Galaxy.Instance.GalaxyCreationSettings.ExtraSystemStats;
+            var startSettings = X3Galaxy.Instance.GalaxyCreationSettings;
+            if (startSettings.PeacefulStart) 
+                rbPeacefulStart.Checked = true;
+            else if (startSettings.ChaoticStart) 
+                rbChaoticStart.Checked = true;
+            else rbStandardStart.Checked = true;
+            cbClusteredXenon.Checked = rbChaoticStart.Checked || (rbStandardStart.Checked && startSettings.ClusteredXenons);
+            cbSaboteurMode.Checked = X3Galaxy.Instance.GalaxyCreationSettings.SaboteurMode;
             tbFog.Value = X3Galaxy.Instance.GalaxyCreationSettings.FogLevelPercent / 25;
             switch(X3Galaxy.Instance.GalaxyCreationSettings.GalaxyExpansion)
             {
@@ -1289,6 +1303,8 @@ namespace Azimuth
                     rbCustom.Checked = true;
                     break;
             }
+            xenonSlider.Value = GalaxySettings.ResolveXenonPercent(
+                X3Galaxy.Instance.GalaxyCreationSettings.XenonPercent, configuredXenonPercent);
             voidSlider.Value = X3Galaxy.Instance.GalaxyCreationSettings.EffectiveVoidPercent;
 
             UpdateRelationsGrid();
@@ -1320,7 +1336,7 @@ namespace Azimuth
                 }
                 else
                 {
-                    if (newentry == null) throw new Exception($"Invalid line in {filename}.");
+                    if (newentry == null) throw new Exception(X3Utils.Ui("Form1.InvalidLineIn", filename));
                     newentry.Add(src);
                 }
             }
@@ -1338,8 +1354,8 @@ namespace Azimuth
 
             // Get enumeration value of source and target.  These are 1 greater than the index where we store them in Relations.
             ERace sourceRace, destinationRace;
-            if (!Enum.TryParse(source, out sourceRace)) throw new Exception($"Unable to parse Tag {lbl.Tag.ToString()}");
-            if (!Enum.TryParse(target, out destinationRace)) throw new Exception($"Unable to parse Tag {lbl.Tag.ToString()}");
+            if (!Enum.TryParse(source, out sourceRace)) throw new Exception(X3Utils.Ui("Form1.UnableToParseTag", lbl.Tag.ToString()));
+            if (!Enum.TryParse(target, out destinationRace)) throw new Exception(X3Utils.Ui("Form1.UnableToParseTag", lbl.Tag.ToString()));
 
             // create 0-based index into Relations array
             int srcIndex = (int)sourceRace - 1;
@@ -1427,7 +1443,7 @@ namespace Azimuth
                                     lbl.ForeColor = Color.DarkRed;
                                     break;
                                 default:
-                                    throw new Exception($"Invalid relation value {iRelation}");
+                                    throw new Exception(X3Utils.Ui("Form1.InvalidRelationValue", iRelation));
                             }
                         }
                     }
@@ -1443,6 +1459,7 @@ namespace Azimuth
         private void btnGenerateStats_Click(object sender, EventArgs e)
         {
             X3Galaxy.Instance.HasUnsavedChanges = true;
+            X3Galaxy.Instance.GalaxyCreationSettings.SaboteurMode = cbSaboteurMode.Checked;
             m_Generator.GenerateSystemStats();
             pictureBox1.Refresh();
         }
@@ -1588,7 +1605,7 @@ namespace Azimuth
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, ex.Message, "Could not open configuration");
+                MessageBox.Show(this, ex.Message, X3Utils.Ui("Form1.CouldNotOpenConfiguration"));
             }
         }
 
@@ -1611,17 +1628,17 @@ namespace Azimuth
             int count = galaxy.Sectors.Count;
             if (adding ? count >= galaxy.MaximumSectorCount : count <= galaxy.MinimumSectorCount)
             {
-                MessageBox.Show(this, $"This {galaxy.MaxX}×{galaxy.MaxY} grid allows {galaxy.MinimumSectorCount}–{galaxy.MaximumSectorCount} sectors. It currently has {count}.", "Sector limit");
+                MessageBox.Show(this, X3Utils.Ui("Form1.ThisGridAllowsSectorsItCurrentlyHas", galaxy.MaxX, galaxy.MaxY, galaxy.MinimumSectorCount, galaxy.MaximumSectorCount, count), X3Utils.Ui("Form1.SectorLimit"));
                 return;
             }
             if (!adding && sector.IsMaelstromPortal)
             {
-                MessageBox.Show(this, "This sector contains the Maelstrom portal and cannot be removed.");
+                MessageBox.Show(this, X3Utils.Ui("Form1.ThisSectorContainsTheMaelstromPortalAnd"));
                 return;
             }
-            string question = adding ? $"Add an Unknown sector at ({cell.X}, {cell.Y})?" :
-                $"Remove {sector.SectorName}, its gates, and any preferred start at this location?";
-            if (MessageBox.Show(this, question, "Edit galaxy", MessageBoxButtons.YesNo,
+            string question = adding ? X3Utils.Ui("Form1.AddAnUnknownSectorAt", cell.X, cell.Y) :
+                X3Utils.Ui("Form1.RemoveItsGatesAndAnyPreferredStart", sector.SectorName);
+            if (MessageBox.Show(this, question, X3Utils.Ui("Form1.EditGalaxy"), MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
 
             if (adding)
@@ -1632,7 +1649,7 @@ namespace Azimuth
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(this, ex.Message, "Could not add sector");
+                    MessageBox.Show(this, ex.Message, X3Utils.Ui("Form1.CouldNotAddSector"));
                     return;
                 }
                 galaxy.Sectors.Add(sector);
@@ -1656,17 +1673,21 @@ namespace Azimuth
             UpdateSectorCount();
             CheckMapValidity();
             pictureBox1.Refresh();
-            if (adding) Message("Sector added. Double-click it to edit its gates or use Regenerate Gates.");
+            if (adding) 
+                Message(X3Utils.Ui("Form1.SectorAddedDoubleClickItToEdit"));
         }
 
+        // Allocate the entire sector before adding it to the map; a missing name or template leaves the old map intact.
         private X3Sector CreateMapSector(Point cell)
         {
             var galaxy = X3Galaxy.Instance;
             string data = Path.Combine(m_CurX3RootFolder, "mayhem_data");
             LoadMasterSystemsLists(data + Path.DirectorySeparatorChar);
-            var name = m_MasterSystemList.FirstOrDefault(candidate => !galaxy.Sectors.Any(s =>
-                s.SectorName == candidate.Name || (s.StreamID == candidate.StreamID && s.StreamLocation == candidate.StreamLocation)));
-            if (name == null) throw new InvalidDataException("No unused sector name and voice entry is available.");
+            var name = m_MasterSystemList.FirstOrDefault(candidate => !galaxy.Sectors.Any(existingSector => existingSector.SectorName == candidate.Name));
+            if (name == null)
+            {
+                throw new InvalidDataException(X3Utils.Ui("Form1.NoUnusedSectorNameAndVoiceEntry"));
+            }
 
             var tracks = LoadSectorMusicPool();
             var counts = tracks.ToDictionary(track => int.Parse(track), track => 0);
@@ -1685,7 +1706,7 @@ namespace Azimuth
             var backgrounds = File.ReadAllLines(Path.Combine(data, "custom_backgrounds.txt"));
             var sector = new X3Sector(cell.X, cell.Y, candidates[m_Rand.Next(candidates.Count)],
                 int.Parse(backgrounds[m_Rand.Next(backgrounds.Length)]), skies[m_Rand.Next(skies.Count)], rocks[m_Rand.Next(rocks.Count)]);
-            if (sector.Sun == null) throw new InvalidDataException("The selected sector template has no sun.");
+            if (sector.Sun == null) throw new InvalidDataException(X3Utils.Ui("Form1.TheSelectedSectorTemplateHasNoSun"));
             sector.MarkSectorRace(ERace.Unknown);
             sector.SectorID = $"102{cell.Y + 1:00}{cell.X + 1:00}";
             sector.SectorName = name.Name;
@@ -1705,24 +1726,29 @@ namespace Azimuth
             return sector;
         }
 
-        private void pictureBox1_DoubleClick(object sender, EventArgs e)
+        private void pictureBox1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            if (X3Galaxy.Instance.Sectors.Count == 0) return;
-
-            // We stored the rectangle where we drew each sector box in the paint method.  Here we can just see if we clicked in one of those rectangles to figure
-            // out which sector was clicked.
-            X3Sector sector = GetSectorAtLocation(pictureBox1.PointToClient(Cursor.Position));
-            if (sector != null)
+            if (e.Button != MouseButtons.Left) return;
+            foreach (var cell in m_MapCells)
             {
-                SectorEdit se = new SectorEdit();
-                se.Initialize(sector);
-                se.StartPosition = FormStartPosition.CenterScreen;
-                se.ShowDialog();
+                if (!cell.Key.Contains(e.Location)) continue;
+                var sector = X3Galaxy.Instance.GetSectorAt(cell.Value.X, cell.Value.Y);
+                if (sector == null)
+                {
+                    EditMapCell(cell.Value);
+                    return;
+                }
+                using (var editor = new SectorEdit())
+                {
+                    editor.Initialize(sector);
+                    editor.StartPosition = FormStartPosition.CenterScreen;
+                    editor.ShowDialog(this);
+                }
                 UpdateSectorSearch(force: true);
                 pictureBox1.Refresh();
+                CheckMapValidity();
+                return;
             }
-
-            CheckMapValidity();
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
@@ -1735,29 +1761,24 @@ namespace Azimuth
             }
         }
 
-        private void cbPeacefulStart_CheckedChanged(object sender, EventArgs e)
+        private void GalaxyStartChanged(object sender, EventArgs e)
         {
-            if (cbPeacefulStart.Checked)
-            {
-                cbChaoticStart.Checked = false;
-                cbClusteredXenon.Checked = false;
-            }
+            if (!((RadioButton)sender).Checked) return;
+            cbClusteredXenon.Enabled = rbStandardStart.Checked;
+            if (!rbStandardStart.Checked)
+                cbClusteredXenon.Checked = rbChaoticStart.Checked;
+            UpdateXenonPreview(sender, e);
         }
 
-        private void cbChaoticStart_CheckedChanged(object sender, EventArgs e)
+        private void btnAbout_Click(object sender, EventArgs e)
         {
-            cbClusteredXenon.Enabled = !cbChaoticStart.Checked;
-
-            if (cbChaoticStart.Checked)
-            {
-                cbPeacefulStart.Checked = false;
-                cbClusteredXenon.Checked = true;
-            }
+            MessageBox.Show(this, X3Utils.Ui("About.Body", X3Utils.GetVersion()),
+                X3Utils.Ui("btnAbout"), MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void btnHelpMain_Click(object sender, EventArgs e)
         {
-            System.Diagnostics.Process.Start("HelpMain.txt");
+            System.Diagnostics.Process.Start(X3Utils.HelpFile());
         }
 
         private void btnLaunchWeaponsEditor_Click(object sender, EventArgs e)
@@ -1772,7 +1793,7 @@ namespace Azimuth
         {
             if (m_CurX3RootFolder == string.Empty)
             {
-                MessageBox.Show("You have to set your Mayhem 3 root folder first.  Look above.");
+                MessageBox.Show(X3Utils.Ui("Form1.YouHaveToSetYourMayhemRoot"));
                 return;
             }
             CustomMusic cm = new CustomMusic(m_CurX3MusicFolder, m_CurX3RootFolder);
@@ -1784,7 +1805,7 @@ namespace Azimuth
 
                 rbCustom.Enabled = true;
                 rbCustom.Checked = true;
-                Message("Custom Music configured successfully.");
+                Message(X3Utils.Ui("Form1.CustomMusicConfiguredSuccessfully"));
             }
         }
     }
