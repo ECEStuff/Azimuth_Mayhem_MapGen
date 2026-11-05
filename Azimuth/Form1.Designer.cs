@@ -1325,7 +1325,7 @@ namespace Azimuth
             this.gbGateDensity.Size = new System.Drawing.Size(172, 48);
             this.gbGateDensity.TabIndex = 65;
             this.gbGateDensity.TabStop = false;
-            this.gbGateDensity.Text = "Border Gate Density";
+            this.gbGateDensity.Text = "Gate Density";
             // 
             // rbHighGateDensity
             // 
@@ -1404,7 +1404,7 @@ namespace Azimuth
             this.gbExpansion.Size = new System.Drawing.Size(221, 92);
             this.gbExpansion.TabIndex = 53;
             this.gbExpansion.TabStop = false;
-            this.gbExpansion.Text = "Galaxy Expansion";
+            this.gbExpansion.Text = "Expansion (non-Xenon space)";
             // 
             // rbAdvanced
             // 
@@ -1413,7 +1413,7 @@ namespace Azimuth
             this.rbAdvanced.Name = "rbAdvanced";
             this.rbAdvanced.Size = new System.Drawing.Size(182, 17);
             this.rbAdvanced.TabIndex = 3;
-            this.rbAdvanced.Text = "Advanced (20% unknown space)";
+            this.rbAdvanced.Text = "Advanced (20% unknown)";
             this.rbAdvanced.UseVisualStyleBackColor = true;
             // 
             // rbAverage
@@ -1425,7 +1425,7 @@ namespace Azimuth
             this.rbAverage.Size = new System.Drawing.Size(173, 17);
             this.rbAverage.TabIndex = 2;
             this.rbAverage.TabStop = true;
-            this.rbAverage.Text = "Average (40% unknown space)";
+            this.rbAverage.Text = "Average (40% unknown)";
             this.rbAverage.UseVisualStyleBackColor = true;
             // 
             // rbEarly
@@ -1435,7 +1435,7 @@ namespace Azimuth
             this.rbEarly.Name = "rbEarly";
             this.rbEarly.Size = new System.Drawing.Size(156, 17);
             this.rbEarly.TabIndex = 1;
-            this.rbEarly.Text = "Early (60% unknown space)";
+            this.rbEarly.Text = "Early (60% unknown)";
             this.rbEarly.UseVisualStyleBackColor = true;
             // 
             // rbOrigin

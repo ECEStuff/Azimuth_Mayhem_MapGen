@@ -394,6 +394,8 @@ namespace Azimuth
             toolTip1.SetToolTip(cbUseParticles, X3Utils.GetLocalizedText("{Tips.CbParticles}"));
             toolTip1.SetToolTip(tbFog, X3Utils.GetLocalizedText("{Tips.SlFog}"));
             toolTip1.SetToolTip(gbExpansion, X3Utils.GetLocalizedText("{Tips.GbExpansion}"));
+            foreach (var option in gbExpansion.Controls.OfType<RadioButton>())
+                toolTip1.SetToolTip(option, X3Utils.GetLocalizedText("{Tips.GbExpansion}"));
             toolTip1.SetToolTip(gbSystemSpread, X3Utils.GetLocalizedText("{Tips.GbSystemSpread}"));
             toolTip1.SetToolTip(gbGalaxySize, X3Utils.GetLocalizedText("{Tips.GbGalaxySize}"));
             toolTip1.SetToolTip(gbGateDensity, X3Utils.GetLocalizedText("{Tips.GbGateDensity}"));
@@ -451,7 +453,15 @@ namespace Azimuth
 
         private void Message(string msg)
         {
+            if (rtb1.InvokeRequired)
+            {
+                rtb1.BeginInvoke(new Action<string>(Message), msg);
+                return;
+            }
             rtb1.AppendText(msg + "\n");
+            rtb1.SelectionStart = rtb1.TextLength;
+            rtb1.SelectionLength = 0;
+            rtb1.ScrollToCaret();
         }
 
         internal static bool ConfirmDiscard(IWin32Window owner, string action)
@@ -471,16 +481,28 @@ namespace Azimuth
 
         private void btnGenerateGates_Click(object sender, EventArgs e)
         {
-            X3Galaxy.Instance.HasUnsavedChanges = true;
             rtb1.Clear();
             GenerateGates();
         }
 
         private void GenerateGates()
         {
-            X3Galaxy.Instance.GalaxyCreationSettings.LimitedEnclaves = cbLimitedEnclaves.Checked;
-            X3Galaxy.Instance.GalaxyCreationSettings.BorderGateDensity = rbLowGateDensity.Checked ? EGateDensity.Low : EGateDensity.High;
-            m_Generator.GenerateGates();
+            var settings = X3Galaxy.Instance.GalaxyCreationSettings;
+            bool previousLimited = settings.LimitedEnclaves;
+            var previousDensity = settings.BorderGateDensity;
+            settings.LimitedEnclaves = cbLimitedEnclaves.Checked;
+            settings.BorderGateDensity = rbLowGateDensity.Checked ? EGateDensity.Low : EGateDensity.High;
+            try
+            {
+                m_Generator.GenerateGates();
+                X3Galaxy.Instance.HasUnsavedChanges = true;
+            }
+            catch (Exception ex)
+            {
+                settings.LimitedEnclaves = previousLimited;
+                settings.BorderGateDensity = previousDensity;
+                MessageBox.Show(this, ex.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
             pictureBox1.Refresh();
             CheckMapValidity();
         }
@@ -559,6 +581,9 @@ namespace Azimuth
                 return;
             }
 
+            var previousSettings = Newtonsoft.Json.JsonConvert.DeserializeObject<GalaxySettings>(
+                Newtonsoft.Json.JsonConvert.SerializeObject(galaxy.GalaxyCreationSettings));
+            bool previousDirty = galaxy.HasUnsavedChanges;
             X3Galaxy.Instance.HasUnsavedChanges = true;
             X3Galaxy.Instance.GalaxyCreationSettings.UseParticles = cbUseParticles.Checked;
             X3Galaxy.Instance.GalaxyCreationSettings.ClusteredVoids = cbClusteredVoids.Checked;
@@ -592,22 +617,46 @@ namespace Azimuth
             x = dimensions.Width;
             y = dimensions.Height;
 
-            do
+            galaxy.GalaxyCreationSettings.LimitedEnclaves = cbLimitedEnclaves.Checked;
+            galaxy.GalaxyCreationSettings.BorderGateDensity = rbLowGateDensity.Checked ? EGateDensity.Low : EGateDensity.High;
+            var pending = new X3Galaxy(x, y);
+            pending.GalaxyCreationSettings = galaxy.GalaxyCreationSettings;
+            pending.GalaxyCreationSettings.ExtraSystemStats = rbExtraStats.Checked;
+            pending.GalaxyCreationSettings.SaboteurMode = rbSaboteurMode.Checked;
+            pending.GalaxyCreationSettings.StartSectors = new GalaxySettings().StartSectors;
+            // The visible galaxy is never used as the worker's scratch space.
+            galaxy.GalaxyCreationSettings = previousSettings;
+            galaxy.HasUnsavedChanges = previousDirty;
+            var messages = new List<string>();
+            using (var progress = new GenerationProgressDialog((token, report) =>
             {
-                m_Generator.GenerateGalaxy(x, y, musicFiles, backgroundFiles, m_SunsAndPlanets, m_Asteroids);
+                var worker = new Generator(pending) { Cancellation = token };
+                worker.OnMessage += message => { messages.Add(message); report(message); };
+                worker.GenerateGalaxy(x, y, musicFiles, backgroundFiles, m_SunsAndPlanets, m_Asteroids);
+                token.ThrowIfCancellationRequested();
+                pending.AssignSystemNamesAndSoundToGeneratedSystems(m_MasterSystemList);
+                worker.GenerateSystemStats();
+                token.ThrowIfCancellationRequested();
+            }))
+            {
+                var result = progress.ShowDialog(this);
+                foreach (string message in messages) Message(message);
+                if (result != DialogResult.OK)
+                {
+                    Message(result == DialogResult.Cancel ? X3Utils.Ui("Generator.Cancelled") : X3Utils.Ui("Generator.PreviousRetained"));
+                    if (progress.Failure != null) MessageBox.Show(this, progress.Failure.Message, Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    EnableButtons(); CheckMapValidity();
+                    return;
+                }
             }
-            while (X3Galaxy.Instance.Sectors.Count > 256);       // This should never happen, as 17x17 = 289..  minus 15% for voids (38) = 246 max systems..  and we only have 256 names to work with.
-
-
-            X3Galaxy.Instance.AssignSystemNamesAndSoundToGeneratedSystems(m_MasterSystemList);
+            galaxy.Sectors.Clear(); galaxy.Sectors.AddRange(pending.Sectors);
+            galaxy.GalaxyCreationSettings = pending.GalaxyCreationSettings;
+            galaxy.SetSize(x, y);
+            galaxy.HasUnsavedChanges = true;
             ClearSectorSearch();
 
-            // Commit the selected mode to the newly generated map. Rerolls retain that mode.
-            X3Galaxy.Instance.GalaxyCreationSettings.ExtraSystemStats = rbExtraStats.Checked;
-            X3Galaxy.Instance.GalaxyCreationSettings.SaboteurMode = rbSaboteurMode.Checked;
-            m_Generator.GenerateSystemStats();
-
-            GenerateGates();
+            pictureBox1.Refresh();
+            CheckMapValidity();
             EnableButtons();
             galaxy.HasUnsavedManualEdits = false;
         }
@@ -650,6 +699,12 @@ namespace Azimuth
             if (network.MissingReturnGates > 0)
                 problems.Add(Localize("{Map.MissingReturns}", "Gates without return connections: {0}",
                     network.MissingReturnGates));
+
+            if (X3Galaxy.Instance.GalaxyCreationSettings.TerritorySeeds != null)
+            {
+                string structural = new GalaxyEditRules(X3Galaxy.Instance).CurrentError();
+                if (structural != null) problems.Add(X3Utils.Ui(structural));
+            }
 
             if (problems.Count > 0)
             {
@@ -1668,58 +1723,58 @@ namespace Azimuth
         private void EditMapCell(Point cell)
         {
             var galaxy = X3Galaxy.Instance;
+            var rules = new GalaxyEditRules(galaxy);
             var sector = galaxy.GetSectorAt(cell.X, cell.Y);
             bool adding = sector == null;
-            int count = galaxy.Sectors.Count;
-            if (adding ? count >= galaxy.MaximumSectorCount : count <= galaxy.MinimumSectorCount)
-            {
-                MessageBox.Show(this, X3Utils.Ui("Form1.ThisGridAllowsSectorsItCurrentlyHas", galaxy.MaxX, galaxy.MaxY, galaxy.MinimumSectorCount, galaxy.MaximumSectorCount, count), X3Utils.Ui("Form1.SectorLimit"));
-                return;
-            }
-            if (!adding && sector.IsMaelstromPortal)
-            {
-                MessageBox.Show(this, X3Utils.Ui("Form1.ThisSectorContainsTheMaelstromPortalAnd"));
-                return;
-            }
-            string question = adding ? X3Utils.Ui("Form1.AddAnUnknownSectorAt", cell.X, cell.Y) :
-                X3Utils.Ui("Form1.RemoveItsGatesAndAnyPreferredStart", sector.SectorName);
-            if (MessageBox.Show(this, question, X3Utils.Ui("Form1.EditGalaxy"), MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question, MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
-
             if (adding)
             {
-                try
+                var choices = rules.AdditionChoices(cell.X, cell.Y);
+                if (choices.Count == 0)
                 {
-                    sector = CreateMapSector(cell);
+                    string reason = !rules.CountAllowed(galaxy.Sectors.Count + 1) ? "Edit.Count" : rules.CurrentError() ?? "Edit.NoAddition";
+                    MessageBox.Show(this, X3Utils.Ui(reason), X3Utils.Ui("Edit.Invalid")); return;
                 }
-                catch (Exception ex)
+                using (var chooser = new SectorOwnerDialog(choices.Keys))
                 {
-                    MessageBox.Show(this, ex.Message, X3Utils.Ui("Form1.CouldNotAddSector"));
-                    return;
+                    if (chooser.ShowDialog(this) != DialogResult.OK) return;
+                    try
+                    {
+                        sector = CreateMapSector(cell);
+                        sector.MarkSectorRace((ERace)chooser.SelectedOwner);
+                        // Assets are ready; apply the validated proposal as one operation.
+                        galaxy.Sectors.Add(sector);
+                        foreach (int neighbor in choices[chooser.SelectedOwner]) sector.AddGates(rules.Sectors[neighbor]);
+                        string reason = new GalaxyEditRules(galaxy).CurrentError();
+                        if (reason != null) throw new InvalidOperationException(X3Utils.Ui(reason));
+                    }
+                    catch (Exception ex)
+                    {
+                        if (sector != null)
+                        {
+                            foreach (var other in galaxy.Sectors) other.Gates.RemoveAll(g => g.gx == cell.X && g.gy == cell.Y);
+                            galaxy.Sectors.Remove(sector);
+                        }
+                        MessageBox.Show(this, ex.Message, X3Utils.Ui("Form1.CouldNotAddSector")); return;
+                    }
                 }
-                galaxy.Sectors.Add(sector);
             }
             else
             {
-                foreach (var other in galaxy.Sectors)
-                    other.Gates.RemoveAll(gate => gate.gx == cell.X && gate.gy == cell.Y);
+                string reason = rules.RemovalError(sector);
+                if (reason != null) { MessageBox.Show(this, X3Utils.Ui(reason), X3Utils.Ui("Edit.Invalid")); return; }
+                if (MessageBox.Show(this, X3Utils.Ui("Form1.RemoveItsGatesAndAnyPreferredStart", sector.SectorName),
+                    X3Utils.Ui("Form1.EditGalaxy"), MessageBoxButtons.YesNo, MessageBoxIcon.Question,
+                    MessageBoxDefaultButton.Button2) != DialogResult.Yes) return;
+                foreach (var other in galaxy.Sectors) other.Gates.RemoveAll(g => g.gx == cell.X && g.gy == cell.Y);
                 var starts = galaxy.GalaxyCreationSettings.StartSectors;
                 for (int i = 0; i < starts.GetLength(0); i++)
-                    if (starts[i, 0] == cell.X && starts[i, 1] == cell.Y)
-                    {
-                        starts[i, 0] = -1;
-                        starts[i, 1] = -1;
-                    }
+                    if (starts[i, 0] == cell.X && starts[i, 1] == cell.Y) { starts[i, 0] = -1; starts[i, 1] = -1; }
                 galaxy.Sectors.Remove(sector);
             }
             galaxy.HasUnsavedManualEdits = true;
             galaxy.HasUnsavedChanges = true;
-            UpdateSectorSearch(force: true);
-            UpdateSectorCount();
-            CheckMapValidity();
-            pictureBox1.Refresh();
-            if (adding) 
-                Message(X3Utils.Ui("Form1.SectorAddedDoubleClickItToEdit"));
+            UpdateSectorSearch(force: true); UpdateSectorCount(); CheckMapValidity(); pictureBox1.Refresh();
+            if (adding) Message(X3Utils.Ui("Form1.SectorAddedDoubleClickItToEdit"));
         }
 
         // Allocate the entire sector before adding it to the map; a missing name or template leaves the old map intact.

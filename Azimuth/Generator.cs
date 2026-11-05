@@ -6,16 +6,21 @@ using System.Diagnostics;
 using System.Linq;
 using System.Drawing;
 using System.IO;
+using System.Threading;
 
 namespace Azimuth
 {
     class Generator
     {
-        private List<EQuadrant> m_quadrantsAvailable;
-        private int m_AvgSpread;
-        private int m_AvgSystemsPerRace;
-        private Random m_Rand = new Random();
-        private X3Sector m_FirstRaceSectorCreated;
+        private Random m_Rand;
+        private readonly X3Galaxy m_Galaxy;
+        public CancellationToken Cancellation { get; set; }
+        private Stopwatch generationTimer;
+        public Generator(X3Galaxy galaxy = null, int? seed = null)
+        {
+            m_Galaxy = galaxy ?? X3Galaxy.Instance;
+            m_Rand = seed.HasValue ? new Random(seed.Value) : new Random();
+        }
         private int m_GlobID;
         private List<List<X3Sector>> m_Globs;
         private struct Match { public X3Sector Source; public X3Sector Dest; public int Distance; };
@@ -34,7 +39,7 @@ namespace Azimuth
         {
             Msg(X3Utils.Ui("Generator.GeneratingNewAttributesForEachSector"));
 
-            var settings = X3Galaxy.Instance.GalaxyCreationSettings;
+            var settings = m_Galaxy.GalaxyCreationSettings;
             int fifths = settings.SaboteurMode ? 4 : settings.ExtraSystemStats ? 6 : 5;
             
 
@@ -51,15 +56,27 @@ namespace Azimuth
             //<t id="10100101">4</t>            // company         4% chance galaxy wide for a company to exist in their race system.  + 1 company of every kind in unknown space.
 
             // Do not use RaceIsMain, because Xenon do not count toward de jure sectors.
-            List<X3Sector> populatedSectors = X3Galaxy.Instance.Sectors.FindAll(item => (item.r >= (int)ERace.Argon && item.r <= (int)ERace.Teladi) || item.r == (int)ERace.Terran);
-            List<X3Sector> allSectors = X3Galaxy.Instance.Sectors;
+            List<X3Sector> populatedSectors = m_Galaxy.Sectors.FindAll(item => (item.r >= (int)ERace.Argon && item.r <= (int)ERace.Teladi) || item.r == (int)ERace.Terran);
+            List<X3Sector> allSectors = m_Galaxy.Sectors;
 
             // Clear existing sector data because we may be re-generating over and over.
             allSectors.ForEach(item => item.SectorCreationData = new SectorData());
 
-            // Dejure - Randomly pick 20% of all systems, but located only in Populated systems.
+            // Seed guarantees count toward the normal de jure allocation, rather than
+            // adding an unpredictable extra six sectors on every stat reroll.
+            var guaranteed = new List<X3Sector>();
+            var seeds = settings.TerritorySeeds;
+            if (seeds != null && seeds.GetLength(0) == 6 && seeds.GetLength(1) == 2)
+                for (int r = 0; r < 6; r++)
+                {
+                    var seed = m_Galaxy.GetSectorAt(seeds[r, 0], seeds[r, 1]);
+                    if (seed != null && seed.r == (int)TerritoryRaces[r]) guaranteed.Add(seed);
+                }
+            guaranteed.ForEach(item => item.SectorCreationData.DejureOwner = item.r);
             populatedSectors.Shuffle();
-            List<X3Sector> target = populatedSectors.Take((int)(allSectors.Count * 0.2)).ToList();
+            int dejureCount = Math.Max(guaranteed.Count, (int)(allSectors.Count * 0.2));
+            List<X3Sector> target = populatedSectors.Where(item => !guaranteed.Contains(item))
+                .Take(dejureCount - guaranteed.Count).ToList();
             target.ForEach(item => item.SectorCreationData.DejureOwner = item.r);
 
             // Set 70% of all sectors to a non-zero abnormal signal level.  Leave 30% at 0.  
@@ -163,10 +180,21 @@ namespace Azimuth
 
 
 
-        public void GenerateGalaxy(int maxx, int maxy, List<string>musicFiles, List<string>backgroundFiles, List<List<string>> sunAndPlanets, List<List<string>> asteroids)
+        public void GenerateGalaxy(int maxx, int maxy, List<string> musicFiles, List<string> backgroundFiles,
+            List<List<string>> sunAndPlanets, List<List<string>> asteroids)
         {
-            m_quadrantsAvailable = new List<EQuadrant> { EQuadrant.UpperLeft, EQuadrant.UpperRight, EQuadrant.LowerLeft, EQuadrant.LowerRight, EQuadrant.MiddleLeft, EQuadrant.MiddleRight };
-            m_FirstRaceSectorCreated = null;
+            generationTimer = Stopwatch.StartNew();
+            for (int layout = 1; layout <= 8 && generationTimer.Elapsed.TotalSeconds < 60; layout++)
+            {
+                Cancellation.ThrowIfCancellationRequested();
+                Msg(X3Utils.Ui("Generator.LayoutAttempt", layout));
+                if (GenerateLayout(maxx, maxy, musicFiles, backgroundFiles, sunAndPlanets, asteroids)) return;
+            }
+            throw new InvalidOperationException(X3Utils.Ui("Generator.TerritoryFailure"));
+        }
+
+        private bool GenerateLayout(int maxx, int maxy, List<string>musicFiles, List<string>backgroundFiles, List<List<string>> sunAndPlanets, List<List<string>> asteroids)
+        {
             m_GlobID = 1;
 
             int backgroundIndex = backgroundFiles.Count;
@@ -181,16 +209,16 @@ namespace Azimuth
             sunAndPlanets.Shuffle();
             asteroids.Shuffle();
 
-            X3Galaxy.Instance.Sectors.Clear();
-            X3Galaxy.Instance.SetSize(maxx, maxy);
-            X3Galaxy.Instance.GalaxyCreationSettings.GridWidth = maxx;
-            X3Galaxy.Instance.GalaxyCreationSettings.GridHeight = maxy;
+            m_Galaxy.Sectors.Clear();
+            m_Galaxy.SetSize(maxx, maxy);
+            m_Galaxy.GalaxyCreationSettings.GridWidth = maxx;
+            m_Galaxy.GalaxyCreationSettings.GridHeight = maxy;
 
 
             // Create all sectors
-            for (int x = 0; x < X3Galaxy.Instance.MaxX; x++)
+            for (int x = 0; x < m_Galaxy.MaxX; x++)
             {
-                for (int y = 0; y < X3Galaxy.Instance.MaxY; y++)
+                for (int y = 0; y < m_Galaxy.MaxY; y++)
                 {
                     // System Background
                     if (--backgroundIndex < 0)
@@ -227,25 +255,18 @@ namespace Azimuth
 
                     // Create uninitialized sectors in all spaces to start with.  Void/Empty (not unknown) sectors will be removed from the list when we are all done.
                     X3Sector sector = new X3Sector(x, y, null, backgroundFile, sunsToUse, asteroidsToUse);
-                    X3Galaxy.Instance.Sectors.Add(sector);                     // All sectors exist at start.  They are just uninitialized.
+                    m_Galaxy.Sectors.Add(sector);                     // All sectors exist at start.  They are just uninitialized.
                 }
             }
 
-            GenerateVoidOrXenonSectors();                       // Generate empty sectors.  These (void sectors) are removed at the end of process.
-            GenerateVoidOrXenonSectors(true);                   // Generate Xenon sectors.
-            GenerateAllRacesSectors();
-
-            // Mark Remaining space as unknown.
-            int unknown = X3Galaxy.Instance.Sectors.Count(item => !item.IsInitialized);
-            Msg(X3Utils.Ui("Generator.GeneratedUnknownSectors", unknown));
-            X3Galaxy.Instance.Sectors.Where(item => !item.IsInitialized).ToList().ForEach(i => i.MarkSectorRace(ERace.Unknown));
-
-            // remove any empty/void sectors.
-            X3Galaxy.Instance.Sectors.RemoveAll(sector => sector.IsVoid);
+            GenerateVoidSectors();
+            m_Galaxy.Sectors.RemoveAll(sector => sector.IsVoid);
+            m_Galaxy.Sectors.ForEach(sector => sector.MarkSectorRace(ERace.Unknown));
+            if (!GenerateTerritories()) return false;
 
             // Deal tracks only to surviving sectors. Every complete round uses each ID once.
             int musicIndex = 0;
-            foreach (var sector in X3Galaxy.Instance.Sectors)
+            foreach (var sector in m_Galaxy.Sectors)
             {
                 if (musicIndex == 0)
                     musicFiles.Shuffle();
@@ -254,40 +275,194 @@ namespace Azimuth
                     musicIndex = 0;
             }
 
-            int sectorCount = X3Galaxy.Instance.Sectors.Count;
+            int sectorCount = m_Galaxy.Sectors.Count;
             Msg(X3Utils.Ui("Generator.CreatedTotalSectors", sectorCount));
+            return true;
         }
 
 
-        /// <summary>
-        /// 
-        /// 1. Connect everything to every immediate neighbor.
-        /// 2. foreach Race system, randomly remove a link to a neighboring system not belonging to that race.  Increase chances of this if GateDensity is low.
-        ///     This leans the gate network towards good interconnections within starting globs compared to connections to the outside systems.
-        ///     Also remove some gates interconnecting this race's systems.  Low chance, but it helps break them up a bit.
-        /// 3. foreach Race system, if it's connected to 2 neighbors, randomly remove one of those gates. 
-        ///     Helps gates be less connected, promoting the formation of enclaves.
-        /// 4. Connect orphaned lone systems to nearest neighbor.    
-        /// 5. Here, we may now end up with small "islands" of systems that are interconnected with each other, but still surrounded by a void and are not reachable.
-        ///     Start with the first Argon Glob system created, we can iterate through ALL remaining non-void sectors on the map and determining if there
-        ///     is a valid path to that original system.  If not, connect that system to it's nearest neighbor that isn't already connected to it.
-        ///     https://blog.theknightsofunity.com/pathfinding-on-a-hexagonal-grid-a-algorithm/  
-        ///     
-        /// </summary>
+        // Gate topology is finalized before ownership. Regeneration validates the existing
+        // territories and restores the previous gate graph if no safe replacement is found.
+        private static readonly ERace[] TerritoryRaces =
+            { ERace.Argon, ERace.Boron, ERace.Split, ERace.Paranid, ERace.Teladi, ERace.Terran };
+
+        private int[][] GateGraph()
+        {
+            var sectors = m_Galaxy.Sectors;
+            var index = sectors.Select((v, i) => new { v, i }).ToDictionary(v => v.v, v => v.i);
+            return sectors.Select(v => v.Gates.Select(g => m_Galaxy.GetSectorAt(g.gx, g.gy))
+                .Where(w => w != null).Select(w => index[w]).Distinct().ToArray()).ToArray();
+        }
+
+        private bool GenerateTerritories()
+        {
+            var galaxy = m_Galaxy;
+            var settings = galaxy.GalaxyCreationSettings;
+            int total = galaxy.Sectors.Count;
+            int percent = settings.ChaoticStart ? 50 : GalaxySettings.ResolveXenonPercent(settings.XenonPercent, GalaxySettings.MinXenonPercent);
+            int unknownPercent = settings.GalaxyExpansion == EGalaxyExpansion.Early ? 60
+                : settings.GalaxyExpansion == EGalaxyExpansion.Average ? 40 : 20;
+            int[] budget = TerritoryPlanner.Budget(total, percent, settings.PeacefulStart,
+                unknownPercent, settings.GalaxyExpansion == EGalaxyExpansion.Origin);
+            int xenon = budget[0];
+            int owned = budget[2];
+            if (budget[1] < TerritoryPlanner.RequiredUnknownEnclaves(settings.ChaoticStart) || owned < TerritoryPlanner.RaceCount)
+                throw new InvalidOperationException(X3Utils.Ui("Generator.InvalidTerritoryBudget"));
+            int[] spread = { settings.ArgonSpread, settings.BoronSpread, settings.SplitSpread,
+                settings.ParanidSpread, settings.TeladiSpread, settings.TerranSpread };
+            int[] targets = TerritoryPlanner.Quotas(owned, spread, m_Rand);
+            if (settings.GalaxyExpansion == EGalaxyExpansion.Origin) targets = Enumerable.Repeat(1, 6).ToArray();
+            // Retry topology as well as ownership; never weaken quotas or separation silently.
+            for (int attempt = 0; attempt < 8 && generationTimer.Elapsed.TotalSeconds < 60; attempt++)
+            {
+                Msg(X3Utils.Ui("Generator.TerritoryAttempt", attempt + 1));
+                BuildTopology();
+                var graph = GateGraph();
+                // Reserve the mode-specific unknown frontiers plus the Xenon portal.
+                if (graph.Count(edges => edges.Length == 1) < TerritoryPlanner.RequiredUnknownEnclaves(settings.ChaoticStart) + 1) continue;
+                var planner = new TerritoryPlanner(graph, m_Rand) { Cancellation = Cancellation };
+                if (!planner.Plan(xenon, targets, settings.ClusteredXenons || settings.ChaoticStart, settings.ChaoticStart, 1000))
+                { Msg(X3Utils.Ui("Generator.SearchRejectedReason", X3Utils.Ui(planner.LastFailure))); continue; }
+                settings.TerritorySeeds = new int[6, 2];
+                for (int i = 0; i < total; i++)
+                {
+                    int owner = planner.Owners[i];
+                    galaxy.Sectors[i].MarkSectorRace(owner == 0 ? ERace.Unknown : owner == 7 ? ERace.Xenon : TerritoryRaces[owner - 1]);
+                    galaxy.Sectors[i].IsMaelstromPortal = i == planner.Portal;
+                }
+                for (int r = 0; r < 6; r++)
+                {
+                    settings.TerritorySeeds[r, 0] = galaxy.Sectors[planner.Seeds[r]].x;
+                    settings.TerritorySeeds[r, 1] = galaxy.Sectors[planner.Seeds[r]].y;
+                }
+                if (new GalaxyEditRules(galaxy).CurrentError() != null) continue;
+                Msg(X3Utils.Ui("Generator.TerritoryCounts", xenon, owned, total - xenon - owned));
+                Msg(X3Utils.Ui("Generator.TerritoryChecks", planner.MinimumStartDistance,
+                    planner.XenonEnclaveCount, planner.UnknownEnclaveCount));
+                return true;
+            }
+            return false;
+        }
+
         public void GenerateGates()
         {
-            X3Galaxy.Instance.ClearAllGates();
+            var galaxy = m_Galaxy;
+            var original = galaxy.Sectors.ToDictionary(s => s, s => s.Gates.ToList());
+            var coordinates = galaxy.GalaxyCreationSettings.TerritorySeeds;
+            bool legacy = coordinates == null;
+            if (!legacy && (coordinates.GetLength(0) != 6 || coordinates.GetLength(1) != 2))
+                throw new InvalidOperationException(X3Utils.Ui("Generator.GateRegenerationFailure"));
+            int[] owners = galaxy.Sectors.Select(s => s.r == (int)ERace.Xenon ? 7 : Array.FindIndex(TerritoryRaces, r => (int)r == s.r) + 1).ToArray();
+            var settings = galaxy.GalaxyCreationSettings;
+            var initial = GateGraph();
+            var sectors = galaxy.Sectors;
+            var candidates = sectors.Select(s => galaxy.GetNeighbors(s)
+                .Select(n => sectors.IndexOf(n)).Where(i => i >= 0).Distinct().ToArray()).ToArray();
+            var editRules = new GalaxyEditRules(galaxy);
+            Func<int[][], bool> valid = graph =>
+            {
+                // Limited Enclaves may preserve existing dead ends, but rewiring
+                // must not introduce additional ones when this option is enabled.
+                if (settings.LimitedEnclaves && graph.Count(v => v.Length == 1) > initial.Count(v => v.Length == 1))
+                    return false;
+                var planner = new TerritoryPlanner(graph, m_Rand);
+                return legacy
+                    ? planner.IsConnected && Enumerable.Range(0, graph.Length).Count(i => owners[i] == 0 && graph[i].Length == 1) >= TerritoryPlanner.RequiredUnknownEnclaves(settings.ChaoticStart)
+                    : editRules.GraphError(graph) == null;
+            };
+            var replacement = TerritoryPlanner.Rewire(initial, candidates, m_Rand, valid,
+                settings.BorderGateDensity == EGateDensity.Low);
+            if (replacement == null)
+                throw new InvalidOperationException(X3Utils.Ui("Generator.GateInputInvalid"));
+            int changes = Enumerable.Range(0, initial.Length).Sum(i =>
+                initial[i].Except(replacement[i]).Count() + replacement[i].Except(initial[i]).Count()) / 2;
+            if (changes == 0)
+            {
+                Msg(X3Utils.Ui("Generator.GatesUnchanged"));
+                return;
+            }
+            bool accepted = false;
+            try
+            {
+                // Apply only the delta. Unchanged gates retain their original objects
+                // and special-gate metadata. Every edge is changed at both endpoints.
+                for (int i = 0; i < sectors.Count; i++)
+                {
+                    foreach (int j in initial[i].Except(replacement[i]).Where(j => j > i))
+                        sectors[i].RemoveGates(sectors[j]);
+                    foreach (int j in replacement[i].Except(initial[i]).Where(j => j > i))
+                        sectors[i].AddGates(sectors[j]);
+                }
+                if (!valid(GateGraph()))
+                    throw new InvalidOperationException(X3Utils.Ui("Generator.GateRegenerationFailure"));
+                accepted = true;
+                Msg(X3Utils.Ui("Generator.GatesRewired", changes));
+            }
+            finally
+            {
+                if (!accepted) foreach (var pair in original) { pair.Key.Gates.Clear(); pair.Key.Gates.AddRange(pair.Value); }
+            }
+        }
+
+        private bool GraphConnected()
+        {
+            var graph = GateGraph();
+            if (graph.Length == 0) return false;
+            var seen = new HashSet<int> { 0 };
+            var queue = new Queue<int>();
+            queue.Enqueue(0);
+            while (queue.Count > 0)
+                foreach (int next in graph[queue.Dequeue()])
+                    if (seen.Add(next)) queue.Enqueue(next);
+            return seen.Count == graph.Length;
+        }
+
+        private void EnsureFrontier()
+        {
+            var sectors = m_Galaxy.Sectors;
+            int required = TerritoryPlanner.RequiredUnknownEnclaves(m_Galaxy.GalaxyCreationSettings.ChaoticStart) + 1;
+            if (sectors.Count(v => v.Gates.Count == 1) >= required) return;
+            // Even Limited Enclaves must supply four unknown leaves and a portal leaf.
+            // Remove only cycle edges, keeping the complete graph connected.
+            foreach (var source in sectors.OrderBy(v => m_Rand.Next()).OrderBy(v => v.Gates.Count).ToList())
+            {
+                if (sectors.Count(v => v.Gates.Count == 1) >= required) return;
+                if (source.Gates.Count <= 1) continue;
+                var saved = sectors.ToDictionary(v => v, v => v.Gates.ToList());
+                foreach (var gate in source.Gates.ToList().OrderBy(v => m_Rand.Next()))
+                {
+                    if (source.Gates.Count == 1) break;
+                    var dest = m_Galaxy.GetSectorAt(gate.gx, gate.gy);
+                    if (dest == null || dest.Gates.Count <= 1) continue;
+                    var beforeSource = source.Gates.ToList();
+                    var beforeDest = dest.Gates.ToList();
+                    source.RemoveGates(dest);
+                    if (!GraphConnected())
+                    {
+                        source.Gates.Clear(); source.Gates.AddRange(beforeSource);
+                        dest.Gates.Clear(); dest.Gates.AddRange(beforeDest);
+                    }
+                }
+                if (source.Gates.Count == 1) continue;
+                foreach (var pair in saved) { pair.Key.Gates.Clear(); pair.Key.Gates.AddRange(pair.Value); }
+            }
+        }
+
+        private void BuildTopology()
+        {
+            lastmatchesadded.Clear();
+            m_Galaxy.ClearAllGates();
 
             // 1. Create gates to every possible direct neighbor.
             Msg(X3Utils.Ui("Generator.CreatingGates"));
-            for (int x = 0; x < X3Galaxy.Instance.MaxX; x++)
+            for (int x = 0; x < m_Galaxy.MaxX; x++)
             {
-                for (int y = 0; y < X3Galaxy.Instance.MaxY; y++)
+                for (int y = 0; y < m_Galaxy.MaxY; y++)
                 {
-                    X3Sector source = X3Galaxy.Instance.GetSectorAt(x, y);
+                    X3Sector source = m_Galaxy.GetSectorAt(x, y);
                     if (source != null)
                     {
-                        List<X3Sector> neighbors = X3Galaxy.Instance.GetNeighbors(source);
+                        List<X3Sector> neighbors = m_Galaxy.GetNeighbors(source);
                         foreach (X3Sector neighbor in neighbors)
                         {
                             source.AddGates(neighbor);
@@ -296,20 +471,18 @@ namespace Azimuth
                 }
             }
 
-            // 2. Selectively remove some gates interconnecting differing races and then some interconnecting a race.
-            //    This tends to help create race-centric Clusters.
-            foreach (ERace race in Enum.GetValues(typeof(ERace)))
-            {
-                if (race == ERace.None) continue;
-                if (race == ERace.Xenon) continue;
-
-                RemoveBorderingGatesToOtherRaces(race);
-
-                RemoveInternalGatesForRace(race);
-            }
+            // Prune before ownership exists. The density setting now controls the whole network.
+            int minimum = m_Galaxy.GalaxyCreationSettings.LimitedEnclaves ? 2 : 1;
+            int chance = m_Galaxy.GalaxyCreationSettings.BorderGateDensity == EGateDensity.Low ? 70 : 20;
+            var sources = m_Galaxy.Sectors.OrderBy(v => m_Rand.Next()).ToList();
+            foreach (var source in sources)
+                foreach (var dest in m_Galaxy.GetNeighbors(source))
+                    if ((source.x < dest.x || (source.x == dest.x && source.y < dest.y))
+                        && source.IsConnectedTo(dest) && source.Gates.Count > minimum && dest.Gates.Count > minimum
+                        && m_Rand.Next(100) < chance) source.RemoveGates(dest);
 
             // 3.
-            if (!X3Galaxy.Instance.GalaxyCreationSettings.LimitedEnclaves)
+            if (!m_Galaxy.GalaxyCreationSettings.LimitedEnclaves)
             {
                 Msg(X3Utils.Ui("Generator.CreatingAdditionalEnclavesRemovingGates"));
                 CreateMoreEnclaves();
@@ -325,8 +498,9 @@ namespace Azimuth
 
             // This will add back gates to interconnect the blobs.
             CombineGlobs();
+            EnsureFrontier();
 
-            int gateCount = X3Galaxy.Instance.Sectors.Sum(item => item.Gates.Count);
+            int gateCount = m_Galaxy.Sectors.Sum(item => item.Gates.Count);
             Msg(X3Utils.Ui("Generator.CreatedGates", gateCount));
         }
 
@@ -347,15 +521,15 @@ namespace Azimuth
         public void CreateGlobs()
         {
             m_Globs = new List<List<X3Sector>>();
-            X3Galaxy.Instance.Sectors.ForEach(item => item.IsOrphaned = true); 
+            m_Galaxy.Sectors.ForEach(item => item.IsOrphaned = true); 
             m_GlobID = 0;
 
-            while (X3Galaxy.Instance.Sectors.Exists(sec => sec.IsOrphaned))
+            while (m_Galaxy.Sectors.Exists(sec => sec.IsOrphaned))
             {
                 // Create a new Glob
                 List<X3Sector> glob = new List<X3Sector>();
 
-                X3Sector start = X3Galaxy.Instance.Sectors.Find(item => item.IsOrphaned);  // Just pick any old orphaned sector to start with.
+                X3Sector start = m_Galaxy.Sectors.Find(item => item.IsOrphaned);  // Just pick any old orphaned sector to start with.
                 start.IsOrphaned = false;                                   // Adding a system to a glob makes it non-orphaned
                 start.GlobID = m_GlobID;
                 glob.Add(start);
@@ -400,7 +574,7 @@ namespace Azimuth
                 // 1. Source System (in Glob)
                 // 2. Dest System (outside Glob on vertical or horizontal axis)
                 // 3. Distance between them.
-                List<X3Sector> possibleDestinations = X3Galaxy.Instance.Sectors.FindAll(item => item.GlobID != curGlobId);
+                List<X3Sector> possibleDestinations = m_Galaxy.Sectors.FindAll(item => item.GlobID != curGlobId);
                 foreach (X3Sector srcsec in srcglob)
                 {
                     foreach (X3Sector dstsec in possibleDestinations)
@@ -410,7 +584,7 @@ namespace Azimuth
                             int dst = srcsec.DistanceFrom(dstsec);
                             // A usable link must have a clear, axis-aligned path.
                             // Evaluate the map itself, rather than its configured void %.
-                            if (!X3Galaxy.Instance.HasNonVoidSectorsBetween(srcsec, dstsec))
+                            if (!m_Galaxy.HasNonVoidSectorsBetween(srcsec, dstsec))
                             {
                                 matches.Add(new Match { Source = srcsec, Dest = dstsec, Distance = dst });
                             }
@@ -449,7 +623,7 @@ namespace Azimuth
                         numGatesAddedToGlob.Add(dst.GlobID, 0);
                     }
                     // How many gates can that destination glob handle.
-                    int destmaxgates = (int)Math.Sqrt(X3Galaxy.Instance.Sectors.Count(item => item.GlobID == dst.GlobID));
+                    int destmaxgates = (int)Math.Sqrt(m_Galaxy.Sectors.Count(item => item.GlobID == dst.GlobID));
                     // How many have we already added the maximum to that destination glob?
                     if (numGatesAddedToGlob[dst.GlobID] == destmaxgates)
                     {
@@ -530,7 +704,7 @@ namespace Azimuth
             foreach(X3Sector globsec in glob)
             {
                 // Get all connected orphaned neighbors
-                foreach (X3Sector globsecneighbor in X3Galaxy.Instance.GetConnectedNeighbors(globsec).FindAll(sec => sec.IsOrphaned))
+                foreach (X3Sector globsecneighbor in m_Galaxy.GetConnectedNeighbors(globsec).FindAll(sec => sec.IsOrphaned))
                 {
                     if (!neighbors.Exists(item => item.x == globsecneighbor.x && item.y == globsecneighbor.y))
                     {
@@ -568,8 +742,6 @@ namespace Azimuth
                 foreach (X3Sector sector in glob)
                 {
                     sector.GlobColor = randy;
-                    if (sector == m_FirstRaceSectorCreated)
-                        sector.GlobColor = Color.Red;
                 }
             }
         }
@@ -580,21 +752,21 @@ namespace Azimuth
         public void ConnectOrphanedSectors()
         {
             int numorphaned = 0;
-            foreach (X3Sector source in X3Galaxy.Instance.Sectors)
+            foreach (X3Sector source in m_Galaxy.Sectors)
             {
                 if (source.Gates.Count == 0)
                 {
                     // Retain the original six-sector neighborhood whenever possible.
-                    X3Sector dest = X3Galaxy.Instance.GetNearestRandomNeighbor(source);
+                    X3Sector dest = m_Galaxy.GetNearestRandomNeighbor(source);
                     if (dest == null)
                     {
                         // Sparse or shattered layouts may have no nearby sector.
                         // Find the closest unobstructed sector along either axis.
-                        List<X3Sector> candidates = X3Galaxy.Instance.Sectors
+                        List<X3Sector> candidates = m_Galaxy.Sectors
                             .Where(candidate => candidate != source
                                 && (candidate.x == source.x || candidate.y == source.y)
                                 && !source.IsConnectedTo(candidate)
-                                && !X3Galaxy.Instance.HasNonVoidSectorsBetween(source, candidate))
+                                && !m_Galaxy.HasNonVoidSectorsBetween(source, candidate))
                             .ToList();
 
                         if (candidates.Count > 0)
@@ -622,9 +794,9 @@ namespace Azimuth
         {
             int numremoved = 0;
 
-            foreach (X3Sector source in X3Galaxy.Instance.Sectors)
+            foreach (X3Sector source in m_Galaxy.Sectors)
             {
-                List<X3Sector> neighbors = X3Galaxy.Instance.GetNeighbors(source);
+                List<X3Sector> neighbors = m_Galaxy.GetNeighbors(source);
                 if ((neighbors.Count == 2) && (source.Gates.Count == 2))
                 {
                     if (m_Rand.Next(100) > 50)
@@ -645,305 +817,40 @@ namespace Azimuth
         }
 
         /// <summary>
-        /// Up to 70% chance that a gate will be removed between dissimilar races, provided removal of that
-        /// gate does not create an unwanted Enclave.
-        /// This tends to create race centric clusters.
-        /// </summary>
-        /// <param name="erace"></param>
-        private void RemoveBorderingGatesToOtherRaces(ERace erace)
-        {
-            int minimumsystems = X3Galaxy.Instance.GalaxyCreationSettings.LimitedEnclaves ? 2 : 1;
-            int race = (int)erace;
-
-            List<X3Sector> raceSectors = X3Galaxy.Instance.Sectors.FindAll(item => item.r == race);
-            foreach (X3Sector source in raceSectors)
-            {
-                if (source.Gates.Count <= minimumsystems) continue;
-                // Remove some bordering gates that go to other races.
-                List<X3Sector> non_race_neighbors = X3Galaxy.Instance.GetNeighbors(source).FindAll(item => item.r != race);
-                if (non_race_neighbors.Count > 1)
-                {
-                    int chanceToremove = X3Galaxy.Instance.GalaxyCreationSettings.BorderGateDensity == EGateDensity.High ? 20 : 70;
-                    if (m_Rand.Next(100) < chanceToremove)
-                    {
-                        // pick one neighbor to remove.
-                        X3Sector secToRemove = non_race_neighbors[m_Rand.Next(non_race_neighbors.Count)];
-                        if (secToRemove.Gates.Count > minimumsystems)
-                        {
-                            source.RemoveGates(secToRemove);
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Up to 20% chance that a gate between systems of the same race is removed.
-        /// </summary>
-        /// <param name="erace"></param>
-        private void RemoveInternalGatesForRace(ERace erace)
-        {
-            int minimumsystems = X3Galaxy.Instance.GalaxyCreationSettings.LimitedEnclaves ? 2 : 1;
-            int race = (int)erace;
-
-            List<X3Sector> raceSectors = X3Galaxy.Instance.Sectors.FindAll(item => item.r == race);
-            foreach (X3Sector source in raceSectors)
-            {
-                if (source.Gates.Count <= minimumsystems) continue;
-
-                // Remove some (20% chance, very little) gates that go between systems of the same race.  Not adjustable in U.I.
-                List<X3Sector> race_neighbors = X3Galaxy.Instance.GetNeighbors(source).FindAll(item => item.r == race);
-                if (race_neighbors.Count > 2)
-                {
-                    if (m_Rand.Next(100) < 20)
-                    {
-                        // pick one neighbor to remove.
-                        X3Sector secToRemove = race_neighbors[m_Rand.Next(race_neighbors.Count)];
-                        if (secToRemove.Gates.Count > minimumsystems)
-                        {
-                            source.RemoveGates(secToRemove);
-                        }
-                    }
-                }
-            }
-        }
-
-        private void GenerateAllRacesSectors()
-        {
-            // First determine, based on number of available systems and the Race System Spread, how many systems this race is allowed.
-            // If no changes are made, the baseline is 0, meaning no adjustment.
-            // If they choose +25 for every race, it should work out the same.  All are equal.   It's the difference from the average that matters.
-            m_AvgSpread = (
-                X3Galaxy.Instance.GalaxyCreationSettings.ArgonSpread +
-                X3Galaxy.Instance.GalaxyCreationSettings.BoronSpread +
-                X3Galaxy.Instance.GalaxyCreationSettings.SplitSpread +
-                X3Galaxy.Instance.GalaxyCreationSettings.ParanidSpread +
-                X3Galaxy.Instance.GalaxyCreationSettings.TeladiSpread +
-                X3Galaxy.Instance.GalaxyCreationSettings.TerranSpread) / 6;
-
-            // count total non-void and non-Xenon sectors available for colonization.
-            int totalsystemsAvailable = X3Galaxy.Instance.Sectors.Count(item => item.IsVoid == false && item.r == (int)ERace.None);
-            switch(X3Galaxy.Instance.GalaxyCreationSettings.GalaxyExpansion)
-            {
-                case EGalaxyExpansion.Origin:
-                    totalsystemsAvailable = 6;
-                    break;
-                case EGalaxyExpansion.Early:
-                    totalsystemsAvailable = (int)(totalsystemsAvailable * 0.4);     // 60% unknown space
-                    break;
-                case EGalaxyExpansion.Average:
-                    totalsystemsAvailable = (int)(totalsystemsAvailable * 0.6);     // 40% unknown space
-                    break;
-                case EGalaxyExpansion.Advanced:
-                    totalsystemsAvailable = (int)(totalsystemsAvailable * 0.8);     // 20% unknown space
-                    break;
-            }
-            m_AvgSystemsPerRace =  totalsystemsAvailable / 6;   // number of systems each race would get if all left at equal spreads.
-            Debug.WriteLine($"Average sectors per race: {m_AvgSystemsPerRace}");
-            Msg(X3Utils.Ui("Generator.AverageSectorsPerRace", m_AvgSystemsPerRace));
-
-            GenerateRaceSector(ERace.Argon, X3Galaxy.Instance.GalaxyCreationSettings.ArgonSpread);
-            GenerateRaceSector(ERace.Boron, X3Galaxy.Instance.GalaxyCreationSettings.BoronSpread);
-            GenerateRaceSector(ERace.Paranid, X3Galaxy.Instance.GalaxyCreationSettings.ParanidSpread);
-            GenerateRaceSector(ERace.Split, X3Galaxy.Instance.GalaxyCreationSettings.SplitSpread);
-            GenerateRaceSector(ERace.Teladi, X3Galaxy.Instance.GalaxyCreationSettings.TeladiSpread);
-            GenerateRaceSector(ERace.Terran, X3Galaxy.Instance.GalaxyCreationSettings.TerranSpread);
-        }
-
-
-        private void GenerateRaceSector(ERace race, int racespread)
-        {
-            int targetNum, created1, created2, created3, created4 = 0, remaining = 0;
-            int systemsToCreate = m_AvgSystemsPerRace + (m_AvgSystemsPerRace * (racespread - m_AvgSpread) / 100);
-
-            if (X3Galaxy.Instance.GalaxyCreationSettings.GalaxyExpansion == EGalaxyExpansion.Origin)
-            {
-                systemsToCreate = 1;
-            }
-
-            EQuadrant primaryQuadrant = m_quadrantsAvailable[m_Rand.Next(m_quadrantsAvailable.Count)];
-            m_quadrantsAvailable.Remove(primaryQuadrant);
-
-            // Divide map into 5 quadrants:  1 in middle and 4 on each corner.  Each race gets a quadrant.
-            // Randomly place 2 systems in one of the quadrants.  Build on those for 90% of the race systems.
-            // Build 10% of the race systems randomly in another quadrant.
-            targetNum = (int)(systemsToCreate * 0.45);
-            created1 = CreateGlob(primaryQuadrant, race, targetNum);        // In the chance we can't create all targetNum here, we try to make it up with the 2nd glob.
-            created2 = CreateGlob(primaryQuadrant, race, targetNum + (targetNum - created1));
-
-            // Because of rounding, we will always create less than we need with the first 2 globs.  We're going to make it up with the 3rd glob.
-            remaining = systemsToCreate - (created1 + created2);
-            created3 = CreateGlob(EQuadrant.None, race, remaining);
-
-            // If all 3 don't add up to the total we want, we basically have a cornered race that was nearly last to put down.. in that case, give them another Glob randomly.
-            remaining = systemsToCreate - (created1 + created2 + created3);
-            if (remaining > 0)
-            {
-                created4 = CreateGlob(EQuadrant.None, race, remaining);
-            }
-            Msg(X3Utils.Ui("Generator.SectorsCreated", race, created1 + created2 + created3 + created4));
-        }
-
-
-        private int CreateGlob(EQuadrant primaryQuadrant, ERace race, int systemsToCreate)
-        {
-            List<X3Sector> glob = new List<X3Sector>();
-            int systemsCreated = 0;
-            X3Sector startsec = X3Galaxy.Instance.GetRandomUninitializedSector(primaryQuadrant);
-            if (startsec == null)
-            {
-                // Should seldom happen where we run out of totally uninitialized sectors in a target quadrant.. but if we do, just put the Glob somewhere else.
-                startsec = X3Galaxy.Instance.GetRandomUninitializedSector(EQuadrant.None);
-                if (startsec == null) return 0;
-            }
-                
-            glob.Add(startsec);
-
-
-            if (m_FirstRaceSectorCreated == null && race == ERace.Argon)
-            {
-                m_FirstRaceSectorCreated = startsec;
-            }
-
-            while (systemsToCreate > systemsCreated)
-            {
-                // Pick a random sector in the existing glob.
-                X3Sector sec = GetRandomSectorInGlobHavingNeighbors(glob);
-                if (sec == null) break;
-                sec.MarkSectorRace(race);
-                glob.Add(sec);
-                systemsCreated++;
-            }
-            return systemsCreated;
-        }
-
-        private X3Sector GetRandomSectorInGlobHavingNeighbors(List<X3Sector>glob)
-        {
-            glob.Shuffle();
-
-            bool done = false;
-            int distance = 1;
-            while (!done)
-            {
-                foreach (X3Sector sec in glob)
-                {
-                    List<X3Sector> freeneighbors = X3Galaxy.Instance.GetNeighbors(sec, distance).FindAll(item => item.IsInitialized == false); // get all uninitialized neighbors.
-                    if (freeneighbors.Count == 0)
-                    {
-                        continue;
-                    }
-                    X3Sector afreeneighbor = freeneighbors[m_Rand.Next(freeneighbors.Count)];    // pick one of them.
-                    return afreeneighbor;
-                }
-                if (distance++ > 5) done = true;
-            }
-            return null;
-        }
-
-        /// <summary>
         /// We actually place an empty/non-existent/void sector into the sectors list as a placeholder, but they get removed after everything else is generated.
         /// IsVoid = true
         /// 
-        /// For xenon generation, the algorithm for placement is identical so we just pass a flag.
         /// </summary>
-        /// <param name="uv"></param>
-        private void GenerateVoidOrXenonSectors(bool isXenon = false)
+        private void GenerateVoidSectors()
         {
-            bool isVoid = !isXenon;
-            int voidpct = X3Galaxy.Instance.GalaxyCreationSettings.EffectiveVoidPercent;
-            bool isChaotic = X3Galaxy.Instance.GalaxyCreationSettings.ChaoticStart;
-            X3Sector sector;
-
-            var galaxy = X3Galaxy.Instance;
-            int xenonpct = isChaotic ? 50 : GalaxySettings.ResolveXenonPercent(
-                galaxy.GalaxyCreationSettings.XenonPercent, GalaxySettings.MinXenonPercent);
+            var galaxy = m_Galaxy;
             int cells = galaxy.MaxX * galaxy.MaxY;
-            int numSectors = isXenon ? cells * xenonpct / 100 : cells - galaxy.GalaxyCreationSettings.SectorTarget(cells, voidpct);
-
-
-            if (isXenon)
+            int count = cells - galaxy.GalaxyCreationSettings.SectorTarget(cells,
+                galaxy.GalaxyCreationSettings.EffectiveVoidPercent);
+            for (int i = 0; i < count; i++)
             {
-                if (X3Galaxy.Instance.GalaxyCreationSettings.PeacefulStart)
+                var sector = galaxy.GetRandomUninitializedSector();
+                if (galaxy.GalaxyCreationSettings.ClusteredVoids && i >= count / 2)
                 {
-                    // Get a corner sector, mark it as xenon and as the maelstrom portal and then we're done for xenon's.
-                    sector = X3Galaxy.Instance.GetCornerUninitializedSector();
-                    sector.MarkSectorVoidorXenon(true);
-                    sector.IsMaelstromPortal = true;
-                    return;
-                }
-            }
-
-            string action = isXenon ? X3Utils.Ui("Generator.Xenon") : X3Utils.Ui("Generator.VoidGaps");
-            Msg(X3Utils.Ui("Generator.GeneratingSectors", numSectors, action));
-
-            for (int x = 0; x < numSectors; x++)
-            {
-                if (isChaotic && isXenon && x == 0)
-                {
-                    sector = X3Galaxy.Instance.GetCornerUninitializedSector();      // For chaotic start, the first xenon sector generated is in a corner.
-                    sector.MarkSectorVoidorXenon(true);
-                    sector.IsMaelstromPortal = true;
-                    continue;
-                }
-
-                sector = X3Galaxy.Instance.GetRandomUninitializedSector();
-                if (sector == null) throw new Exception(X3Utils.Ui("Generator.UnableToPlaceSectorNoUnitializedSectors"));
-
-                bool clustered = isXenon ? X3Galaxy.Instance.GalaxyCreationSettings.ClusteredXenons : X3Galaxy.Instance.GalaxyCreationSettings.ClusteredVoids;
-                if (clustered)
-                {
-                    // First Half of clustered sectors are randomly placed and second half must be located next to another void sector.
-
-                    // We must place some void sectors here in the first half, and in the second half of our series we will b able to cluster next to the first half.
-                    if (x < numSectors / 2 && (isVoid || !isChaotic))
-                    {
-                        sector.MarkSectorVoidorXenon(isXenon);
-                    }
-                    else  // Search randomly for an existing void or xenon sector to cluster next to.
-                    {  
-                        List<X3Sector> secs = X3Galaxy.Instance.Sectors.FindAll(item => isXenon ? item.r == (int)ERace.Xenon : item.IsVoid);
-                        if (secs.Count == 0)
-                            break;
-                        //throw new Exception("Unable to find any void/Xenon sectors to cluster next to.");
-
-                        secs.Shuffle();
-
-                        bool done = false;
-                        int distance = 1;
-                        while (!done)
+                    var existing = galaxy.Sectors.Where(v => v.IsVoid).OrderBy(v => m_Rand.Next()).ToList();
+                    bool found = false;
+                    for (int distance = 1; distance <= 6 && !found; distance++)
+                        foreach (var gap in existing)
                         {
-                            foreach (X3Sector randomvoidsec in secs)
-                            {
-                                //X3Sector randomvoidsec = secs[rand.Next(secs.Count)]; // pick one of the random ones
-                                List<X3Sector> freeneighbors = X3Galaxy.Instance.GetNeighbors(randomvoidsec, distance).FindAll(item => item.IsInitialized == false); // get all uninitialized neighbors.
-                                if (freeneighbors.Count == 0) continue;
-
-                                X3Sector afreeneighbor = freeneighbors[m_Rand.Next(freeneighbors.Count)];    // pick one of them.
-                                afreeneighbor.MarkSectorVoidorXenon(isXenon);
-                                done = true;
-                                break;
-                            }
-                            if (!done && distance++ > 5)
-                            {
-                                // Could find no neighboring uninit sectors within 5 squares of any of these sectors.
-                                // This usually occurs only on the first Xenon sector for a Chaotic Start, and also using the Shattered Galaxy option.  In this condition,
-                                // you can have the first xenon system in a corner with no nearby neighbors.  Usually it will find one within 2 squares 90% of the time.
-                                if (isVoid) sector.MarkSectorVoidorXenon(false);
-                                done = true;
-                            }
+                            var nearby = galaxy.GetNeighbors(gap, distance).Where(v => !v.IsInitialized).ToList();
+                            if (nearby.Count == 0) continue;
+                            sector = nearby[m_Rand.Next(nearby.Count)];
+                            found = true;
+                            break;
                         }
-                    }
                 }
-                else
-                {
-                    sector.MarkSectorVoidorXenon(isXenon);
-                }
+                sector.MarkSectorVoidorXenon(false);
             }
         }
 
-
         private void Msg(string msg)
         {
+            Cancellation.ThrowIfCancellationRequested();
             OnMessage?.Invoke(msg);
         }
 

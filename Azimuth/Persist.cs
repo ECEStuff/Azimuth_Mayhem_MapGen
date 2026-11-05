@@ -409,6 +409,12 @@ namespace Azimuth
         {
 
 
+            if (X3Galaxy.Instance.GalaxyCreationSettings.TerritorySeeds != null)
+            {
+                string reason = new GalaxyEditRules(X3Galaxy.Instance).CurrentError();
+                if (reason != null) { MessageBox.Show(this, X3Utils.Ui(reason), X3Utils.Ui("Persist.InvalidGalaxy")); return; }
+            }
+
             // 1.77 - just double check that the map has at least one unknown enclave system.
             if (!X3Galaxy.HasUnknownEnclave())
             {
@@ -1220,7 +1226,16 @@ namespace Azimuth
                 X3Galaxy savedGalaxy = new X3Galaxy(0, 0);
                 savedGalaxy.LoadFrom_X3_Universe_XML(universeFile);
 
-                bool hasUnknownEnclave = savedGalaxy.Sectors.Any(sector => (ERace)sector.r == ERace.Unknown && sector.Gates.Count == 1);
+                savedGalaxy.LoadFrom_X3_Universe_Settings(Path.Combine(source, "GalaxySettings.json"));
+                string language = X3Utils.GetLocalizedText("language_id_file");
+                savedGalaxy.Load9970_XML(Path.Combine(source, "addon", "t", "9970-L0" + language + ".xml"));
+                bool hasUnknownEnclave = savedGalaxy.Sectors.Count(sector => (ERace)sector.r == ERace.Unknown && sector.Gates.Count == 1)
+                    >= TerritoryPlanner.RequiredUnknownEnclaves(savedGalaxy.GalaxyCreationSettings.ChaoticStart);
+                if (savedGalaxy.GalaxyCreationSettings.TerritorySeeds != null)
+                {
+                    string reason = new GalaxyEditRules(savedGalaxy).CurrentError();
+                    if (reason != null) { MessageBox.Show(this, X3Utils.Ui(reason), X3Utils.Ui("Persist.InvalidGalaxy")); return false; }
+                }
                 GateNetworkReport network = savedGalaxy.AnalyzeGateNetwork();
 
                 if (!hasUnknownEnclave || network.GatelessSectors > 0 || network.OutsideLargestNetwork > 0 || network.MissingDestinations > 0 || network.MissingReturnGates > 0)

@@ -1,6 +1,12 @@
 ﻿----------------------------------------------------- Azimuth ----------------------------------------------------
 
 Current development changes
+- Reworked territory placement to use BFS on the final gate network, with separated race seeds and no direct borders between different non-Xenon races.
+- Xenon percentages now use actual sectors and round up. Unknown percentages apply to non-Xenon sectors and round up; races receive the remainder.
+- New maps reserve at least four unknown enclaves and an enclave portal. Xenon prefer other enclaves; Standard supports multiple clusters, while Chaotic uses one connected territory.
+- Generated race seeds retain guaranteed de jure ownership when rerolling stats. Seed coordinates are saved in GalaxySettings.json.
+- Border Gate Density is now Gate Density and applies before ownership assignment.
+- Failed territory planning retains the previous galaxy. Gate regeneration restores previous gates if it cannot preserve the required topology.
 - Page 9970 stores the sector stats modifier at ID 101 (-1 Saboteur, 0 Normal, 1 Extra). ID 103 is no longer used or imported.
 - Extra Sector Stats now boosts population, research and station support by 20%. Choose it or Saboteur Mode at galaxy generation.
 - Expanded rules: Extra Sector Stats reduces total supply by 20% and lowers maximum specialization from 20% to 15%. Saboteur raises maximum specialization from 20% to 30% and grants one additional perk slot.

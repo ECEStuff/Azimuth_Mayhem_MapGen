@@ -37,17 +37,11 @@ namespace Azimuth
 
         public static bool HasUnknownEnclave()
         {
-            foreach (X3Sector sector in m_Instance.Sectors)
-            {
-                if ((ERace)sector.r == ERace.Unknown)
-                {
-                    if (sector.Gates.Count == 1)
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
+            int required = TerritoryPlanner.RequiredUnknownEnclaves(m_Instance.GalaxyCreationSettings.ChaoticStart);
+            int count = 0;
+            foreach (var sector in m_Instance.Sectors)
+                if (sector.r == (int)ERace.Unknown && sector.Gates.Count == 1) count++;
+            return count >= required;
         }
 
         public GateNetworkReport AnalyzeGateNetwork()
@@ -162,7 +156,7 @@ namespace Azimuth
         {
             List<string> usedNames = new List<string>();
 
-            foreach (X3Sector sector in X3Galaxy.Instance.Sectors)
+            foreach (X3Sector sector in Sectors)
             {
                 string sectorx = (sector.x + 1).ToString("00");         // 01, 02 etc.
                 string sectory = (sector.y + 1).ToString("00");

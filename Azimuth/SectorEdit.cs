@@ -19,6 +19,10 @@ namespace Azimuth
         private X3Sector m_Sector;
         private bool m_StartMaelstrom;
         private bool m_InitialStartSector;
+        private bool committed, bindingOwners;
+        private Dictionary<X3Sector, List<X3Gate>> originalGates;
+        private bool originalDirty, originalManual;
+        private string originalMusic;
 
         public SectorEdit()
         {
@@ -47,6 +51,10 @@ namespace Azimuth
         public void Initialize(X3Sector sector)
         {
             m_Sector = sector;
+            var galaxy = X3Galaxy.Instance;
+            originalGates = galaxy.Sectors.ToDictionary(s => s, s => s.Gates.ToList());
+            originalDirty = galaxy.HasUnsavedChanges; originalManual = galaxy.HasUnsavedManualEdits;
+            originalMusic = sector.m_MusicFileName;
             SetupLocalization();
 
             string title = X3Utils.GetLocalizedText("{SectorEditFormTitle}");
@@ -127,7 +135,34 @@ namespace Azimuth
                 }
             }
 
+            cbMaelstrom.Enabled = false;
+            if (new GalaxyEditRules(galaxy).IsSeed(sector)) cbDejureOwner.Enabled = false;
             ColorGates();
+        }
+
+        private void RefreshOwners()
+        {
+            var rules = new GalaxyEditRules(X3Galaxy.Instance);
+            int previous = cbOwner.SelectedValue is int ? (int)cbOwner.SelectedValue : m_Sector.r;
+            var available = new[] { 1, 2, 3, 4, 5, 6, 14, 18 }.Where(i => rules.OwnerError(m_Sector, i) == null).ToList();
+            if (!available.Contains(m_Sector.r)) available.Add(m_Sector.r);
+            bindingOwners = true;
+            cbOwner.DataSource = available.Select(i => new KeyValuePair<string, int>(SectorOwnerDialog.OwnerName(i), i)).ToList();
+            cbOwner.SelectedValue = available.Contains(previous) ? previous : m_Sector.r;
+            bindingOwners = false;
+            cbOwner_SelectedIndexChanged(cbOwner, EventArgs.Empty);
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            if (!committed && originalGates != null)
+            {
+                foreach (var pair in originalGates) { pair.Key.Gates.Clear(); pair.Key.Gates.AddRange(pair.Value); }
+                m_Sector.m_MusicFileName = originalMusic;
+                X3Galaxy.Instance.HasUnsavedChanges = originalDirty;
+                X3Galaxy.Instance.HasUnsavedManualEdits = originalManual;
+            }
+            base.OnFormClosed(e);
         }
 
         private void ColorGates()
@@ -205,7 +240,8 @@ namespace Azimuth
 
             cbOwner.DisplayMember = "Key";
             cbOwner.ValueMember = "Value";
-            cbOwner.DataSource = racedd.Where(item => item.Value != 0).ToList();    // use most of the list, except for the "none" option.
+            cbOwner.DropDownStyle = ComboBoxStyle.DropDownList;
+            RefreshOwners();
 
             cbDejureOwner.DisplayMember = "Key";
             cbDejureOwner.ValueMember = "Value";
@@ -230,7 +266,10 @@ namespace Azimuth
 
         private void btnOk_Click(object sender, EventArgs e)
         {
+            if (!(cbOwner.SelectedValue is int)) return;
             int owner = (int)cbOwner.SelectedValue;
+            string invalidOwner = new GalaxyEditRules(X3Galaxy.Instance).OwnerError(m_Sector, owner);
+            if (invalidOwner != null) { MessageBox.Show(this, X3Utils.Ui(invalidOwner), X3Utils.Ui("Edit.Invalid")); return; }
             int dejowner = (int)cbDejureOwner.SelectedValue;
             int production = (int)cbProduction.SelectedValue;
             int consumption = (int)cbConsumption.SelectedValue;
@@ -265,6 +304,13 @@ namespace Azimuth
             m_Sector.Sun.SetSunLevel((int)cbSunLevel.SelectedValue);
             // Save the UI values back into the sector.
 
+            if (m_Sector.r != owner)
+            {
+                var preferred = X3Galaxy.Instance.GalaxyCreationSettings.StartSectors;
+                for (int i = 0; i < preferred.GetLength(0); i++)
+                    if (preferred[i, 0] == m_Sector.x && preferred[i, 1] == m_Sector.y) { preferred[i, 0] = -1; preferred[i, 1] = -1; }
+                m_InitialStartSector = false;
+            }
             m_Sector.r = owner;
             m_Sector.SectorCreationData.DejureOwner = dejowner;
             m_Sector.SectorCreationData.Production = production;
@@ -314,17 +360,19 @@ namespace Azimuth
             }
 
 
+            committed = true;
             Close();
         }
 
 
         private void cbOwner_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (bindingOwners || !(cbOwner.SelectedValue is int)) return;
             int owner = (int)cbOwner.SelectedValue;
 
             // If changing this to a non-xenon sector, force the maelstrom option off.
             bool xenonOwner = owner == (int)ERace.Xenon;
-            cbMaelstrom.Enabled = xenonOwner;
+            cbMaelstrom.Enabled = false;
             if (!xenonOwner) cbMaelstrom.Checked = false;
 
 
@@ -361,83 +409,29 @@ namespace Azimuth
             ColorGates();
         }
 
-        /// <summary>
-        /// Yes, let them orphan systems if that's what they want.
-        /// </summary>
-        /// <param name="direction"></param>
-        /// 
         private void ToggleGate(EGateDirection direction)
         {
-            // When removing an existing gate, use its actual destination.
-            X3Gate existingGate = m_Sector.Gates.Find(gate => gate.s == (int)direction);
-            if (existingGate != null)
+            var galaxy = X3Galaxy.Instance;
+            var rules = new GalaxyEditRules(galaxy);
+            var graph = rules.Graph.Select(v => v.ToList()).ToArray();
+            int source = rules.Sectors.IndexOf(m_Sector);
+            var existing = m_Sector.Gates.Find(g => g.s == (int)direction);
+            X3Sector destination = existing == null ? galaxy.GetSectorInDirection(m_Sector, direction) : galaxy.GetSectorAt(existing.gx, existing.gy);
+            if (destination == null) { MessageBox.Show(this, X3Utils.Ui("Edit.Gates")); return; }
+            int dest = rules.Sectors.IndexOf(destination);
+            if (existing != null) { graph[source].Remove(dest); graph[dest].Remove(source); }
+            else
             {
-                X3Sector linkedSector = X3Galaxy.Instance.GetSectorAt(existingGate.gx, existingGate.gy);
-
-                if (linkedSector != null)
-                {
-                    m_Sector.RemoveGates(linkedSector);
-                }
-                else
-                {
-                    // Allow removal of gates pointing to nonexistent sectors.
-                    m_Sector.Gates.Remove(existingGate);
-                }
-
-                X3Galaxy.Instance.HasUnsavedChanges = true;
-                X3Galaxy.Instance.HasUnsavedManualEdits = true;
-                return;
+                var opposite = GalaxyEditRules.Direction(destination.x, destination.y, m_Sector.x, m_Sector.y);
+                if (destination.Gates.Any(g => g.s == (int)opposite))
+                { MessageBox.Show(this, X3Utils.Ui("SectorEdit.GateAlreadyInUse")); return; }
+                graph[source].Add(dest); graph[dest].Add(source);
             }
-
-            // Search for the nearest sector only when adding a new gate.
-            X3Sector destination = X3Galaxy.Instance.GetSectorInDirection(m_Sector, direction);
-            if (destination == null)
-                return;
-
-            // Determine which gate side the destination would use.
-            EGateDirection opposite;
-            switch (direction)
-            {
-                case EGateDirection.North:
-                    opposite = EGateDirection.South;
-                    break;
-
-                case EGateDirection.South:
-                    opposite = EGateDirection.North;
-                    break;
-
-                case EGateDirection.East:
-                    opposite = EGateDirection.West;
-                    break;
-
-                case EGateDirection.West:
-                    opposite = EGateDirection.East;
-                    break;
-
-                default:
-                    return;
-            }
-
-            // Do not overwrite an occupied gate side.
-            X3Gate occupiedSide = destination.Gates.Find(gate => gate.s == (int)opposite && (gate.gx != m_Sector.x || gate.gy != m_Sector.y));
-            if (occupiedSide != null)
-            {
-                MessageBox.Show(
-                    X3Utils.Ui("SectorEdit.CannotAddAGateTheDestinationSector", direction, opposite),
-                    X3Utils.Ui("SectorEdit.GateAlreadyInUse"),
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-
-                return;
-            }
-
-            int gateCount = m_Sector.Gates.Count + destination.Gates.Count;
-            m_Sector.AddGates(destination);
-            if (gateCount != m_Sector.Gates.Count + destination.Gates.Count)
-            {
-                X3Galaxy.Instance.HasUnsavedChanges = true;
-                X3Galaxy.Instance.HasUnsavedManualEdits = true;
-            }
+            string reason = rules.GraphError(graph.Select(v => v.ToArray()).ToArray());
+            if (reason != null) { MessageBox.Show(this, X3Utils.Ui(reason), X3Utils.Ui("Edit.Invalid")); return; }
+            if (existing != null) m_Sector.RemoveGates(destination); else m_Sector.AddGates(destination);
+            galaxy.HasUnsavedChanges = galaxy.HasUnsavedManualEdits = true;
+            RefreshOwners();
         }
 
         private void btnChangeMusicFile_Click(object sender, EventArgs e)

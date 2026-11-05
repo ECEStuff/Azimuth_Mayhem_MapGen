@@ -57,6 +57,9 @@ namespace Azimuth
         public int Minority;                        // ID 3 Not used in editor.
         public bool ShatteredGalaxy;                // ID 100 Used by legacy maps and other editors.
         public bool ExtraSystemStats;               // ID 101, True when ID 101 is 1; mutually exclusive with SaboteurMode.
+        // Generated race seeds (zero-based X,Y); distinct from player-selected start overrides.
+        public int[,] TerritorySeeds;
+
         public bool SaboteurMode;                   // ID 101, True when ID 101 is -1; mutually exclusive with ExtraSystemStats.
         public bool ClusteredXenons;                // ID 102
         public bool HollowedGalaxy;                 // ID 110 Not used in editor.
