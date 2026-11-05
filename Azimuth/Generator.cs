@@ -24,10 +24,10 @@ namespace Azimuth
         public event Message OnMessage;
 
 
-        private static int ReducedStat(int value)
+        private static int ScaledStat(int value, int fifths)
         {
-            // Round 80% to the nearest whole stat.
-            return (4 * value + 2) / 5;
+            // Apply the generated modifier in fifths, rounded to a whole stat.
+            return (fifths * value + 2) / 5;
         }
 
         public void GenerateSystemStats()
@@ -35,8 +35,7 @@ namespace Azimuth
             Msg(X3Utils.Ui("Generator.GeneratingNewAttributesForEachSector"));
 
             var settings = X3Galaxy.Instance.GalaxyCreationSettings;
-            // New rolls replace any boosted values imported from a legacy galaxy.
-            settings.ExtraSystemStats = false;
+            int fifths = settings.SaboteurMode ? 4 : settings.ExtraSystemStats ? 6 : 5;
             
 
             //<t id="10000101">5</t>            // Dejure Owner:   20% chance galaxy wide and always in same race's system.  Some races up to 5% dejure, while others at 1%.  odd.
@@ -44,7 +43,7 @@ namespace Azimuth
             //<t id="10020101">48</t>           // Xenons:         Abnormal signals.  0-60.   30% of these are at 0. The other 70% average 32% signal level.
             //<t id="10030101">0</t>            // Terrans:        20% chance galaxy wide.
             //<t id="10040101">99</t>           // research:       40-100, average 70
-            //<t id="10050101">10</t>           // support         Number of stations supported in system. 8-15, expected average 10.
+            //<t id="10050101">10</t>           // support         Number of stations supported in system. 8-15, nominal mean 9.65 before tier rounding.
             //<t id="10060101">107</t>          // manpower        Population of system (60-130, average 95)
             //<t id="10070101">-1</t>           // cluster         Not Used.  Set to -1 to duplicate old program.
             //<t id="10080101">3 </t >          // production      Type of Food produced.  See EFood above for enumeration.
@@ -74,47 +73,60 @@ namespace Azimuth
             target.ForEach(item => item.SectorCreationData.Terrans = 1);
 
 
-            // Each full block totals 200. Its three high rolls total 39;
-            // remaining sectors outside a full block receive 10 each.
+            // Floor each original tier independently; leftover sectors also receive 9.
             allSectors.Shuffle();
-            int fullBlockSectors = allSectors.Count / 20 * 20;
-            int spread = 0;
-            for (int i = 0; i < allSectors.Count; i++)
+            int count = allSectors.Count;
+            int endEight = count * 25 / 100;
+            int endNine = endEight + count * 30 / 100;
+            int endTen = endNine + count * 30 / 100;
+            int endHigh = endTen + count * 15 / 100;
+            for (int i = 0; i < count; i++)
             {
                 var data = allSectors[i].SectorCreationData;
-                int slot = i % 20;
-                data.Support = 10;
-                if (i < fullBlockSectors)
-                {
-                    if (slot < 2) data.Support = 8;
-                    else if (slot < 7) data.Support = 9;
-                    else if (slot == 7)
-                    {
-                        spread = m_Rand.Next(3);
-                        data.Support = 13 - spread;
-                    }
-                    else if (slot == 8) data.Support = 13;
-                    else if (slot == 9) data.Support = 13 + spread;
-                }
+                if (i < endEight) data.Support = 8;
+                else if (i < endNine) data.Support = 9;
+                else if (i < endTen) data.Support = 10;
+                else if (i < endHigh) data.Support = m_Rand.Next(11, 16);
+                else data.Support = 9;
                 data.Research = m_Rand.Next(40, 101);
                 data.Manpower = m_Rand.Next(60, 131);
-                if (settings.SaboteurMode)
+                if (fifths != 5)
                 {
-                    data.Research = ReducedStat(data.Research);
-                    data.Manpower = ReducedStat(data.Manpower);
+                    data.Research = ScaledStat(data.Research, fifths);
+                    data.Manpower = ScaledStat(data.Manpower, fifths);
                 }
             }
 
-            if (settings.SaboteurMode)
+            // 9.65 = 193 / 20. Round half-station ties upward and retain all tier counts.
+            // Only the high tier has room to move: up to four single-station passes span 11–15.
+            int normalTarget = (193 * count + 10) / 20;
+            int difference = normalTarget - allSectors.Sum(sector => sector.SectorCreationData.Support);
+            int step = Math.Sign(difference);
+            for (int pass = 0; pass < 4 && difference != 0; pass++)
             {
-                // Round down first, then award the remaining whole stations to the
-                // largest fractional shares. Equal shares follow the shuffled order.
-                var roundingOrder = allSectors.OrderByDescending(
-                    sector => sector.SectorCreationData.Support * 4 % 5).ToList();
-                foreach (var sector in allSectors)
-                    sector.SectorCreationData.Support = sector.SectorCreationData.Support * 4 / 5;
+                for (int i = endTen; i < endHigh && difference != 0; i++)
+                {
+                    var data = allSectors[i].SectorCreationData;
+                    int adjusted = data.Support + step;
+                    if (adjusted < 11 || adjusted > 15) continue;
+                    data.Support = adjusted;
+                    difference -= step;
+                }
+            }
 
-                int remaining = 8 * allSectors.Count - allSectors.Sum(sector => sector.SectorCreationData.Support);
+            if (fifths != 5)
+            {
+                // For Extra Stats, 8 * 1.2 rounds to the editable minimum of 10.
+                // Exclude those already rounded up from the remaining station awards.
+                int minimum = ScaledStat(8, fifths);
+                int targetSupport = ScaledStat(normalTarget, fifths);
+                var roundingOrder = allSectors
+                    .Where(sector => sector.SectorCreationData.Support * fifths / 5 >= minimum)
+                    .OrderByDescending(sector => sector.SectorCreationData.Support * fifths % 5).ToList();
+                foreach (var sector in allSectors)
+                    sector.SectorCreationData.Support = Math.Max(minimum, sector.SectorCreationData.Support * fifths / 5);
+
+                int remaining = targetSupport - allSectors.Sum(sector => sector.SectorCreationData.Support);
                 foreach (var sector in roundingOrder.Take(remaining))
                     sector.SectorCreationData.Support++;
             }

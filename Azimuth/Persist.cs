@@ -147,7 +147,7 @@ namespace Azimuth
             //<t id="10020101">48</t>           // Xenons:              id = 1002 + SectorLocation      Abnormal signals.  0-60, average 23.    30% of these are at 0.
             //<t id="10030101">0</t>            // Terrans:             id = 1003 + "                   20% chance galaxy wide.
             //<t id="10040101">99</t>           // research:            id = 1004 + "                   40-100, average 70
-            //<t id="10050101">9</t>            // support              id = 1005 + "                   Number of stations supported in system.  Normal rolls average 10; Saboteur rolls average 8.
+            //<t id="10050101">9</t>            // support              id = 1005 + "                   Number of stations supported in system.  Normal target average 9.65; modifier totals scale by 0.8 (Saboteur) or 1.2 (Extra), rounded to whole stations.
             //<t id="10060101">107</t>          // manpower             id = 1006 + "                   Population of system (60-130, average 95)
             //<t id="10070101">-1</t>           // cluster              id = 1007 + "                   Not Used.  Set to -1 to duplicate old program.
             //<t id="10080101">3 </t >          // production           id = 1008 + "                   Type of Food produced.  See EFood above for enumeration.
@@ -674,14 +674,12 @@ namespace Azimuth
                 }
             }
 
-            // IDs 100-102, 110, 111, and 113 are not used in-game, but they are saved anyway for compatibility with other Mayhem versions.
+            // These are not used in-game, but they are saved anyway for compatibility with other Mayhem versions.
             content.Add($"\t\t<t id=\"100\">{(X3Galaxy.Instance.GalaxyCreationSettings.ShatteredGalaxy ? 1 : 0)}</t> <!-- Legacy Shattered Galaxy flag. -->");
-            content.Add($"\t\t<t id=\"101\">{(X3Galaxy.Instance.GalaxyCreationSettings.ExtraSystemStats ? 1 : 0)}</t> <!-- Legacy Extra Sector Stats. -->");  // Other Mayhem editions besides Expanded.
+            var settings = X3Galaxy.Instance.GalaxyCreationSettings;
+            int modifier = settings.SaboteurMode ? -1 : settings.ExtraSystemStats ? 1 : 0;
+            content.Add($"\t\t<t id=\"101\">{modifier}</t> <!-- Sector stats: -1 Saboteur, 0 Normal, 1 Extra. -->");
             content.Add($"\t\t<t id=\"102\">{(X3Galaxy.Instance.GalaxyCreationSettings.ClusteredXenons ? 1 : 0)}</t> <!-- Clustered Xenons. -->");
-            
-            // Exception: Expanded reads 103 to decide whether to validate Saboteur Mode at game start.
-            content.Add($"\t\t<t id=\"103\">{(X3Galaxy.Instance.GalaxyCreationSettings.SaboteurMode ? 1 : 0)}</t> <!-- Expanded Saboteur Mode (1 enabled, 0 disabled). -->"); // Expanded only.
-
             content.Add($"\t\t<t id=\"110\">{(X3Galaxy.Instance.GalaxyCreationSettings.HollowedGalaxy ? 1 : 0)}</t> <!-- Legacy Hollowed Galaxy. -->");
             content.Add($"\t\t<t id=\"111\">{(X3Galaxy.Instance.GalaxyCreationSettings.RandomDistribution ? 1 : 0)}</t> <!-- Legacy Random Distribution. -->");
             content.Add($"\t\t<t id=\"113\">{(X3Galaxy.Instance.GalaxyCreationSettings.LimitedEnclaves ? 1 : 0)}</t> <!-- Limited Enclaves. -->");

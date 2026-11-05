@@ -34,6 +34,7 @@ namespace Azimuth
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.rtb1 = new System.Windows.Forms.RichTextBox();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.chkShowRelations = new System.Windows.Forms.CheckBox();
             this.btnCustomMusic = new System.Windows.Forms.Button();
             this.gbMapOptions = new System.Windows.Forms.GroupBox();
             this.cbUseParticles = new System.Windows.Forms.CheckBox();
@@ -138,7 +139,10 @@ namespace Azimuth
             this.rbChaoticStart = new System.Windows.Forms.RadioButton();
             this.rbPeacefulStart = new System.Windows.Forms.RadioButton();
             this.gbChallenge = new System.Windows.Forms.GroupBox();
-            this.cbSaboteurMode = new System.Windows.Forms.CheckBox();
+            this.lblGeneratedModifier = new System.Windows.Forms.Label();
+            this.rbNoModifier = new System.Windows.Forms.RadioButton();
+            this.rbExtraStats = new System.Windows.Forms.RadioButton();
+            this.rbSaboteurMode = new System.Windows.Forms.RadioButton();
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.btnConfig = new System.Windows.Forms.ToolStripDropDownButton();
@@ -148,6 +152,7 @@ namespace Azimuth
             this.btnShowTerran = new System.Windows.Forms.ToolStripButton();
             this.btnShowSectorStats = new System.Windows.Forms.ToolStripButton();
             this.btnShowSectorNames = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparatorEditors = new System.Windows.Forms.ToolStripSeparator();
             this.btnLaunchWeaponsEditor = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparatorFind = new System.Windows.Forms.ToolStripSeparator();
             this.lblFindCaption = new System.Windows.Forms.ToolStripLabel();
@@ -159,6 +164,7 @@ namespace Azimuth
             this.lblSectorCount = new System.Windows.Forms.ToolStripLabel();
             this.btnHelpMenu = new System.Windows.Forms.ToolStripDropDownButton();
             this.miUserGuide = new System.Windows.Forms.ToolStripMenuItem();
+            this.miReleaseNotes = new System.Windows.Forms.ToolStripMenuItem();
             this.miAboutAzimuth = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -194,7 +200,7 @@ namespace Azimuth
             this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictureBox1.Location = new System.Drawing.Point(10, 10);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(1056, 920);
+            this.pictureBox1.Size = new System.Drawing.Size(1034, 920);
             this.pictureBox1.TabIndex = 1;
             this.pictureBox1.TabStop = false;
             this.pictureBox1.Click += new System.EventHandler(this.pictureBox1_Click);
@@ -204,9 +210,9 @@ namespace Azimuth
             // 
             // rtb1
             // 
-            this.rtb1.Location = new System.Drawing.Point(6, 818);
+            this.rtb1.Location = new System.Drawing.Point(7, 916);
             this.rtb1.Name = "rtb1";
-            this.rtb1.Size = new System.Drawing.Size(425, 135);
+            this.rtb1.Size = new System.Drawing.Size(424, 135);
             this.rtb1.TabIndex = 24;
             this.rtb1.Text = "";
             // 
@@ -214,12 +220,15 @@ namespace Azimuth
             // 
             this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainer1.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
+            this.splitContainer1.IsSplitterFixed = true;
             this.splitContainer1.Location = new System.Drawing.Point(0, 25);
             this.splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.AutoScroll = true;
             this.splitContainer1.Panel1.BackColor = System.Drawing.SystemColors.Control;
+            this.splitContainer1.Panel1.Controls.Add(this.chkShowRelations);
             this.splitContainer1.Panel1.Controls.Add(this.btnCustomMusic);
             this.splitContainer1.Panel1.Controls.Add(this.gbMapOptions);
             this.splitContainer1.Panel1.Controls.Add(this.gbMapLevels);
@@ -249,17 +258,27 @@ namespace Azimuth
             this.splitContainer1.Panel2.BackColor = System.Drawing.Color.AntiqueWhite;
             this.splitContainer1.Panel2.Controls.Add(this.pictureBox1);
             this.splitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(10);
-            this.splitContainer1.Panel2MinSize = 400;
+            this.splitContainer1.Panel2MinSize = 456;
             this.splitContainer1.Size = new System.Drawing.Size(1514, 940);
-            this.splitContainer1.SplitterDistance = 434;
+            this.splitContainer1.SplitterDistance = 456;
             this.splitContainer1.TabIndex = 25;
+            // 
+            // chkShowRelations
+            // 
+            this.chkShowRelations.AutoSize = true;
+            this.chkShowRelations.Location = new System.Drawing.Point(16, 686);
+            this.chkShowRelations.Name = "chkShowRelations";
+            this.chkShowRelations.Size = new System.Drawing.Size(129, 17);
+            this.chkShowRelations.TabIndex = 99;
+            this.chkShowRelations.Text = "Show Race Relations";
+            this.chkShowRelations.CheckedChanged += new System.EventHandler(this.chkShowRelations_CheckedChanged);
             // 
             // btnCustomMusic
             // 
             this.btnCustomMusic.BackColor = System.Drawing.Color.Linen;
-            this.btnCustomMusic.Location = new System.Drawing.Point(286, 578);
+            this.btnCustomMusic.Location = new System.Drawing.Point(284, 646);
             this.btnCustomMusic.Name = "btnCustomMusic";
-            this.btnCustomMusic.Size = new System.Drawing.Size(134, 23);
+            this.btnCustomMusic.Size = new System.Drawing.Size(125, 23);
             this.btnCustomMusic.TabIndex = 94;
             this.btnCustomMusic.Text = "Custom Music folder";
             this.btnCustomMusic.UseVisualStyleBackColor = false;
@@ -271,12 +290,12 @@ namespace Azimuth
             this.gbMapOptions.Controls.Add(this.cbLimitedEnclaves);
             this.gbMapOptions.Controls.Add(this.cbClusteredXenon);
             this.gbMapOptions.Controls.Add(this.cbClusteredVoids);
-            this.gbMapOptions.Location = new System.Drawing.Point(16, 159);
+            this.gbMapOptions.Location = new System.Drawing.Point(16, 167);
             this.gbMapOptions.Name = "gbMapOptions";
             this.gbMapOptions.Size = new System.Drawing.Size(164, 102);
             this.gbMapOptions.TabIndex = 95;
             this.gbMapOptions.TabStop = false;
-            this.gbMapOptions.Text = "Map options";
+            this.gbMapOptions.Text = "Map Options";
             // 
             // cbUseParticles
             // 
@@ -326,12 +345,12 @@ namespace Azimuth
             this.gbMapLevels.Controls.Add(this.tbFog);
             this.gbMapLevels.Controls.Add(this.voidSlider);
             this.gbMapLevels.Controls.Add(this.voidLabel);
-            this.gbMapLevels.Location = new System.Drawing.Point(184, 159);
+            this.gbMapLevels.Location = new System.Drawing.Point(188, 167);
             this.gbMapLevels.Name = "gbMapLevels";
-            this.gbMapLevels.Size = new System.Drawing.Size(225, 95);
+            this.gbMapLevels.Size = new System.Drawing.Size(221, 102);
             this.gbMapLevels.TabIndex = 96;
             this.gbMapLevels.TabStop = false;
-            this.gbMapLevels.Text = "Map sliders";
+            this.gbMapLevels.Text = "Galaxy Parameters";
             // 
             // xenonSlider
             // 
@@ -402,9 +421,9 @@ namespace Azimuth
             this.lblMayhemSave.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblMayhemSave.Location = new System.Drawing.Point(12, 104);
             this.lblMayhemSave.Name = "lblMayhemSave";
-            this.lblMayhemSave.Size = new System.Drawing.Size(141, 13);
+            this.lblMayhemSave.Size = new System.Drawing.Size(150, 13);
             this.lblMayhemSave.TabIndex = 90;
-            this.lblMayhemSave.Text = "Mayhem Save Game Folder:";
+            this.lblMayhemSave.Text = "Mayhem 3 Save Game Folder:";
             // 
             // lblMayhemRoot
             // 
@@ -412,19 +431,19 @@ namespace Azimuth
             this.lblMayhemRoot.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblMayhemRoot.Location = new System.Drawing.Point(12, 69);
             this.lblMayhemRoot.Name = "lblMayhemRoot";
-            this.lblMayhemRoot.Size = new System.Drawing.Size(108, 13);
+            this.lblMayhemRoot.Size = new System.Drawing.Size(117, 13);
             this.lblMayhemRoot.TabIndex = 89;
-            this.lblMayhemRoot.Text = "Mayhem Root Folder:";
+            this.lblMayhemRoot.Text = "Mayhem 3 Root Folder:";
             // 
             // btnGenerateStats
             // 
             this.btnGenerateStats.BackColor = System.Drawing.Color.Linen;
             this.btnGenerateStats.Enabled = false;
-            this.btnGenerateStats.Location = new System.Drawing.Point(212, 41);
+            this.btnGenerateStats.Location = new System.Drawing.Point(216, 43);
             this.btnGenerateStats.Name = "btnGenerateStats";
-            this.btnGenerateStats.Size = new System.Drawing.Size(185, 23);
+            this.btnGenerateStats.Size = new System.Drawing.Size(192, 23);
             this.btnGenerateStats.TabIndex = 88;
-            this.btnGenerateStats.Text = "Regenerate Stats";
+            this.btnGenerateStats.Text = "Reroll Sector Stats";
             this.btnGenerateStats.UseVisualStyleBackColor = false;
             this.btnGenerateStats.Click += new System.EventHandler(this.btnGenerateStats_Click);
             // 
@@ -442,9 +461,9 @@ namespace Azimuth
             this.gbSystemSpread.Controls.Add(this.lblParanidSpread);
             this.gbSystemSpread.Controls.Add(this.udTeladi);
             this.gbSystemSpread.Controls.Add(this.lblTeladiSpread);
-            this.gbSystemSpread.Location = new System.Drawing.Point(16, 394);
+            this.gbSystemSpread.Location = new System.Drawing.Point(16, 449);
             this.gbSystemSpread.Name = "gbSystemSpread";
-            this.gbSystemSpread.Size = new System.Drawing.Size(381, 61);
+            this.gbSystemSpread.Size = new System.Drawing.Size(393, 61);
             this.gbSystemSpread.TabIndex = 87;
             this.gbSystemSpread.TabStop = false;
             this.gbSystemSpread.Text = "Sector Spread";
@@ -679,7 +698,7 @@ namespace Azimuth
             this.gbRelations.Controls.Add(this.lblTeladi2);
             this.gbRelations.Controls.Add(this.lblSplit2);
             this.gbRelations.Controls.Add(this.lblParanid2);
-            this.gbRelations.Location = new System.Drawing.Point(7, 615);
+            this.gbRelations.Location = new System.Drawing.Point(7, 711);
             this.gbRelations.Name = "gbRelations";
             this.gbRelations.Size = new System.Drawing.Size(424, 197);
             this.gbRelations.TabIndex = 86;
@@ -1142,7 +1161,7 @@ namespace Azimuth
             this.gbMusic.Controls.Add(this.rbAllMusic);
             this.gbMusic.Controls.Add(this.rbLitcubeMusic);
             this.gbMusic.Controls.Add(this.rbBasicMusic);
-            this.gbMusic.Location = new System.Drawing.Point(20, 562);
+            this.gbMusic.Location = new System.Drawing.Point(16, 630);
             this.gbMusic.Name = "gbMusic";
             this.gbMusic.Size = new System.Drawing.Size(260, 48);
             this.gbMusic.TabIndex = 66;
@@ -1195,9 +1214,9 @@ namespace Azimuth
             // btnSaveGalaxy
             // 
             this.btnSaveGalaxy.BackColor = System.Drawing.Color.Linen;
-            this.btnSaveGalaxy.Location = new System.Drawing.Point(212, 12);
+            this.btnSaveGalaxy.Location = new System.Drawing.Point(216, 12);
             this.btnSaveGalaxy.Name = "btnSaveGalaxy";
-            this.btnSaveGalaxy.Size = new System.Drawing.Size(185, 23);
+            this.btnSaveGalaxy.Size = new System.Drawing.Size(192, 23);
             this.btnSaveGalaxy.TabIndex = 76;
             this.btnSaveGalaxy.Text = "Save/Load Galaxy";
             this.btnSaveGalaxy.UseVisualStyleBackColor = false;
@@ -1205,10 +1224,11 @@ namespace Azimuth
             // 
             // lblCurGalaxyName
             // 
-            this.lblCurGalaxyName.AutoSize = true;
+            this.lblCurGalaxyName.AutoEllipsis = true;
+            this.lblCurGalaxyName.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold);
             this.lblCurGalaxyName.Location = new System.Drawing.Point(200, 143);
             this.lblCurGalaxyName.Name = "lblCurGalaxyName";
-            this.lblCurGalaxyName.Size = new System.Drawing.Size(39, 13);
+            this.lblCurGalaxyName.Size = new System.Drawing.Size(197, 16);
             this.lblCurGalaxyName.TabIndex = 75;
             this.lblCurGalaxyName.Text = "-None-";
             // 
@@ -1217,31 +1237,32 @@ namespace Azimuth
             this.lblActiveGal.AutoSize = true;
             this.lblActiveGal.Location = new System.Drawing.Point(64, 143);
             this.lblActiveGal.Name = "lblActiveGal";
-            this.lblActiveGal.Size = new System.Drawing.Size(127, 13);
+            this.lblActiveGal.Size = new System.Drawing.Size(111, 13);
             this.lblActiveGal.TabIndex = 74;
-            this.lblActiveGal.Text = "Active Mayhem Galaxy:";
+            this.lblActiveGal.Text = "Installed game galaxy:";
             // 
             // lblX3SaveGameFolder
             // 
-            this.lblX3SaveGameFolder.BackColor = System.Drawing.Color.OldLace;
+            this.lblX3SaveGameFolder.AutoEllipsis = true;
+            this.lblX3SaveGameFolder.BackColor = System.Drawing.Color.Transparent;
             this.lblX3SaveGameFolder.Cursor = System.Windows.Forms.Cursors.Hand;
             this.lblX3SaveGameFolder.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblX3SaveGameFolder.ForeColor = System.Drawing.Color.Blue;
-            this.lblX3SaveGameFolder.Location = new System.Drawing.Point(13, 118);
+            this.lblX3SaveGameFolder.ForeColor = System.Drawing.SystemColors.HotTrack;
+            this.lblX3SaveGameFolder.Location = new System.Drawing.Point(18, 118);
             this.lblX3SaveGameFolder.Name = "lblX3SaveGameFolder";
-            this.lblX3SaveGameFolder.Size = new System.Drawing.Size(359, 13);
+            this.lblX3SaveGameFolder.Size = new System.Drawing.Size(379, 16);
             this.lblX3SaveGameFolder.TabIndex = 72;
             this.lblX3SaveGameFolder.Text = "C:\\Users\\...";
-            this.lblX3SaveGameFolder.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.lblX3SaveGameFolder.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.lblX3SaveGameFolder.Click += new System.EventHandler(this.btnX3SaveGameFolder_Click);
             // 
             // gbMapType
             // 
             this.gbMapType.Controls.Add(this.rbRectMap);
             this.gbMapType.Controls.Add(this.rbSquareMap);
-            this.gbMapType.Location = new System.Drawing.Point(197, 510);
+            this.gbMapType.Location = new System.Drawing.Point(196, 574);
             this.gbMapType.Name = "gbMapType";
-            this.gbMapType.Size = new System.Drawing.Size(200, 48);
+            this.gbMapType.Size = new System.Drawing.Size(213, 48);
             this.gbMapType.TabIndex = 70;
             this.gbMapType.TabStop = false;
             this.gbMapType.Text = "Map Type";
@@ -1270,25 +1291,26 @@ namespace Azimuth
             // 
             // lblX3RootFolder
             // 
-            this.lblX3RootFolder.BackColor = System.Drawing.Color.OldLace;
+            this.lblX3RootFolder.AutoEllipsis = true;
+            this.lblX3RootFolder.BackColor = System.Drawing.Color.Transparent;
             this.lblX3RootFolder.Cursor = System.Windows.Forms.Cursors.Hand;
             this.lblX3RootFolder.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblX3RootFolder.ForeColor = System.Drawing.Color.Blue;
-            this.lblX3RootFolder.Location = new System.Drawing.Point(13, 84);
+            this.lblX3RootFolder.ForeColor = System.Drawing.SystemColors.HotTrack;
+            this.lblX3RootFolder.Location = new System.Drawing.Point(18, 84);
             this.lblX3RootFolder.Name = "lblX3RootFolder";
-            this.lblX3RootFolder.Size = new System.Drawing.Size(357, 13);
+            this.lblX3RootFolder.Size = new System.Drawing.Size(379, 16);
             this.lblX3RootFolder.TabIndex = 68;
             this.lblX3RootFolder.Text = "C:\\Mayhem\\";
-            this.lblX3RootFolder.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.lblX3RootFolder.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.lblX3RootFolder.Click += new System.EventHandler(this.btnRootFolder_Click);
             // 
             // btnGenerateGates
             // 
             this.btnGenerateGates.BackColor = System.Drawing.Color.Linen;
             this.btnGenerateGates.Enabled = false;
-            this.btnGenerateGates.Location = new System.Drawing.Point(18, 41);
+            this.btnGenerateGates.Location = new System.Drawing.Point(16, 43);
             this.btnGenerateGates.Name = "btnGenerateGates";
-            this.btnGenerateGates.Size = new System.Drawing.Size(185, 23);
+            this.btnGenerateGates.Size = new System.Drawing.Size(192, 23);
             this.btnGenerateGates.TabIndex = 66;
             this.btnGenerateGates.Text = "Regenerate Gates";
             this.btnGenerateGates.UseVisualStyleBackColor = false;
@@ -1298,7 +1320,7 @@ namespace Azimuth
             // 
             this.gbGateDensity.Controls.Add(this.rbHighGateDensity);
             this.gbGateDensity.Controls.Add(this.rbLowGateDensity);
-            this.gbGateDensity.Location = new System.Drawing.Point(19, 510);
+            this.gbGateDensity.Location = new System.Drawing.Point(16, 574);
             this.gbGateDensity.Name = "gbGateDensity";
             this.gbGateDensity.Size = new System.Drawing.Size(172, 48);
             this.gbGateDensity.TabIndex = 65;
@@ -1332,9 +1354,9 @@ namespace Azimuth
             this.gbGalaxySize.Controls.Add(this.rbLargeGalaxy);
             this.gbGalaxySize.Controls.Add(this.rbMediumGalaxy);
             this.gbGalaxySize.Controls.Add(this.rbSmallGalaxy);
-            this.gbGalaxySize.Location = new System.Drawing.Point(18, 458);
+            this.gbGalaxySize.Location = new System.Drawing.Point(16, 518);
             this.gbGalaxySize.Name = "gbGalaxySize";
-            this.gbGalaxySize.Size = new System.Drawing.Size(379, 48);
+            this.gbGalaxySize.Size = new System.Drawing.Size(393, 48);
             this.gbGalaxySize.TabIndex = 64;
             this.gbGalaxySize.TabStop = false;
             this.gbGalaxySize.Text = "Galaxy Size";
@@ -1345,10 +1367,10 @@ namespace Azimuth
             this.rbLargeGalaxy.Checked = true;
             this.rbLargeGalaxy.Location = new System.Drawing.Point(267, 19);
             this.rbLargeGalaxy.Name = "rbLargeGalaxy";
-            this.rbLargeGalaxy.Size = new System.Drawing.Size(86, 17);
+            this.rbLargeGalaxy.Size = new System.Drawing.Size(100, 17);
             this.rbLargeGalaxy.TabIndex = 2;
             this.rbLargeGalaxy.TabStop = true;
-            this.rbLargeGalaxy.Text = "Large (~246)";
+            this.rbLargeGalaxy.Text = "Large (145-246)";
             this.rbLargeGalaxy.UseVisualStyleBackColor = true;
             // 
             // rbMediumGalaxy
@@ -1356,9 +1378,9 @@ namespace Azimuth
             this.rbMediumGalaxy.AutoSize = true;
             this.rbMediumGalaxy.Location = new System.Drawing.Point(135, 19);
             this.rbMediumGalaxy.Name = "rbMediumGalaxy";
-            this.rbMediumGalaxy.Size = new System.Drawing.Size(96, 17);
+            this.rbMediumGalaxy.Size = new System.Drawing.Size(104, 17);
             this.rbMediumGalaxy.TabIndex = 1;
-            this.rbMediumGalaxy.Text = "Medium (~169)";
+            this.rbMediumGalaxy.Text = "Medium (86-144)";
             this.rbMediumGalaxy.UseVisualStyleBackColor = true;
             // 
             // rbSmallGalaxy
@@ -1366,9 +1388,9 @@ namespace Azimuth
             this.rbSmallGalaxy.AutoSize = true;
             this.rbSmallGalaxy.Location = new System.Drawing.Point(7, 20);
             this.rbSmallGalaxy.Name = "rbSmallGalaxy";
-            this.rbSmallGalaxy.Size = new System.Drawing.Size(84, 17);
+            this.rbSmallGalaxy.Size = new System.Drawing.Size(86, 17);
             this.rbSmallGalaxy.TabIndex = 0;
-            this.rbSmallGalaxy.Text = "Small (~100)";
+            this.rbSmallGalaxy.Text = "Small (50-85)";
             this.rbSmallGalaxy.UseVisualStyleBackColor = true;
             // 
             // gbExpansion
@@ -1377,9 +1399,9 @@ namespace Azimuth
             this.gbExpansion.Controls.Add(this.rbAverage);
             this.gbExpansion.Controls.Add(this.rbEarly);
             this.gbExpansion.Controls.Add(this.rbOrigin);
-            this.gbExpansion.Location = new System.Drawing.Point(184, 255);
+            this.gbExpansion.Location = new System.Drawing.Point(188, 277);
             this.gbExpansion.Name = "gbExpansion";
-            this.gbExpansion.Size = new System.Drawing.Size(225, 92);
+            this.gbExpansion.Size = new System.Drawing.Size(221, 92);
             this.gbExpansion.TabIndex = 53;
             this.gbExpansion.TabStop = false;
             this.gbExpansion.Text = "Galaxy Expansion";
@@ -1429,9 +1451,10 @@ namespace Azimuth
             // btnGenerateSystems
             // 
             this.btnGenerateSystems.BackColor = System.Drawing.Color.Linen;
-            this.btnGenerateSystems.Location = new System.Drawing.Point(18, 12);
+            this.btnGenerateSystems.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold);
+            this.btnGenerateSystems.Location = new System.Drawing.Point(16, 12);
             this.btnGenerateSystems.Name = "btnGenerateSystems";
-            this.btnGenerateSystems.Size = new System.Drawing.Size(185, 23);
+            this.btnGenerateSystems.Size = new System.Drawing.Size(192, 23);
             this.btnGenerateSystems.TabIndex = 46;
             this.btnGenerateSystems.Text = "Generate Sectors";
             this.btnGenerateSystems.UseVisualStyleBackColor = false;
@@ -1442,12 +1465,12 @@ namespace Azimuth
             this.gbGalaxyStart.Controls.Add(this.rbStandardStart);
             this.gbGalaxyStart.Controls.Add(this.rbChaoticStart);
             this.gbGalaxyStart.Controls.Add(this.rbPeacefulStart);
-            this.gbGalaxyStart.Location = new System.Drawing.Point(16, 265);
+            this.gbGalaxyStart.Location = new System.Drawing.Point(16, 277);
             this.gbGalaxyStart.Name = "gbGalaxyStart";
-            this.gbGalaxyStart.Size = new System.Drawing.Size(164, 82);
+            this.gbGalaxyStart.Size = new System.Drawing.Size(164, 92);
             this.gbGalaxyStart.TabIndex = 97;
             this.gbGalaxyStart.TabStop = false;
-            this.gbGalaxyStart.Text = "Galaxy start";
+            this.gbGalaxyStart.Text = "Galaxy Start";
             // 
             // rbStandardStart
             // 
@@ -1484,24 +1507,60 @@ namespace Azimuth
             // 
             // gbChallenge
             // 
-            this.gbChallenge.Controls.Add(this.cbSaboteurMode);
-            this.gbChallenge.Location = new System.Drawing.Point(16, 350);
+            this.gbChallenge.Controls.Add(this.lblGeneratedModifier);
+            this.gbChallenge.Controls.Add(this.rbNoModifier);
+            this.gbChallenge.Controls.Add(this.rbExtraStats);
+            this.gbChallenge.Controls.Add(this.rbSaboteurMode);
+            this.gbChallenge.Location = new System.Drawing.Point(16, 377);
             this.gbChallenge.Name = "gbChallenge";
-            this.gbChallenge.Size = new System.Drawing.Size(393, 40);
+            this.gbChallenge.Size = new System.Drawing.Size(393, 64);
             this.gbChallenge.TabIndex = 98;
             this.gbChallenge.TabStop = false;
-            this.gbChallenge.Text = "Challenge modifiers";
+            this.gbChallenge.Text = "Sector Stat Modifier";
             // 
-            // cbSaboteurMode
+            // lblGeneratedModifier
             // 
-            this.cbSaboteurMode.AutoSize = true;
-            this.cbSaboteurMode.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(85)))), ((int)(((byte)(0)))));
-            this.cbSaboteurMode.Location = new System.Drawing.Point(8, 16);
-            this.cbSaboteurMode.Name = "cbSaboteurMode";
-            this.cbSaboteurMode.Size = new System.Drawing.Size(99, 17);
-            this.cbSaboteurMode.TabIndex = 80;
-            this.cbSaboteurMode.Text = "Saboteur Mode";
-            this.cbSaboteurMode.UseVisualStyleBackColor = true;
+            this.lblGeneratedModifier.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblGeneratedModifier.AutoEllipsis = true;
+            this.lblGeneratedModifier.Location = new System.Drawing.Point(8, 39);
+            this.lblGeneratedModifier.Name = "lblGeneratedModifier";
+            this.lblGeneratedModifier.Size = new System.Drawing.Size(377, 20);
+            this.lblGeneratedModifier.TabIndex = 0;
+            this.lblGeneratedModifier.Text = "Map modifier: No galaxy generated or loaded";
+            this.lblGeneratedModifier.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // rbNoModifier
+            // 
+            this.rbNoModifier.AutoSize = true;
+            this.rbNoModifier.Checked = true;
+            this.rbNoModifier.Location = new System.Drawing.Point(8, 16);
+            this.rbNoModifier.Name = "rbNoModifier";
+            this.rbNoModifier.Size = new System.Drawing.Size(51, 17);
+            this.rbNoModifier.TabIndex = 78;
+            this.rbNoModifier.TabStop = true;
+            this.rbNoModifier.Text = "None";
+            // 
+            // rbExtraStats
+            // 
+            this.rbExtraStats.AutoSize = true;
+            this.rbExtraStats.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(112)))), ((int)(((byte)(48)))), ((int)(((byte)(160)))));
+            this.rbExtraStats.Location = new System.Drawing.Point(96, 16);
+            this.rbExtraStats.Name = "rbExtraStats";
+            this.rbExtraStats.Size = new System.Drawing.Size(111, 17);
+            this.rbExtraStats.TabIndex = 79;
+            this.rbExtraStats.Text = "Extra Stats (+20%)";
+            // 
+            // rbSaboteurMode
+            // 
+            this.rbSaboteurMode.AutoSize = true;
+            this.rbSaboteurMode.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(85)))), ((int)(((byte)(0)))));
+            this.rbSaboteurMode.Location = new System.Drawing.Point(244, 16);
+            this.rbSaboteurMode.Name = "rbSaboteurMode";
+            this.rbSaboteurMode.Size = new System.Drawing.Size(100, 17);
+            this.rbSaboteurMode.TabIndex = 80;
+            this.rbSaboteurMode.Text = "Saboteur (-20%)";
+            this.rbSaboteurMode.UseVisualStyleBackColor = true;
             // 
             // btnConfig
             // 
@@ -1535,6 +1594,7 @@ namespace Azimuth
             this.btnShowTerran,
             this.btnShowSectorStats,
             this.btnShowSectorNames,
+            this.toolStripSeparatorEditors,
             this.btnLaunchWeaponsEditor,
             this.btnConfig,
             this.toolStripSeparatorFind,
@@ -1581,6 +1641,11 @@ namespace Azimuth
             this.btnShowSectorNames.Text = "Sector Names";
             this.btnShowSectorNames.ToolTipText = "Show sector names on the galaxy map";
             this.btnShowSectorNames.Click += new System.EventHandler(this.btnShowSectorNames_Click);
+            // 
+            // toolStripSeparatorEditors
+            // 
+            this.toolStripSeparatorEditors.Name = "toolStripSeparatorEditors";
+            this.toolStripSeparatorEditors.Size = new System.Drawing.Size(6, 25);
             // 
             // btnLaunchWeaponsEditor
             // 
@@ -1659,6 +1724,7 @@ namespace Azimuth
             this.btnHelpMenu.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.btnHelpMenu.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.miUserGuide,
+            this.miReleaseNotes,
             this.miAboutAzimuth});
             this.btnHelpMenu.Name = "btnHelpMenu";
             this.btnHelpMenu.Size = new System.Drawing.Size(45, 22);
@@ -1670,6 +1736,13 @@ namespace Azimuth
             this.miUserGuide.Size = new System.Drawing.Size(155, 22);
             this.miUserGuide.Text = "User Guide";
             this.miUserGuide.Click += new System.EventHandler(this.btnHelpMain_Click);
+            // 
+            // miReleaseNotes
+            // 
+            this.miReleaseNotes.Name = "miReleaseNotes";
+            this.miReleaseNotes.Size = new System.Drawing.Size(155, 22);
+            this.miReleaseNotes.Text = "Release Notes";
+            this.miReleaseNotes.Click += new System.EventHandler(this.miReleaseNotes_Click);
             // 
             // miAboutAzimuth
             // 
@@ -1689,7 +1762,7 @@ namespace Azimuth
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(1000, 900);
             this.Name = "Form1";
-            this.Text = "Azimuth - Map Generator";
+            this.Text = "Azimuth";
             this.Shown += new System.EventHandler(this.Form1_Shown);
             this.Resize += new System.EventHandler(this.Form1_Resize);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
@@ -1791,7 +1864,9 @@ namespace Azimuth
         private System.Windows.Forms.CheckBox cbUseParticles;
         private System.Windows.Forms.Label lblFog;
         private System.Windows.Forms.TrackBar tbFog;
-        private System.Windows.Forms.CheckBox cbSaboteurMode;
+        private System.Windows.Forms.RadioButton rbSaboteurMode;
+        private System.Windows.Forms.CheckBox chkShowRelations;
+        private System.Windows.Forms.Label lblGeneratedModifier;
         private System.Windows.Forms.GroupBox gbRelations;
         private System.Windows.Forms.Label label39;
         private System.Windows.Forms.Label label41;
@@ -1856,11 +1931,15 @@ namespace Azimuth
         private System.Windows.Forms.Button btnCustomMusic;
         private System.Windows.Forms.RadioButton rbCustom;
         private System.Windows.Forms.ToolStripDropDownButton btnHelpMenu;
+        private System.Windows.Forms.RadioButton rbExtraStats;
+        private System.Windows.Forms.RadioButton rbNoModifier;
+        private System.Windows.Forms.ToolStripMenuItem miReleaseNotes;
         private System.Windows.Forms.ToolStripMenuItem miUserGuide;
         private System.Windows.Forms.ToolStripMenuItem miAboutAzimuth;
         private System.Windows.Forms.ToolStripLabel lblSectorCount;
         private System.Windows.Forms.ToolStripButton btnShowSectorNames;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparatorFind;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparatorEditors;
         private System.Windows.Forms.ToolStripLabel lblFindCaption;
         private System.Windows.Forms.ToolStripTextBox txtFindSector;
         private System.Windows.Forms.ToolStripButton btnFindNext;

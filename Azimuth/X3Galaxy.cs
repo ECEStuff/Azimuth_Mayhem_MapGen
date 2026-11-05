@@ -282,10 +282,10 @@ namespace Azimuth
                 sector.SectorName = entry.InnerText;
             }
 
-            // The short-lived test exporter used 101 for Saboteur and recorded SaboteurMode in JSON.
-            // Only that explicit sidecar evidence can disambiguate a test map without a 103 entry.
-            bool interimSaboteur = GalaxyCreationSettings.SaboteurMode &&
-                doc.SelectSingleNode("/language/page[@id='9970']/t[@id='103']") == null;
+            // ID 101 is authoritative. Missing modifiers default to Normal,
+            // regardless of flags restored from the saved JSON settings.
+            GalaxyCreationSettings.SaboteurMode = false;
+            GalaxyCreationSettings.ExtraSystemStats = false;
             foreach (XmlElement entry in doc.SelectNodes("/language/page[@id='9970']/t"))
             {
                 string id = entry.GetAttribute("id");
@@ -300,16 +300,28 @@ namespace Azimuth
                         GalaxyCreationSettings.GalaxyName = value;
                         continue;
                     case "101":
-                        if (!interimSaboteur) GalaxyCreationSettings.ExtraSystemStats = ReadGalaxyFlag(id, value);
-                        continue;
-                    case "103":
-                        GalaxyCreationSettings.SaboteurMode = ReadGalaxyFlag(id, value);
-                        continue;
-                    case "100": GalaxyCreationSettings.ShatteredGalaxy = ReadGalaxyFlag(id, value); continue;
-                    case "102": GalaxyCreationSettings.ClusteredXenons = ReadGalaxyFlag(id, value); continue;
-                    case "110": GalaxyCreationSettings.HollowedGalaxy = ReadGalaxyFlag(id, value); continue;
-                    case "111": GalaxyCreationSettings.RandomDistribution = ReadGalaxyFlag(id, value); continue;
-                    case "113": GalaxyCreationSettings.LimitedEnclaves = ReadGalaxyFlag(id, value); continue;
+                        {
+                            string mode = value.Trim();
+                            if (mode != "-1" && mode != "0" && mode != "1")
+                            {
+                                throw new InvalidDataException(X3Utils.Ui("X3Galaxy.InvalidModifier", value));
+                            }
+
+                            GalaxyCreationSettings.SaboteurMode = mode == "-1";
+                            GalaxyCreationSettings.ExtraSystemStats = mode == "1";
+                            continue;
+                        }
+
+                    case "100": 
+                        GalaxyCreationSettings.ShatteredGalaxy = ReadGalaxyFlag(id, value); continue;
+                    case "102": 
+                        GalaxyCreationSettings.ClusteredXenons = ReadGalaxyFlag(id, value); continue;
+                    case "110": 
+                        GalaxyCreationSettings.HollowedGalaxy = ReadGalaxyFlag(id, value); continue;
+                    case "111": 
+                        GalaxyCreationSettings.RandomDistribution = ReadGalaxyFlag(id, value); continue;
+                    case "113": 
+                        GalaxyCreationSettings.LimitedEnclaves = ReadGalaxyFlag(id, value); continue;
                     case "121":
                         GalaxyCreationSettings.PeacefulStart = value.Trim() == "0";
                         GalaxyCreationSettings.ChaoticStart = value.Trim() == "1";

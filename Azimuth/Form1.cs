@@ -334,7 +334,12 @@ namespace Azimuth
             this.Text = X3Utils.Ui("Form1.AzimuthVByHerobettyBasedOnZMap", ver);
 
             SetupLocalization();
+
+            // Apply the initial Show Race Relations checkbox state.
+            chkShowRelations_CheckedChanged(chkShowRelations, EventArgs.Empty);
+
             int configured;
+
             if (int.TryParse(X3Utils.GetSetting("EmptySpacePercent"), out configured) && configured >= 15 && configured <= 50)
                 voidSlider.Value = configured;
             X3Utils.EnsureSetting("XenonPercent", "");
@@ -365,7 +370,7 @@ namespace Azimuth
             int target = preset.SectorTarget(cells, voidSlider.Value);
             voidLabel.Text = string.Format(X3Utils.GetLocalizedText("{VoidPercentLabel}") ?? "Void {0}%",voidSlider.Value);
             string title = X3Utils.GetLocalizedText("gbGalaxySize") ?? "Galaxy Size";
-            gbGalaxySize.Text = string.Format(X3Utils.GetLocalizedText("{GalaxySizePreview}") ?? "{0} — {1} sectors, {2} empty cells", title, target, cells - target);
+            gbGalaxySize.Text = string.Format(X3Utils.GetLocalizedText("{GalaxySizePreview}") ?? "{0} — Preview: {1} sectors, {2} empty cells", title, target, cells - target);
         }
 
         private void SetupLocalization()
@@ -384,7 +389,8 @@ namespace Azimuth
             toolTip1.SetToolTip(xenonLabel, xenonTip);
             toolTip1.SetToolTip(voidSlider, X3Utils.GetLocalizedText("{Tips.VoidSlider}") ?? "Target percentage of empty cells. The sector count stays within the selected galaxy size limits.");
             toolTip1.SetToolTip(cbLimitedEnclaves, X3Utils.GetLocalizedText("{Tips.CbLimitedEnclaves}"));
-            toolTip1.SetToolTip(cbSaboteurMode, X3Utils.GetLocalizedText("{Tips.CbSaboteurMode}"));
+            toolTip1.SetToolTip(rbExtraStats, X3Utils.Ui("ExtraStats.Tip"));
+            toolTip1.SetToolTip(rbSaboteurMode, X3Utils.GetLocalizedText("{Tips.CbSaboteurMode}"));
             toolTip1.SetToolTip(cbUseParticles, X3Utils.GetLocalizedText("{Tips.CbParticles}"));
             toolTip1.SetToolTip(tbFog, X3Utils.GetLocalizedText("{Tips.SlFog}"));
             toolTip1.SetToolTip(gbExpansion, X3Utils.GetLocalizedText("{Tips.GbExpansion}"));
@@ -566,7 +572,6 @@ namespace Azimuth
             X3Galaxy.Instance.GalaxyCreationSettings.ParanidSpread = (int)udParanid.Value;
             X3Galaxy.Instance.GalaxyCreationSettings.TeladiSpread = (int)udTeladi.Value;
             X3Galaxy.Instance.GalaxyCreationSettings.TerranSpread = (int)udTerran.Value;
-            X3Galaxy.Instance.GalaxyCreationSettings.SaboteurMode = cbSaboteurMode.Checked;
             X3Galaxy.Instance.GalaxyCreationSettings.PeacefulStart = rbPeacefulStart.Checked;
             X3Galaxy.Instance.GalaxyCreationSettings.ChaoticStart = rbChaoticStart.Checked;
 
@@ -597,6 +602,9 @@ namespace Azimuth
             X3Galaxy.Instance.AssignSystemNamesAndSoundToGeneratedSystems(m_MasterSystemList);
             ClearSectorSearch();
 
+            // Commit the selected mode to the newly generated map. Rerolls retain that mode.
+            X3Galaxy.Instance.GalaxyCreationSettings.ExtraSystemStats = rbExtraStats.Checked;
+            X3Galaxy.Instance.GalaxyCreationSettings.SaboteurMode = rbSaboteurMode.Checked;
             m_Generator.GenerateSystemStats();
 
             GenerateGates();
@@ -1193,8 +1201,44 @@ namespace Azimuth
             }
         }
 
+        // Changes visibility only; the saved relations are never altered.
+        private void chkShowRelations_CheckedChanged(object sender, EventArgs e)
+        {
+            splitContainer1.Panel1.SuspendLayout();
+            try
+            {
+                // Restore logical coordinates before moving controls in a scrolled panel.
+                splitContainer1.Panel1.AutoScrollPosition = Point.Empty;
+                gbRelations.Visible = chkShowRelations.Checked;
+                rtb1.Top = chkShowRelations.Checked
+                    ? gbRelations.Bottom + 8
+                    : chkShowRelations.Bottom + 8;
+                rtb1.Height = 135;
+            }
+            finally
+            {
+                splitContainer1.Panel1.ResumeLayout(true);
+            }
+        }
+
+        private void UpdateGeneratedModifierSummary()
+        {
+            var galaxy = X3Galaxy.Instance;
+            string key = "Form1.MapModifier.Empty";
+            if (galaxy.Sectors.Count > 0)
+            {
+                var settings = galaxy.GalaxyCreationSettings;
+                key = settings.SaboteurMode ? "Form1.MapModifier.Saboteur"
+                    : settings.ExtraSystemStats ? "Form1.MapModifier.Extra"
+                    : "Form1.MapModifier.Normal";
+            }
+            lblGeneratedModifier.Text = X3Utils.Ui(key);
+            toolTip1.SetToolTip(lblGeneratedModifier, lblGeneratedModifier.Text);
+        }
+
         private void EnableButtons()
         {
+            UpdateGeneratedModifierSummary();
             UpdateSectorCount();
             bool hasSectors = X3Galaxy.Instance.Sectors.Count > 0;
             txtFindSector.Enabled = hasSectors;
@@ -1255,7 +1299,9 @@ namespace Azimuth
                 rbChaoticStart.Checked = true;
             else rbStandardStart.Checked = true;
             cbClusteredXenon.Checked = rbChaoticStart.Checked || (rbStandardStart.Checked && startSettings.ClusteredXenons);
-            cbSaboteurMode.Checked = X3Galaxy.Instance.GalaxyCreationSettings.SaboteurMode;
+            if (startSettings.SaboteurMode) rbSaboteurMode.Checked = true;
+            else if (startSettings.ExtraSystemStats) rbExtraStats.Checked = true;
+            else rbNoModifier.Checked = true;
             tbFog.Value = X3Galaxy.Instance.GalaxyCreationSettings.FogLevelPercent / 25;
             switch(X3Galaxy.Instance.GalaxyCreationSettings.GalaxyExpansion)
             {
@@ -1459,7 +1505,6 @@ namespace Azimuth
         private void btnGenerateStats_Click(object sender, EventArgs e)
         {
             X3Galaxy.Instance.HasUnsavedChanges = true;
-            X3Galaxy.Instance.GalaxyCreationSettings.SaboteurMode = cbSaboteurMode.Checked;
             m_Generator.GenerateSystemStats();
             pictureBox1.Refresh();
         }
@@ -1774,6 +1819,11 @@ namespace Azimuth
         {
             MessageBox.Show(this, X3Utils.Ui("About.Body", X3Utils.GetVersion()),
                 X3Utils.Ui("btnAbout"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void miReleaseNotes_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start(X3Utils.HelpFile("ReleaseNotes"));
         }
 
         private void btnHelpMain_Click(object sender, EventArgs e)

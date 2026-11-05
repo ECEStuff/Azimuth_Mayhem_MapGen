@@ -98,17 +98,17 @@ namespace Azimuth
             }
         }
 
-        public static string HelpFile()
+        public static string HelpFile(string document = "HelpMain")
         {
             string root = AppDomain.CurrentDomain.BaseDirectory;
             string language = GetLocalizedText("language_id_file");
             int code;
             if (int.TryParse(language, out code))
             {
-                string localized = Path.Combine(root, "HelpMain_" + language + ".txt");
+                string localized = Path.Combine(root, document + "_" + language + ".txt");
                 if (File.Exists(localized)) return localized;
             }
-            return Path.Combine(root, "HelpMain.txt");
+            return Path.Combine(root, document + ".txt");
         }
 
         public static void LoadLocalization()

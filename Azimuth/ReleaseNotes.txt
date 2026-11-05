@@ -1,5 +1,12 @@
 ﻿----------------------------------------------------- Azimuth ----------------------------------------------------
 
+Current development changes
+- Page 9970 stores the sector stats modifier at ID 101 (-1 Saboteur, 0 Normal, 1 Extra). ID 103 is no longer used or imported.
+- Extra Sector Stats now boosts population, research and station support by 20%. Choose it or Saboteur Mode at galaxy generation.
+- Expanded rules: Extra Sector Stats reduces total supply by 20% and lowers maximum specialization from 20% to 15%. Saboteur raises maximum specialization from 20% to 30% and grants one additional perk slot.
+- Normal station support retains the original tiers and balances to the nearest whole-station total to 9.65 per sector. The two modifiers scale that total by 120% or 80%.
+- Open the User Guide and Release Notes from the Help menu.
+
 1.8.6   Removed dependency on the legacy Mayhem Galaxy Generator. Changed color coding (green -> dark blue, red -> dark red) for accessibility.
 1.8.5   Fixed writing inconsistencies (Dejure -> De Jure, Terran memory -> Terran Memory). Also fixed Xenon Defect's preferred spawn location.
 1.8.4   Updated version number.

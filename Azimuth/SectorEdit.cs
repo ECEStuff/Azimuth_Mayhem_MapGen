@@ -37,6 +37,12 @@ namespace Azimuth
             ctl.Value = value;
         }
 
+        private static void SetStatRange(NumericUpDown control, int minimum, int maximum)
+        {
+            control.Minimum = minimum;
+            control.Maximum = maximum;
+        }
+
         // Populate the dialog from the selected sector after localizing captions; raw race IDs differ from dropdown positions.
         public void Initialize(X3Sector sector)
         {
@@ -65,6 +71,28 @@ namespace Azimuth
 
             SetNud(nudSystemSize, sector.size);
             SetNud(nudAbnormalSignals, sector.SectorCreationData.Xenons);
+            // The checkbox on the main form configures the next galaxy; the saved mode governs this one.
+            var settings = X3Galaxy.Instance.GalaxyCreationSettings;
+            if (settings.SaboteurMode)
+            {
+                SetStatRange(nudResearch, 32, 80);
+                SetStatRange(nudSupport, 6, 12);
+                SetStatRange(nudManpower, 48, 104);
+            }
+            else if (settings.ExtraSystemStats)
+            {
+                // Preserve an imported sector's legacy outlier without unlocking the old caps elsewhere.
+                var data = sector.SectorCreationData;
+                SetStatRange(nudResearch, Math.Min(48, data.Research), Math.Max(120, data.Research));
+                SetStatRange(nudSupport, Math.Min(10, data.Support), Math.Max(18, data.Support));
+                SetStatRange(nudManpower, Math.Min(72, data.Manpower), Math.Max(156, data.Manpower));
+            }
+            else
+            {
+                SetStatRange(nudResearch, 40, 100);
+                SetStatRange(nudSupport, 8, 15);
+                SetStatRange(nudManpower, 60, 130);
+            }
             SetNud(nudResearch, sector.SectorCreationData.Research);
             SetNud(nudSupport, sector.SectorCreationData.Support);
             SetNud(nudManpower, sector.SectorCreationData.Manpower);

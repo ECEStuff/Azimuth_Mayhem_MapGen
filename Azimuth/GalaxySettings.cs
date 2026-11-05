@@ -40,9 +40,8 @@ namespace Azimuth
         // 29-34  Teladi Relations to same list.
         // 35-40  Terran
         // ID 100   mayhem_galaxy.scattered_galaxy      Not Used
-        // ID 101   mayhem_galaxy.extra_stats           Not Used - only for Mayhem editions besides Expanded.
+        // ID 101   Sector stats modifier: -1 = Saboteur, 0 = Normal, 1 = Extra sector stats.
         // ID 102   mayhem_galaxy.clustered_xenons      Not Used
-        // ID 103   mayhem_galaxy.saboteur_mode         Used by Mayhem Expanded to request saboteur mode validation at the start of the game.
         // ID 110   mayhem_galaxy.hollowed_galaxy       Not Used - legacy setting
         // ID 111   mayhem_galaxy.random_distribution   Not Used - legacy setting
         // ID 113   mayhem_galaxy.no_enclaves           Not Used
@@ -52,12 +51,13 @@ namespace Azimuth
         // All remaining ID's are System Stats for every system.  I.E. max population etc.
 
 
-        // These are referenced in the 9970, but never referenced in the Mayhem 3 script.
+        // Settings exported to 9970; game-side use depends on the Mayhem edition.
         // --------------------------------------------
         public int Dominance;                       // ID 2 Not used in editor. This editor uses Spread variables.          
         public int Minority;                        // ID 3 Not used in editor.
-        public bool ShatteredGalaxy;                // ID 100
-        public bool ExtraSystemStats;               // ID 101 Not used in editor. Used only for Mayhem editions besides Expanded.
+        public bool ShatteredGalaxy;                // ID 100 Used by legacy maps and other editors.
+        public bool ExtraSystemStats;               // ID 101, True when ID 101 is 1; mutually exclusive with SaboteurMode.
+        public bool SaboteurMode;                   // ID 101, True when ID 101 is -1; mutually exclusive with ExtraSystemStats.
         public bool ClusteredXenons;                // ID 102
         public bool HollowedGalaxy;                 // ID 110 Not used in editor.
         public bool RandomDistribution;             // ID 111 Not used in editor.
@@ -89,11 +89,8 @@ namespace Azimuth
             {-1, -1}                                // Xenon
         };
 
-        public bool SaboteurMode;                   // ID 103
-        public bool PeacefulStart;                  // ID 120   Optional Maelstrom sector, zero-based X,Y.
-        // ID 121
-        public bool ChaoticStart;                   // ID 120   Optional Maelstrom sector, zero-based X,Y.
-        // ID 121
+        public bool PeacefulStart;                  // ID 121 = 0
+        public bool ChaoticStart;                   // ID 121 = 1
 
         // These are used in this Editor only and not saved in the 9970.
         public bool UseParticles;

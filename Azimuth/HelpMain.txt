@@ -1,14 +1,14 @@
 ﻿Azimuth User Guide
 
 Getting started
-Choose your Mayhem root folder and X3 save folder on the left. Click either path to change it. Back up existing saves before switching galaxies for the first time.
+Choose your Mayhem 3 root folder and X3 save folder on the left. Click either path to change it. Back up existing saves before switching galaxies for the first time.
 
 Generate a galaxy
 Choose a galaxy size, shape and expansion stage. Void sets the target percentage of empty cells within the selected size limits. Xenon sets the target percentage of all grid cells for a standard start. Peaceful Start places one Xenon sector and Chaotic Start targets 50%. Click Generate Systems to build the map.
 
 Edit the map
 Double-click an occupied sector to edit its stats or gates. Double-click a void to add a sector. Right-click a tile to add or remove a sector within the size limits. New sectors start without gates. Check the network warnings after editing, or use Regenerate Gates to rebuild connections.
-Regenerate Stats rerolls sector attributes across the galaxy. Saboteur Mode reduces population, station support and research by 20%. Use Find to locate a sector and Export PNG to save an image of the current map.
+Regenerate Stats rerolls sector attributes across the galaxy. Choose None, Extra Sector Stats or Saboteur Mode before generating a galaxy. Extra Sector Stats increases population, research and station support by 20%. In Expanded, total supply is reduced by 20% and maximum specialization falls from 20% to 15%. Saboteur Mode reduces population, research and station support by 20%. In Expanded, maximum specialization rises from 20% to 30%, and you gain one additional perk slot. Rerolling stats and editing a sector use the stored modifier. Use Find to locate a sector and Export PNG to save an image of the current map.
 
 Save and play
 Open Save/Load Galaxy, enter a name and click Save. Load reopens a saved galaxy in the editor. Set Active installs the selected galaxy for X3. If Azimuth cannot identify your existing save slots, select the galaxy those saves belong to and click Identify Current Saves before switching.
@@ -34,8 +34,8 @@ of the "X3 Editor 2".
 Note:  If something doesn't appear to be working, check your /addon/types/ folder and ensure there are no TShips.pck or TBullets.pck files there. 
 	If you find any, either delete or rename them to .temp or something else.
 
-This editor works by allowing you to graphically edit the default TShips.txt and TBullets.txt files. Note: these were extracted from Mayhem's 10.cat file.
-Once these files are adjusted by this editor, it writes them out to the /addon/types/ folder in your Mayhem install folder, where
+This editor works by allowing you to graphically edit the Default TShips.txt and TBullets.txt files. (These were extracted from Mayhem 3's 10.cat file.)
+Once these files are adjusted by this editor, it writes them out to the /addon/types/ folder in your Mayhem 3 install folder, where
 these settings will automatically Override the default values found in the 10.cat file in the game.  You can certainly modify these values
 by hand, but they are a bit hard to parse and read.  The editor does this for you, and also allows the important values to be randomized globally
 or by Race.
