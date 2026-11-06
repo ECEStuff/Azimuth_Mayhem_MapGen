@@ -282,7 +282,7 @@
   "Persist.SavedGalaxy": "Saved galaxy '{0}'.",
   "Persist.TheInstalledGalaxyWasUpdated": "The installed galaxy was updated.",
   "Persist.SavedButActivationFailed": "Saved, but activation failed.",
-  "Persist.ToPlayThisMapFirstSetIt": "To play this map, first set it Active.",
+  "Persist.ToPlayThisMapFirstSetIt": "To play this map, select it in Saved Galaxies and click Set Active.",
   "Persist.TheGalaxyNameInGalaxySettingsJsonDiffers": "The galaxy name in GalaxySettings.json differs from its folder name.",
   "Persist.PleaseSelectAMapToActivate": "Please select a map to activate.",
   "Persist.IsNowTheActiveMapInMayhem": "{0} is now the active map in Mayhem.\r\nYou can now run Mayhem to play this map.",
