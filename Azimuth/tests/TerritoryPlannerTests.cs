@@ -96,6 +96,15 @@ namespace Azimuth
             try { new TerritoryPlanner(graph, rng) { Cancellation = cancelled.Token }.Plan(1, targets3, false, false); }
             catch (OperationCanceledException) { cancellationObserved = true; }
             Check(cancellationObserved, "Planner honours cancellation");
+            Check(planner.ValidationError(owners, seeds, targets3, 1, true, true, -1, false) == null,
+                "No Maelstrom override is valid; Chaotic connectivity does not depend on it");
+            Check(planner.ValidationError(owners, seeds, targets3, 1, true, true, 5, false) == "Edit.Portal",
+                "Override must be Xenon");
+            var interiorPortal = (int[])owners.Clone(); interiorPortal[53] = 7;
+            Check(planner.ValidationError(interiorPortal, seeds, targets3, 2, true, true, 53, false) == null,
+                "Interior Xenon override is valid");
+            Check(!planner.Validate(interiorPortal, seeds, targets3, 2, true, true, 53),
+                "Generation still reserves an enclave seed");
             var disconnected = (int[])owners.Clone();
             disconnected[15] = 0; disconnected[50] = 2;
             Check(!planner.Validate(disconnected, seeds, targets3, 1, false, false, 54), "Disconnected race rejected");

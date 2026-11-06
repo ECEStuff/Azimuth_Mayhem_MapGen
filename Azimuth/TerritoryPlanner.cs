@@ -351,7 +351,7 @@ namespace Azimuth
 
         // Return localization keys so the same structural contract explains edits
         // and generation failures. Targets passed by editors are CURRENT counts.
-        public string ValidationError(int[] owners, int[] seeds, int[] targets, int xenonCount, bool clustered, bool chaotic, int portal)
+        public string ValidationError(int[] owners, int[] seeds, int[] targets, int xenonCount, bool clustered, bool chaotic, int portal, bool requirePortalEnclave = true)
         {
             if (graph.Length == 0 || owners.Length != graph.Length || !IsConnected) return "Edit.Disconnected";
             for (int v = 0; v < graph.Length; v++)
@@ -359,7 +359,13 @@ namespace Azimuth
             if (seeds == null || seeds.Length != RaceCount || seeds.Distinct().Count() != RaceCount
                 || targets.Length != RaceCount || seeds.Any(s => s < 0 || s >= graph.Length)
                 || owners.Any(o => o < 0 || o > 7)) return "Edit.Seeds";
-            if (portal < 0 || portal >= graph.Length || owners[portal] != 7 || graph[portal].Length != 1) return "Edit.Portal";
+            // Generation reserves a Xenon enclave, but the exported Maelstrom
+            // override is optional and may point to any Xenon sector.
+            if (requirePortalEnclave)
+            {
+                if (portal < 0 || portal >= graph.Length || owners[portal] != 7 || graph[portal].Length != 1) return "Edit.Portal";
+            }
+            else if (portal != -1 && (portal < 0 || portal >= graph.Length || owners[portal] != 7)) return "Edit.Portal";
             if (owners.Count(o => o == 7) != xenonCount) return "Edit.Budget";
             if (leaves.Count(v => owners[v] == 0) < RequiredUnknownEnclaves(chaotic)) return "Edit.Enclaves";
             for (int r = 0; r < RaceCount; r++)
@@ -373,7 +379,8 @@ namespace Azimuth
             for (int v = 0; v < graph.Length; v++)
                 if (owners[v] >= 1 && owners[v] <= RaceCount
                     && graph[v].Any(w => owners[w] >= 1 && owners[w] <= RaceCount && owners[w] != owners[v])) return "Edit.Border";
-            if (chaotic && Component(owners, portal).Count != xenonCount) return "Edit.Xenon";
+            int xenonSeed = Array.IndexOf(owners, 7);
+            if (chaotic && (xenonSeed < 0 || Component(owners, xenonSeed).Count != xenonCount)) return "Edit.Xenon";
             if (clustered)
             {
                 var remaining = new HashSet<int>(Enumerable.Range(0, graph.Length).Where(v => owners[v] == 7));

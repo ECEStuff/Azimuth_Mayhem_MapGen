@@ -123,8 +123,13 @@
     <Compile Include="Generator.cs" />
     <Compile Include="TerritoryPlanner.cs" />
     <Compile Include="GalaxyEditRules.cs" />
-    <Compile Include="SectorOwnerDialog.cs" />
-    <Compile Include="GenerationProgressDialog.cs" />
+    <Compile Include="SectorOwnershipRules.cs" />
+    <Compile Include="SectorOwnerDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="GenerationProgressDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="AssemblyTestAccess.cs" />
     <Compile Include="LiveSaveOwner.cs" />
     <Compile Include="Persist.cs">

@@ -409,6 +409,8 @@ namespace Azimuth
         {
 
 
+            string attributeError = new GalaxyEditRules(X3Galaxy.Instance).AttributeError();
+            if (attributeError != null) { MessageBox.Show(this, X3Utils.Ui(attributeError), X3Utils.Ui("Persist.InvalidGalaxy")); return; }
             if (X3Galaxy.Instance.GalaxyCreationSettings.TerritorySeeds != null)
             {
                 string reason = new GalaxyEditRules(X3Galaxy.Instance).CurrentError();
@@ -425,7 +427,7 @@ namespace Azimuth
                 return;
             }
 
-            // Azimuth 2.2 - Check for connectivity.
+            // Azimuth 2.0 - Check for connectivity.
             GateNetworkReport network = X3Galaxy.Instance.AnalyzeGateNetwork();
 
             if (network.GatelessSectors > 0 || network.OutsideLargestNetwork > 0 || network.MissingDestinations > 0 || network.MissingReturnGates > 0)
@@ -1026,7 +1028,7 @@ namespace Azimuth
             {
                 string[] entries = srcTemplate.Split(';');
 
-                // Azimuth 2.2: Space particles are independent of nebula dust.
+                // Azimuth 2.0: Space particles are independent of nebula dust.
                 entries[26] = X3Galaxy.Instance.GalaxyCreationSettings.UseParticles ? "80" : "0";
 
                 // The original template determines whether dust is supported.
@@ -1231,6 +1233,8 @@ namespace Azimuth
                 savedGalaxy.Load9970_XML(Path.Combine(source, "addon", "t", "9970-L0" + language + ".xml"));
                 bool hasUnknownEnclave = savedGalaxy.Sectors.Count(sector => (ERace)sector.r == ERace.Unknown && sector.Gates.Count == 1)
                     >= TerritoryPlanner.RequiredUnknownEnclaves(savedGalaxy.GalaxyCreationSettings.ChaoticStart);
+                string attributeError = new GalaxyEditRules(savedGalaxy).AttributeError();
+                if (attributeError != null) { MessageBox.Show(this, X3Utils.Ui(attributeError), X3Utils.Ui("Persist.InvalidGalaxy")); return false; }
                 if (savedGalaxy.GalaxyCreationSettings.TerritorySeeds != null)
                 {
                     string reason = new GalaxyEditRules(savedGalaxy).CurrentError();

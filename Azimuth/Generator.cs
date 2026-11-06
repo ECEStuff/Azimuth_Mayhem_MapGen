@@ -328,7 +328,8 @@ namespace Azimuth
                 {
                     int owner = planner.Owners[i];
                     galaxy.Sectors[i].MarkSectorRace(owner == 0 ? ERace.Unknown : owner == 7 ? ERace.Xenon : TerritoryRaces[owner - 1]);
-                    galaxy.Sectors[i].IsMaelstromPortal = i == planner.Portal;
+                    // The planner's enclave seed is not a user-selected override.
+                    galaxy.Sectors[i].IsMaelstromPortal = false;
                 }
                 for (int r = 0; r < 6; r++)
                 {

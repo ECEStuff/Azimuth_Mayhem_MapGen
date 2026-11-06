@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.lbsSecId = new System.Windows.Forms.Label();
             this.lblDejOwner = new System.Windows.Forms.Label();
             this.lblCompany = new System.Windows.Forms.Label();
@@ -54,6 +55,9 @@
             this.nudSystemSize = new System.Windows.Forms.NumericUpDown();
             this.lblSysSize = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.btnChangeMusicFile = new System.Windows.Forms.Button();
+            this.lblMusicFile = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
             this.cbSunLevel = new System.Windows.Forms.ComboBox();
             this.lblPlanets = new System.Windows.Forms.Label();
             this.lblPlanetCount = new System.Windows.Forms.Label();
@@ -69,10 +73,8 @@
             this.lblStartSec = new System.Windows.Forms.Label();
             this.cbStartSector = new System.Windows.Forms.CheckBox();
             this.lblSystemName = new System.Windows.Forms.Label();
-            this.label1 = new System.Windows.Forms.Label();
-            this.lblMusicFile = new System.Windows.Forms.Label();
-            this.btnChangeMusicFile = new System.Windows.Forms.Button();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.tipSectorEdit = new System.Windows.Forms.ToolTip(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.nudAbnormalSignals)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudResearch)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nudSupport)).BeginInit();
@@ -214,11 +216,6 @@
             // nudResearch
             // 
             this.nudResearch.Location = new System.Drawing.Point(146, 98);
-            this.nudResearch.Maximum = new decimal(new int[] {
-            100,
-            0,
-            0,
-            0});
             this.nudResearch.Minimum = new decimal(new int[] {
             32,
             0,
@@ -414,6 +411,34 @@
             this.panel1.Size = new System.Drawing.Size(447, 310);
             this.panel1.TabIndex = 39;
             // 
+            // btnChangeMusicFile
+            // 
+            this.btnChangeMusicFile.Location = new System.Drawing.Point(383, 9);
+            this.btnChangeMusicFile.Name = "btnChangeMusicFile";
+            this.btnChangeMusicFile.Size = new System.Drawing.Size(33, 23);
+            this.btnChangeMusicFile.TabIndex = 55;
+            this.btnChangeMusicFile.Text = "<--";
+            this.btnChangeMusicFile.UseVisualStyleBackColor = true;
+            this.btnChangeMusicFile.Click += new System.EventHandler(this.btnChangeMusicFile_Click);
+            // 
+            // lblMusicFile
+            // 
+            this.lblMusicFile.AutoSize = true;
+            this.lblMusicFile.Location = new System.Drawing.Point(289, 14);
+            this.lblMusicFile.Name = "lblMusicFile";
+            this.lblMusicFile.Size = new System.Drawing.Size(78, 13);
+            this.lblMusicFile.TabIndex = 54;
+            this.lblMusicFile.Text = "00000000.mp3";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(226, 14);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(57, 13);
+            this.label1.TabIndex = 53;
+            this.label1.Text = "Music File:";
+            // 
             // cbSunLevel
             // 
             this.cbSunLevel.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
@@ -423,16 +448,26 @@
             this.cbSunLevel.Size = new System.Drawing.Size(70, 21);
             this.cbSunLevel.TabIndex = 52;
             // 
-            // lblSunLevel
+            // lblPlanets
             // 
             this.lblPlanets.AutoSize = true;
             this.lblPlanets.Location = new System.Drawing.Point(15, 205);
             this.lblPlanets.Name = "lblPlanets";
+            this.lblPlanets.Size = new System.Drawing.Size(42, 13);
+            this.lblPlanets.TabIndex = 56;
             this.lblPlanets.Text = "Planets";
+            // 
+            // lblPlanetCount
+            // 
             this.lblPlanetCount.AutoSize = true;
             this.lblPlanetCount.Location = new System.Drawing.Point(146, 205);
             this.lblPlanetCount.Name = "lblPlanetCount";
+            this.lblPlanetCount.Size = new System.Drawing.Size(13, 13);
+            this.lblPlanetCount.TabIndex = 57;
             this.lblPlanetCount.Text = "0";
+            // 
+            // lblSunLevel
+            // 
             this.lblSunLevel.AutoSize = true;
             this.lblSunLevel.Location = new System.Drawing.Point(238, 182);
             this.lblSunLevel.Name = "lblSunLevel";
@@ -532,9 +567,9 @@
             this.lblStartSec.AutoSize = true;
             this.lblStartSec.Location = new System.Drawing.Point(238, 214);
             this.lblStartSec.Name = "lblStartSec";
-            this.lblStartSec.Size = new System.Drawing.Size(115, 13);
+            this.lblStartSec.Size = new System.Drawing.Size(97, 13);
             this.lblStartSec.TabIndex = 40;
-            this.lblStartSec.Text = "Start Sector for Owner:";
+            this.lblStartSec.Text = "Game Start Sector:";
             // 
             // cbStartSector
             // 
@@ -555,34 +590,6 @@
             this.lblSystemName.TabIndex = 39;
             this.lblSystemName.Text = "Owner:";
             this.lblSystemName.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(226, 14);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(57, 13);
-            this.label1.TabIndex = 53;
-            this.label1.Text = "Music File:";
-            // 
-            // lblMusicFile
-            // 
-            this.lblMusicFile.AutoSize = true;
-            this.lblMusicFile.Location = new System.Drawing.Point(289, 14);
-            this.lblMusicFile.Name = "lblMusicFile";
-            this.lblMusicFile.Size = new System.Drawing.Size(78, 13);
-            this.lblMusicFile.TabIndex = 54;
-            this.lblMusicFile.Text = "00000000.mp3";
-            // 
-            // btnChangeMusicFile
-            // 
-            this.btnChangeMusicFile.Location = new System.Drawing.Point(383, 9);
-            this.btnChangeMusicFile.Name = "btnChangeMusicFile";
-            this.btnChangeMusicFile.Size = new System.Drawing.Size(33, 23);
-            this.btnChangeMusicFile.TabIndex = 55;
-            this.btnChangeMusicFile.Text = "<--";
-            this.btnChangeMusicFile.UseVisualStyleBackColor = true;
-            this.btnChangeMusicFile.Click += new System.EventHandler(this.btnChangeMusicFile_Click);
             // 
             // openFileDialog1
             // 
@@ -657,5 +664,6 @@
         private System.Windows.Forms.Label lblMusicFile;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.ToolTip tipSectorEdit;
     }
 }

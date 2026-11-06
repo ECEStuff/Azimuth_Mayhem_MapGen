@@ -700,10 +700,12 @@ namespace Azimuth
                 problems.Add(Localize("{Map.MissingReturns}", "Gates without return connections: {0}",
                     network.MissingReturnGates));
 
+            string attributes = new GalaxyEditRules(X3Galaxy.Instance).AttributeError();
+            if (attributes != null) problems.Add(X3Utils.Ui(attributes));
             if (X3Galaxy.Instance.GalaxyCreationSettings.TerritorySeeds != null)
             {
                 string structural = new GalaxyEditRules(X3Galaxy.Instance).CurrentError();
-                if (structural != null) problems.Add(X3Utils.Ui(structural));
+                if (structural != null && structural != attributes) problems.Add(X3Utils.Ui(structural));
             }
 
             if (problems.Count > 0)

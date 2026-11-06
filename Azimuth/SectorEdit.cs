@@ -20,6 +20,7 @@ namespace Azimuth
         private bool m_StartMaelstrom;
         private bool m_InitialStartSector;
         private bool committed, bindingOwners;
+        private int? attributeOwner;
         private Dictionary<X3Sector, List<X3Gate>> originalGates;
         private bool originalDirty, originalManual;
         private string originalMusic;
@@ -70,10 +71,10 @@ namespace Azimuth
             // Set drop down list values.
             cbOwner.SelectedValue = sector.r;
 
-            cbDejureOwner.SelectedValue = sector.SectorCreationData.DejureOwner;
+            RefreshOwnerAttributes(sector.r);
             cbProduction.SelectedValue = sector.SectorCreationData.Production;
             cbConsumption.SelectedValue = sector.SectorCreationData.Consumption;
-            cbCompany.SelectedValue = sector.SectorCreationData.Company;
+
             cbSunLevel.SelectedValue = X3Utils.PlaceDigitValue(0, sector.Sun.s);
 
 
@@ -108,10 +109,6 @@ namespace Azimuth
 
             cbMaelstrom.Checked = sector.IsMaelstromPortal;
             cbMaelstrom.Enabled = (m_Sector.r == (int)ERace.Xenon);
-            if (X3Galaxy.Instance.GalaxyCreationSettings.PeacefulStart || X3Galaxy.Instance.GalaxyCreationSettings.ChaoticStart)
-            {
-                cbMaelstrom.Enabled = false;    // Don't let them change this.  It is always true and must never be set to false for this start.
-            }
             m_StartMaelstrom = cbMaelstrom.Checked;
 
 
@@ -135,7 +132,7 @@ namespace Azimuth
                 }
             }
 
-            cbMaelstrom.Enabled = false;
+            cbMaelstrom.Enabled = (int)cbOwner.SelectedValue == (int)ERace.Xenon;
             if (new GalaxyEditRules(galaxy).IsSeed(sector)) cbDejureOwner.Enabled = false;
             ColorGates();
         }
@@ -151,6 +148,32 @@ namespace Azimuth
             cbOwner.SelectedValue = available.Contains(previous) ? previous : m_Sector.r;
             bindingOwners = false;
             cbOwner_SelectedIndexChanged(cbOwner, EventArgs.Empty);
+        }
+
+        private void RefreshOwnerAttributes(int owner)
+        {
+            bool changed = attributeOwner.HasValue && attributeOwner.Value != owner;
+            int dejure = cbDejureOwner.SelectedValue is int ? (int)cbDejureOwner.SelectedValue : m_Sector.SectorCreationData.DejureOwner;
+            int company = cbCompany.SelectedValue is int ? (int)cbCompany.SelectedValue : m_Sector.SectorCreationData.Company;
+            if (changed || owner != m_Sector.r || !SectorOwnershipRules.ValidDejure(owner, dejure)) dejure = 0;
+            if (!SectorOwnershipRules.ValidCompany(owner, company)) company = -1;
+            var dejures = new List<KeyValuePair<string, int>> { new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{none}"), 0) };
+            if (SectorOwnershipRules.IsFaction(owner)) dejures.Add(new KeyValuePair<string, int>(SectorOwnerDialog.OwnerName(owner), owner));
+            cbDejureOwner.DisplayMember = "Key"; cbDejureOwner.ValueMember = "Value";
+            cbDejureOwner.DropDownStyle = ComboBoxStyle.DropDownList;
+            cbDejureOwner.DataSource = dejures; cbDejureOwner.SelectedValue = dejure;
+            // A transfer commits with no de jure owner. It can be assigned on the next edit.
+            cbDejureOwner.Enabled = SectorOwnershipRules.IsFaction(owner) && owner == m_Sector.r
+                && !new GalaxyEditRules(X3Galaxy.Instance).IsSeed(m_Sector);
+            string[] companyKeys = { "{Markus}", "{Oceana}", "{Pontifex}", "{Thurok}", "{Salecrest}", "{Industritech}" };
+            var companies = new List<KeyValuePair<string, int>> { new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{none}"), -1) };
+            for (int i = 0; i < companyKeys.Length; i++)
+                if (SectorOwnershipRules.ValidCompany(owner, i)) companies.Add(new KeyValuePair<string, int>(X3Utils.GetLocalizedText(companyKeys[i]), i));
+            cbCompany.DisplayMember = "Key"; cbCompany.ValueMember = "Value";
+            cbCompany.DropDownStyle = ComboBoxStyle.DropDownList;
+            cbCompany.DataSource = companies; cbCompany.SelectedValue = company;
+            cbCompany.Enabled = companies.Count > 1;
+            attributeOwner = owner;
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
@@ -195,19 +218,9 @@ namespace Azimuth
         private void SetupLocalization()
         {
             X3Utils.SetControlChildrenText(this);
-            
-            var racedd = new[]
-            {
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{none}"), 0),
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Argon}"), 1),
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Boron}"), 2),
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Split}"), 3),
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Paranid}"), 4),
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Teladi}"), 5),
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Xenon}"), 6),
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Unknown}"), 14),
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Terran}"), 18)
-            };
+            string gamestartTip = X3Utils.Ui("SectorEdit.GamestartSectorTip");
+            tipSectorEdit.SetToolTip(cbStartSector, gamestartTip);
+            tipSectorEdit.SetToolTip(lblStartSec, gamestartTip);
 
             var productsdd = new[]
             {
@@ -217,17 +230,6 @@ namespace Azimuth
                 new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Vegetables}"), 3)
             };
 
-
-            var companydd = new[]
-            {
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{none}"), -1),
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Markus}"), 0),
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Oceana}"), 1),
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Pontifex}"), 2),
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Thurok}"), 3),
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Salecrest}"), 4),
-                new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Industritech}"), 5)
-            };
 
             Dictionary<string, int> sunlevels = new Dictionary<string, int>
             {
@@ -245,7 +247,7 @@ namespace Azimuth
 
             cbDejureOwner.DisplayMember = "Key";
             cbDejureOwner.ValueMember = "Value";
-            cbDejureOwner.DataSource = racedd.Where(item => item.Value != 6 && item.Value != 14).ToList();    // use most of the list, except for the "Unknown and Xenon" options.
+
 
             cbProduction.DisplayMember = "Key";
             cbProduction.ValueMember = "Value";
@@ -257,7 +259,7 @@ namespace Azimuth
 
             cbCompany.DisplayMember = "Key";
             cbCompany.ValueMember = "Value";
-            cbCompany.DataSource = companydd.ToList();
+
 
             cbSunLevel.DisplayMember = "Key";
             cbSunLevel.ValueMember = "Value";
@@ -270,10 +272,12 @@ namespace Azimuth
             int owner = (int)cbOwner.SelectedValue;
             string invalidOwner = new GalaxyEditRules(X3Galaxy.Instance).OwnerError(m_Sector, owner);
             if (invalidOwner != null) { MessageBox.Show(this, X3Utils.Ui(invalidOwner), X3Utils.Ui("Edit.Invalid")); return; }
-            int dejowner = (int)cbDejureOwner.SelectedValue;
+            int dejowner = owner != m_Sector.r ? 0 : (int)cbDejureOwner.SelectedValue;
             int production = (int)cbProduction.SelectedValue;
             int consumption = (int)cbConsumption.SelectedValue;
             int company = (int)cbCompany.SelectedValue;
+            if (!SectorOwnershipRules.ValidDejure(owner, dejowner) || !SectorOwnershipRules.ValidCompany(owner, company))
+            { MessageBox.Show(this, X3Utils.Ui("Edit.InvalidAttributes")); return; }
 
             if (production == consumption)
             {
@@ -369,18 +373,19 @@ namespace Azimuth
         {
             if (bindingOwners || !(cbOwner.SelectedValue is int)) return;
             int owner = (int)cbOwner.SelectedValue;
+            RefreshOwnerAttributes(owner);
 
             // If changing this to a non-xenon sector, force the maelstrom option off.
             bool xenonOwner = owner == (int)ERace.Xenon;
-            cbMaelstrom.Enabled = false;
+            cbMaelstrom.Enabled = (int)cbOwner.SelectedValue == (int)ERace.Xenon;
             if (!xenonOwner) cbMaelstrom.Checked = false;
 
 
-            // Only allow start sector for player in race controlled space.
+            // Allow start sector for player only in race controlled space.
             bool ownerisrace = X3Utils.RaceIsMain(owner);
             cbStartSector.Enabled = ownerisrace;
-            if (!ownerisrace) cbStartSector.Checked = false;
-
+            if (!ownerisrace) 
+                cbStartSector.Checked = false;
         }
 
 

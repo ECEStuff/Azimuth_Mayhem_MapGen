@@ -29,7 +29,7 @@ namespace Azimuth
                 ? Enumerable.Range(0, 6).Select(r => Sectors.FindIndex(s => s.x == coordinates[r, 0] && s.y == coordinates[r, 1])).ToArray()
                 : null;
             portal = Sectors.FindIndex(s => s.IsMaelstromPortal);
-            if (Sectors.Count(s => s.IsMaelstromPortal) != 1) captureError = "Edit.Portal";
+            if (Sectors.Count(s => s.IsMaelstromPortal) > 1) captureError = "Edit.Portal";
         }
         internal static int Encode(int owner)
         {
@@ -38,9 +38,29 @@ namespace Azimuth
             int index = Array.IndexOf(RaceIds, owner);
             return index < 0 ? -1 : index + 1;
         }
-        internal bool IsProtected(X3Sector sector) { int i = Sectors.IndexOf(sector); return sector.IsMaelstromPortal || (seeds != null && seeds.Contains(i)); }
+        internal bool IsProtected(X3Sector sector) { int i = Sectors.IndexOf(sector); return seeds != null && seeds.Contains(i); }
         internal bool IsSeed(X3Sector sector) { return seeds != null && seeds.Contains(Sectors.IndexOf(sector)); }
-        internal string CurrentError() { return Validate(Graph, Owners, seeds, portal); }
+        // Applies also to imported maps without territory-seed metadata.
+        internal string AttributeError()
+        {
+            if (Sectors.Count(s => s.IsMaelstromPortal) > 1 || Sectors.Any(s => s.IsMaelstromPortal && s.r != 6)) return "Edit.Portal";
+            string share = XenonError(Owners.Length, Owners.Count(o => o == 7));
+            if (share != null) return share;
+            foreach (var sector in Sectors)
+            {
+                if (!SectorOwnershipRules.ValidDejure(sector.r, sector.SectorCreationData.DejureOwner)) return "Edit.DejureOwner";
+                if (!SectorOwnershipRules.ValidCompany(sector.r, sector.SectorCreationData.Company)) return "Edit.CompanyOwner";
+            }
+            return null;
+        }
+        private string XenonError(int total, int xenon)
+        {
+            var settings = galaxy.GalaxyCreationSettings;
+            int percent = GalaxySettings.ResolveXenonPercent(settings.XenonPercent, GalaxySettings.MinXenonPercent);
+            return SectorOwnershipRules.ValidXenonCount(total, xenon, settings.PeacefulStart, settings.ChaoticStart, percent)
+                ? null : settings.PeacefulStart ? "Edit.PeacefulXenon" : "Edit.MinimumXenon";
+        }
+        internal string CurrentError() { return AttributeError() ?? Validate(Graph, Owners, seeds, portal); }
         internal string GraphError(int[][] graph)
         {
             if (graph.Length != Sectors.Count || graph.Any(v => v.Any(w => w < 0 || w >= graph.Length))) return "Edit.Gates";
@@ -61,17 +81,19 @@ namespace Azimuth
             // Connectedness of the recipient alone could allow its first remote
             // sector. Require an existing neighbor for each main-race transfer.
             if (RaceIds.Contains(owner) && !Graph[i].Any(j => j >= 0 && Owners[j] == proposed[i])) return "Edit.Territory";
-            return Validate(Graph, proposed, seeds, portal);
+            return Validate(Graph, proposed, seeds, i == portal && owner != 6 ? -1 : portal);
         }
         private string Validate(int[][] graph, int[] owners, int[] starts, int portalIndex)
         {
+            string xenonError = XenonError(owners.Length, owners.Count(o => o == 7));
+            if (xenonError != null) return xenonError;
             if (captureError != null) return captureError;
             if (graph.Any(v => v.Any(w => w < 0 || w >= graph.Length))) return "Edit.Gates";
             if (starts == null) return "Edit.Legacy";
             int[] counts = Enumerable.Range(1, 6).Select(r => owners.Count(o => o == r)).ToArray();
             var settings = galaxy.GalaxyCreationSettings;
             return new TerritoryPlanner(graph, new Random(0)).ValidationError(owners, starts, counts,
-                owners.Count(o => o == 7), settings.ChaoticStart || settings.ClusteredXenons, settings.ChaoticStart, portalIndex);
+                owners.Count(o => o == 7), settings.ChaoticStart || settings.ClusteredXenons, settings.ChaoticStart, portalIndex, false);
         }
         internal string RemovalError(X3Sector sector)
         {
@@ -82,7 +104,7 @@ namespace Azimuth
             var graph = Graph.Where((v, i) => i != removed)
                 .Select(v => v.Where(w => w != removed).Select(remap).ToArray()).ToArray();
             return Validate(graph, Owners.Where((v, i) => i != removed).ToArray(),
-                seeds == null ? null : seeds.Select(remap).ToArray(), remap(portal));
+                seeds == null ? null : seeds.Select(remap).ToArray(), portal == removed ? -1 : remap(portal));
         }
         internal bool CountAllowed(int count)
         {
