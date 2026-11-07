@@ -36,3 +36,11 @@ Development focuses on:
 ## Licensing
 
 See Azimuth/LICENSE.txt for details. The license file is also included with Azimuth releases.
+
+## Unofficial Fan project and Egosoft Notice
+
+This is an unofficial fan project. It is not affiliated with, endorsed, or supported by Egosoft. 
+Egosoft assumes no technical support or liability (e.g., for corrupted save games). 
+Use at your own risk. All names, trademarks, and content related to X3: Albion Prelude are the property of Egosoft or their respective owners.
+
+Use and distribution of Egosoft content remain subject to Egosoft's applicable terms and Fan Content Policy: https://www.egosoft.com/community/fanpolicy_en.php
