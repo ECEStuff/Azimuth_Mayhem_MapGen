@@ -31,8 +31,6 @@ namespace Azimuth
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(WeaponsEditor));
             this.gbAction = new System.Windows.Forms.GroupBox();
-            this.rbRaiseShipStatsForRace = new System.Windows.Forms.RadioButton();
-            this.rbLowerShipStatsForRace = new System.Windows.Forms.RadioButton();
             this.rbAllShipStatsForRace = new System.Windows.Forms.RadioButton();
             this.rbAllShipStats = new System.Windows.Forms.RadioButton();
             this.rbRandomizeAllWeapons = new System.Windows.Forms.RadioButton();
@@ -52,78 +50,54 @@ namespace Azimuth
             // 
             // gbAction
             // 
-            this.gbAction.Controls.Add(this.rbRaiseShipStatsForRace);
-            this.gbAction.Controls.Add(this.rbLowerShipStatsForRace);
             this.gbAction.Controls.Add(this.rbAllShipStatsForRace);
             this.gbAction.Controls.Add(this.rbAllShipStats);
             this.gbAction.Controls.Add(this.rbRandomizeAllWeapons);
             this.gbAction.Location = new System.Drawing.Point(20, 21);
             this.gbAction.Name = "gbAction";
-            this.gbAction.Size = new System.Drawing.Size(247, 165);
+            this.gbAction.Size = new System.Drawing.Size(270, 118);
             this.gbAction.TabIndex = 0;
             this.gbAction.TabStop = false;
             this.gbAction.Text = "Action";
             // 
-            // rbRaiseShipStatsForRace
-            // 
-            this.rbRaiseShipStatsForRace.AutoSize = true;
-            this.rbRaiseShipStatsForRace.Location = new System.Drawing.Point(21, 134);
-            this.rbRaiseShipStatsForRace.Name = "rbRaiseShipStatsForRace";
-            this.rbRaiseShipStatsForRace.Size = new System.Drawing.Size(165, 17);
-            this.rbRaiseShipStatsForRace.TabIndex = 4;
-            this.rbRaiseShipStatsForRace.Text = "Raise all ship stats for a Race";
-            this.rbRaiseShipStatsForRace.UseVisualStyleBackColor = true;
-            this.rbRaiseShipStatsForRace.Click += new System.EventHandler(this.rbRaiseShipStatsForRace_Click);
-            // 
-            // rbLowerShipStatsForRace
-            // 
-            this.rbLowerShipStatsForRace.AutoSize = true;
-            this.rbLowerShipStatsForRace.Location = new System.Drawing.Point(21, 111);
-            this.rbLowerShipStatsForRace.Name = "rbLowerShipStatsForRace";
-            this.rbLowerShipStatsForRace.Size = new System.Drawing.Size(167, 17);
-            this.rbLowerShipStatsForRace.TabIndex = 3;
-            this.rbLowerShipStatsForRace.Text = "Lower all ship stats for a Race";
-            this.rbLowerShipStatsForRace.UseVisualStyleBackColor = true;
-            this.rbLowerShipStatsForRace.Click += new System.EventHandler(this.rbLowerShipStatsForRace_Click);
-            // 
             // rbAllShipStatsForRace
             // 
             this.rbAllShipStatsForRace.AutoSize = true;
-            this.rbAllShipStatsForRace.Location = new System.Drawing.Point(21, 88);
+            this.rbAllShipStatsForRace.Location = new System.Drawing.Point(14, 82);
             this.rbAllShipStatsForRace.Name = "rbAllShipStatsForRace";
             this.rbAllShipStatsForRace.Size = new System.Drawing.Size(191, 17);
             this.rbAllShipStatsForRace.TabIndex = 2;
-            this.rbAllShipStatsForRace.Text = "Randomize all ship stats for a Race";
+            this.rbAllShipStatsForRace.Text = "Randomize selected race ships";
             this.rbAllShipStatsForRace.UseVisualStyleBackColor = true;
-            this.rbAllShipStatsForRace.Click += new System.EventHandler(this.rbAllShipStatsForRace_Click);
+            this.rbAllShipStatsForRace.CheckedChanged += new System.EventHandler(this.Action_CheckedChanged);
             // 
             // rbAllShipStats
             // 
             this.rbAllShipStats.AutoSize = true;
-            this.rbAllShipStats.Location = new System.Drawing.Point(21, 65);
+            this.rbAllShipStats.Location = new System.Drawing.Point(14, 54);
             this.rbAllShipStats.Name = "rbAllShipStats";
             this.rbAllShipStats.Size = new System.Drawing.Size(138, 17);
             this.rbAllShipStats.TabIndex = 1;
-            this.rbAllShipStats.Text = "Randomize all ship stats";
+            this.rbAllShipStats.Text = "Randomize all races: ships";
             this.rbAllShipStats.UseVisualStyleBackColor = true;
-            this.rbAllShipStats.Click += new System.EventHandler(this.rbAllShipStats_Click);
+            this.rbAllShipStats.CheckedChanged += new System.EventHandler(this.Action_CheckedChanged);
             // 
             // rbRandomizeAllWeapons
             // 
             this.rbRandomizeAllWeapons.AutoSize = true;
             this.rbRandomizeAllWeapons.Checked = true;
-            this.rbRandomizeAllWeapons.Location = new System.Drawing.Point(21, 31);
+            this.rbRandomizeAllWeapons.Location = new System.Drawing.Point(14, 26);
             this.rbRandomizeAllWeapons.Name = "rbRandomizeAllWeapons";
             this.rbRandomizeAllWeapons.Size = new System.Drawing.Size(149, 17);
             this.rbRandomizeAllWeapons.TabIndex = 0;
             this.rbRandomizeAllWeapons.TabStop = true;
-            this.rbRandomizeAllWeapons.Text = "Randomize weapons stats";
+            this.rbRandomizeAllWeapons.Text = "Randomize weapon groups";
             this.rbRandomizeAllWeapons.UseVisualStyleBackColor = true;
-            this.rbRandomizeAllWeapons.Click += new System.EventHandler(this.rbRandomizeAllWeapons_Click);
+            this.rbRandomizeAllWeapons.CheckedChanged += new System.EventHandler(this.Action_CheckedChanged);
             // 
             // btnDoIt
             // 
-            this.btnDoIt.Location = new System.Drawing.Point(291, 23);
+            this.btnDoIt.Location = new System.Drawing.Point(310, 23);
             this.btnDoIt.Name = "btnDoIt";
             this.btnDoIt.Size = new System.Drawing.Size(118, 23);
             this.btnDoIt.TabIndex = 1;
@@ -133,7 +107,7 @@ namespace Azimuth
             // 
             // btnExit
             // 
-            this.btnExit.Location = new System.Drawing.Point(308, 175);
+            this.btnExit.Location = new System.Drawing.Point(400, 190);
             this.btnExit.Name = "btnExit";
             this.btnExit.Size = new System.Drawing.Size(75, 23);
             this.btnExit.TabIndex = 2;
@@ -145,17 +119,7 @@ namespace Azimuth
             // 
             this.cbRace.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbRace.FormattingEnabled = true;
-            this.cbRace.Items.AddRange(new object[] {
-            "Argon",
-            "Boron",
-            "Paranid",
-            "Split",
-            "Teladi",
-            "Terran",
-            "Yaki",
-            "Xenon",
-            "OCV"});
-            this.cbRace.Location = new System.Drawing.Point(59, 192);
+            this.cbRace.Location = new System.Drawing.Point(70, 151);
             this.cbRace.Name = "cbRace";
             this.cbRace.Size = new System.Drawing.Size(162, 21);
             this.cbRace.TabIndex = 3;
@@ -163,7 +127,7 @@ namespace Azimuth
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(20, 195);
+            this.label1.Location = new System.Drawing.Point(20, 154);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(33, 13);
             this.label1.TabIndex = 4;
@@ -171,7 +135,7 @@ namespace Azimuth
             // 
             // btnRestore
             // 
-            this.btnRestore.Location = new System.Drawing.Point(291, 49);
+            this.btnRestore.Location = new System.Drawing.Point(310, 55);
             this.btnRestore.Name = "btnRestore";
             this.btnRestore.Size = new System.Drawing.Size(118, 23);
             this.btnRestore.TabIndex = 5;
@@ -181,22 +145,22 @@ namespace Azimuth
             // 
             // lblNote
             // 
-            this.lblNote.Location = new System.Drawing.Point(23, 233);
+            this.lblNote.Location = new System.Drawing.Point(20, 235);
             this.lblNote.Name = "lblNote";
-            this.lblNote.Size = new System.Drawing.Size(415, 116);
+            this.lblNote.Size = new System.Drawing.Size(440, 140);
             this.lblNote.TabIndex = 6;
-            this.lblNote.Text = "The rain in spain falls maily";
+            this.lblNote.Text = "One attribute profile per race. Production values follow the combined ship modifiers.";
             // 
             // btnHelpMain
             // 
             this.btnHelpMain.BackColor = System.Drawing.Color.LightGray;
             this.btnHelpMain.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnHelpMain.ForeColor = System.Drawing.Color.Red;
-            this.btnHelpMain.Location = new System.Drawing.Point(291, 132);
+            this.btnHelpMain.ForeColor = System.Drawing.SystemColors.ControlText;
+            this.btnHelpMain.Location = new System.Drawing.Point(300, 190);
             this.btnHelpMain.Name = "btnHelpMain";
-            this.btnHelpMain.Size = new System.Drawing.Size(75, 23);
+            this.btnHelpMain.Size = new System.Drawing.Size(90, 25);
             this.btnHelpMain.TabIndex = 94;
-            this.btnHelpMain.Text = "Help";
+            this.btnHelpMain.Text = "User Guide";
             this.btnHelpMain.UseVisualStyleBackColor = false;
             this.btnHelpMain.Click += new System.EventHandler(this.btnHelpMain_Click);
             // 
@@ -204,12 +168,12 @@ namespace Azimuth
             // 
             this.groupBox1.Controls.Add(this.rbThirtypercent);
             this.groupBox1.Controls.Add(this.rbTwentypercent);
-            this.groupBox1.Location = new System.Drawing.Point(273, 96);
+            this.groupBox1.Location = new System.Drawing.Point(300, 96);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(147, 73);
+            this.groupBox1.Size = new System.Drawing.Size(160, 73);
             this.groupBox1.TabIndex = 95;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Maximum Stat Adjustment";
+            this.groupBox1.Text = "Maximum adjustment";
             // 
             // rbThirtypercent
             // 
@@ -218,7 +182,7 @@ namespace Azimuth
             this.rbThirtypercent.Name = "rbThirtypercent";
             this.rbThirtypercent.Size = new System.Drawing.Size(62, 17);
             this.rbThirtypercent.TabIndex = 1;
-            this.rbThirtypercent.Text = "+/- 30%";
+            this.rbThirtypercent.Text = "±15%";
             this.rbThirtypercent.UseVisualStyleBackColor = true;
             // 
             // rbTwentypercent
@@ -230,14 +194,14 @@ namespace Azimuth
             this.rbTwentypercent.Size = new System.Drawing.Size(62, 17);
             this.rbTwentypercent.TabIndex = 0;
             this.rbTwentypercent.TabStop = true;
-            this.rbTwentypercent.Text = "+/- 20%";
+            this.rbTwentypercent.Text = "±10%";
             this.rbTwentypercent.UseVisualStyleBackColor = true;
             // 
             // WeaponsEditor
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(456, 365);
+            this.ClientSize = new System.Drawing.Size(480, 390);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.btnHelpMain);
             this.Controls.Add(this.lblNote);
@@ -248,6 +212,9 @@ namespace Azimuth
             this.Controls.Add(this.btnDoIt);
             this.Controls.Add(this.gbAction);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "WeaponsEditor";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Ship and Weapon Stats Editor";
@@ -269,8 +236,6 @@ namespace Azimuth
         private System.Windows.Forms.RadioButton rbRandomizeAllWeapons;
         private System.Windows.Forms.Button btnDoIt;
         private System.Windows.Forms.Button btnExit;
-        private System.Windows.Forms.RadioButton rbRaiseShipStatsForRace;
-        private System.Windows.Forms.RadioButton rbLowerShipStatsForRace;
         private System.Windows.Forms.ComboBox cbRace;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button btnRestore;

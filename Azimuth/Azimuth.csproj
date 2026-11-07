@@ -148,6 +148,14 @@
       <DependentUpon>SectorEdit.cs</DependentUpon>
     </Compile>
     <Compile Include="SystemListItem.cs" />
+    <Compile Include="TypeTable.cs" />
+    <Compile Include="ShipModifiers.cs" />
+    <Compile Include="ShipRandomizer.cs" />
+    <Compile Include="WeaponRandomizer.cs" />
+    <Compile Include="WeaponModifiers.cs" />
+    <Compile Include="TypeOverrideFile.cs" />
+    <Compile Include="X3MapPath.cs" />
+    <Compile Include="X3PathLocation.cs" />
     <Compile Include="WeaponsEditor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -242,6 +250,9 @@
     <Content Include="HelpMain.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="LICENSE.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="ReadMe.txt" />
     <Content Include="ReleaseNotes.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -250,6 +261,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="TBullets.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TShields.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="TLaser.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="TShips.txt">

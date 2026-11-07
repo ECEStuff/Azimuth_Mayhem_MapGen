@@ -10,23 +10,13 @@ namespace Azimuth
 {
     class X3MapPath
     {
-        class Location
-        {
-            public int X;
-            public int Y;
-            public int F;
-            public int G;
-            public int H;
-            public Location Parent;
-        }
-
         public static bool HasPath(X3Sector source, X3Sector dest)
         {
-            Location current = null;
-            var start = new Location { X = source.x, Y = source.y };
-            var target = new Location { X = dest.x, Y = dest.y };
-            var openList = new List<Location>();
-            var closedList = new List<Location>();
+            X3PathLocation current = null;
+            var start = new X3PathLocation { X = source.x, Y = source.y };
+            var target = new X3PathLocation { X = dest.x, Y = dest.y };
+            var openList = new List<X3PathLocation>();
+            var closedList = new List<X3PathLocation>();
             int g = 0;
 
             // start by adding the original position to the open list
@@ -88,9 +78,9 @@ namespace Azimuth
             return Math.Abs(targetX - x) + Math.Abs(targetY - y);
         }
 
-        static List<Location> GetGateConnectedSystems(int x, int y)
+        static List<X3PathLocation> GetGateConnectedSystems(int x, int y)
         {
-            var proposedLocations = new List<Location>();
+            var proposedLocations = new List<X3PathLocation>();
 
             X3Sector source = X3Galaxy.Instance.GetSectorAt(x, y);
             if (source == null) throw new Exception(X3Utils.Ui("X3MapPath.GetWalkableAdjacentSquaresSectorAtDoesNotExist", x, y));
@@ -98,7 +88,7 @@ namespace Azimuth
             // return list of connected sectors. Note, these are not always 1 jump away.
             foreach(X3Gate gate in source.Gates)
             {
-                proposedLocations.Add(new Location { X = gate.gx, Y = gate.gy });
+                proposedLocations.Add(new X3PathLocation { X = gate.gx, Y = gate.gy });
             }
 
             return proposedLocations;

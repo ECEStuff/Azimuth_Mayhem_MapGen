@@ -1,36 +1,20 @@
-﻿// Applies or restores ship and weapon type overrides in the selected game installation.
-
+// Generates race-wide profiles from shipped defaults, then writes game overrides.
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Azimuth
 {
     public partial class WeaponsEditor : Form
     {
-        private List<string> m_Bullets = new List<string>();
-        private List<string> m_Ships = new List<string>();
-        private static readonly Random m_Rand = new Random();
-
-        private enum EAdjust {ERandom, ERaise, ELower};
+        private static readonly Random Random = new Random();
         public string MayhemFolder;
 
-        private Dictionary<string, int> racedd = new Dictionary<string, int>
-        {
-            {"Argon", 1 },
-            {"Boron", 2 },
-            {"Split", 3 },
-            {"Paranid", 4 },
-            {"Teladi", 5 },
-            {"Terran", 18 }
+        private readonly Dictionary<string, int> races = new Dictionary<string, int> {
+            { "Argon", 1 }, { "Boron", 2 }, { "Split", 3 },
+            { "Paranid", 4 }, { "Teladi", 5 }, { "Terran", 18 }
         };
 
         public WeaponsEditor()
@@ -41,363 +25,98 @@ namespace Azimuth
             Icon = new System.Drawing.Icon(typeof(WeaponsEditor), "ShipsWeapons.ico");
         }
 
-        private void btnExit_Click(object sender, EventArgs e)
-        {
-            Close();
-        }
-
         private void WeaponsEditor_Load(object sender, EventArgs e)
         {
-            if (!Directory.Exists(MayhemFolder))
-            {
-                try
-                {
-                    Directory.CreateDirectory(MayhemFolder);
-                }
-                catch(Exception)
-                {
-                    MessageBox.Show(X3Utils.Ui("WeaponsEditor.UnableToCreate.Message", MayhemFolder));
-                    Close();
-                    return;
-                }
-            }
-
-            //cbRace.SelectedItem = "Argon";
-            lblNote.Text = "";
-
             cbRace.DisplayMember = "Key";
             cbRace.ValueMember = "Value";
-            cbRace.DataSource = racedd.Select(item => new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{" + item.Key + "}") ?? item.Key, item.Value)).ToList();
-
+            cbRace.DataSource = races.Select(item => new KeyValuePair<string, int>(
+                X3Utils.GetLocalizedText("{" + item.Key + "}") ?? item.Key, item.Value)).ToList();
+            UpdateAction();
         }
 
-        private void rbRandomizeAllWeapons_Click(object sender, EventArgs e)
+        private void UpdateAction()
         {
-            lblNote.Text = X3Utils.Ui("WeaponsEditor.AllWeaponDamageValuesHullShieldAnd");
+            // These captions show effective limits; the underlying selection still
+            // feeds 20/30 into the profile generator, which halves weapon rolls.
+            rbTwentypercent.Text = X3Utils.Ui("Randomizer.PercentLimit", rbRandomizeAllWeapons.Checked ? 10 : 20);
+            rbThirtypercent.Text = X3Utils.Ui("Randomizer.PercentLimit", rbRandomizeAllWeapons.Checked ? 15 : 30);
+            cbRace.Enabled = label1.Enabled = rbAllShipStatsForRace.Checked;
+            lblNote.Text = X3Utils.Ui(rbRandomizeAllWeapons.Checked ? "Randomizer.WeaponsNote" :
+                rbAllShipStatsForRace.Checked ? "Randomizer.RaceNote" : "Randomizer.ShipsNote");
         }
 
-        private void rbAllShipStats_Click(object sender, EventArgs e)
+        private void Action_CheckedChanged(object sender, EventArgs e) { UpdateAction(); }
+
+        private static TypeTable ReadDefaults(string name, int minimumFields)
         {
-            lblNote.Text = X3Utils.Ui("WeaponsEditor.PrimaryShipStatisticsAreModifiedByA");
+            // Stable application directory: file dialogs can change the working directory.
+            return new TypeTable(name, File.ReadAllLines(Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory, name)), minimumFields);
         }
-
-        private void rbAllShipStatsForRace_Click(object sender, EventArgs e)
-        {
-            lblNote.Text = X3Utils.Ui("WeaponsEditor.PrimaryShipStatisticsFORTHESELECTEDRACE");
-        }
-
-        private void rbLowerShipStatsForRace_Click(object sender, EventArgs e)
-        {
-            lblNote.Text = X3Utils.Ui("WeaponsEditor.PrimaryShipStatisticsFORTHESELECTEDRACEDetail");
-        }
-
-        private void rbRaiseShipStatsForRace_Click(object sender, EventArgs e)
-        {
-            lblNote.Text = X3Utils.Ui("WeaponsEditor.PrimaryShipStatisticsFORTHESELECTEDRACEDetailDetail");
-        }
-
 
         private void btnDoIt_Click(object sender, EventArgs e)
         {
+            btnDoIt.Enabled = false;
             try
             {
-                m_Bullets = File.ReadAllLines("TBullets.txt").ToList();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(X3Utils.Ui("WeaponsEditor.UnableToLoadTBulletsTxtFileError.Message", ex.Message));
-                return;
-            }
-
-            try
-            {
-                m_Ships = File.ReadAllLines("TShips.txt").ToList();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(X3Utils.Ui("WeaponsEditor.UnableToLoadTShipsTxtFileError.Message", ex.Message));
-                return;
-            }
-
-
-            // What's selected.
-            if (rbRandomizeAllWeapons.Checked)
-            {
-                RandomizeWeapons();
-            }
-            else if (rbAllShipStats.Checked)
-            {
-                RandomizeShipStats(EAdjust.ERandom);
-            }
-            else if (rbAllShipStatsForRace.Checked)
-            {
-                RandomizeShipStats(EAdjust.ERandom, (int)cbRace.SelectedValue);
-            }
-            else if (rbLowerShipStatsForRace.Checked)
-            {
-                RandomizeShipStats(EAdjust.ELower, (int)cbRace.SelectedValue);
-            }
-            else if (rbRaiseShipStatsForRace.Checked)
-            {
-                RandomizeShipStats(EAdjust.ERaise, (int)cbRace.SelectedValue);
-            }
-
-        }
-
-        private void RandomizeShipStats(EAdjust adjust, int iRace = 0)
-        {
-            List<string> newShips = new List<string>();
-            int count = 0;
-            int countmodified = 0;
-
-            foreach (string src in m_Ships)
-            {
-                count++;
-                if (count < 4)
-                {
-                    newShips.Add(src);
-                    continue;        // First 3 lines are junk.
-                }
-                if (src.Length < 5) break;      // end of line or some other barf.
-
-
-                int adjustvalue;
                 int range = rbTwentypercent.Checked ? 20 : 30;
-
-
-                if (adjust == EAdjust.ERandom)
+                int count;
+                string[] output;
+                string name;
+                string[] laserOutput = null;
+                if (rbRandomizeAllWeapons.Checked)
                 {
-                    adjustvalue = m_Rand.Next(-range, range + 1);
-                }
-                else if (adjust == EAdjust.ELower)
-                {
-                    adjustvalue = m_Rand.Next(-range, -9);
-                }
-                else
-                {
-                    adjustvalue = m_Rand.Next(10, range + 1);
-                }
-
-                bool modified = false;
-                string mod = AdjustShip(src, adjustvalue, iRace, ref modified);                 // Every ship gets it's own random adjustment.
-                if (modified) countmodified++;
-                newShips.Add(mod);
-            }
-
-            m_Ships = newShips;
-            File.WriteAllLines(MayhemFolder + "TShips.txt", m_Ships);
-
-            MessageBox.Show(X3Utils.Ui("WeaponsEditor.ShipsWereModifiedSuccessfullyAdjustmentsMadeTo", countmodified));
-        }
-
-
-        private string AdjustShip(string src, int adjustvalue, int iRace, ref bool modified)
-        {
-            // Limit range from -10 to -20  or +10 to +20
-            if (adjustvalue < 0)
-            {
-                if (adjustvalue > -10) adjustvalue = -10;
-            }
-            else
-            {
-                if (adjustvalue < 10) adjustvalue = 10;
-            }
-
-            float adjust = (100f + adjustvalue) / 100f;
-            string[] items = src.Split(';');
-
-            if (iRace != 0)
-            {
-                if (int.Parse(items[45]) != iRace)
-                {
-                    return src;     // sRace specified, but this ship isn't of that race.
-                }
-            }
-
-            /*
-            string name = items[16];
-            if (name.Contains("Mercury_Hauler"))
-            {
-                int x = 5;
-            }
-            */
-
-            // Modify stats here.
-            // Removed adjustment of cargo just so a TL would always have enough cargo space to hold everything it needs.  
-            // 6th item is the ID.  "SG_SH_TL" for example.
-            if (!(items[5].EndsWith("_TL")))
-            {
-                items[28] = ((int)(adjust * float.Parse(items[28]))).ToString();                // Cargo Min
-                items[29] = ((int)(adjust * float.Parse(items[29]))).ToString();                // Cargo Max
-            }
-
-            items[2] = ((adjust * float.Parse(items[2], NumberFormatInfo.InvariantInfo))).ToString(NumberFormatInfo.InvariantInfo);   // Yaw, Pitch and Roll, floating point
-            items[3] = ((adjust * float.Parse(items[3], NumberFormatInfo.InvariantInfo))).ToString(NumberFormatInfo.InvariantInfo);                           
-            items[4] = ((adjust * float.Parse(items[4], NumberFormatInfo.InvariantInfo))).ToString(NumberFormatInfo.InvariantInfo);                           
-            items[46] = ((int)(adjust * float.Parse(items[46]))).ToString();                    // Hull Strength
-            items[13] = ((int)(adjust * float.Parse(items[13]))).ToString();                    // Power
-            items[7] = ((int)(adjust * float.Parse(items[7]))).ToString();                      // Speed
-            items[8] = ((int)(adjust * float.Parse(items[8]))).ToString();                      // Acceleration
-            //items[20] = ((int)(adjust * float.Parse(items[20]))).ToString();                    // Weapons Energy
-
-            int we = ((int)(adjust * float.Parse(items[20])));
-            // 1.78 Apparently there is a 2 million limit on Weapons energy.
-            if (we >= 2000000)
-            {
-                we = 1995000;
-            }
-            items[20] = we.ToString();
-
-            // items[23] is the amount of Shields.                                                 Shield Count
-            // if a ship can equip 5 or more shields and random price modifier is +10% or more then add 1 shield.
-            // If modifier is -10% or less than subtract one shield.
-            int numshields = int.Parse(items[23]);
-            if (numshields > 4)
-            {
-                if (adjustvalue >= 10)
-                {
-                    numshields++;
-                    items[23] = numshields.ToString();
-                }
-                if (adjustvalue <= -10)
-                {
-                    numshields--;
-                    items[23] = numshields.ToString();
-                }
-            }
-
-            // There's a whole bunch of variable length shit in between the beginning and the end for turrets.
-            // Easier to just parse back from the end to get these two values.
-            int prodrelval1 = items.Length - 10;     // end - 10
-            int prodrelval2 = items.Length - 6;     // end - 6
-            items[prodrelval1] = ((int)(adjust * float.Parse(items[prodrelval1], NumberFormatInfo.InvariantInfo))).ToString(NumberFormatInfo.InvariantInfo);  // Production Rel value NPC
-            items[prodrelval2] = ((int)(adjust * float.Parse(items[prodrelval2], NumberFormatInfo.InvariantInfo))).ToString(NumberFormatInfo.InvariantInfo);  // Production Rel value Player 
-
-            modified = true;
-            return string.Join(";", items);
-        }
-
-        /// <summary>
-        /// Randomize key values in the m_Bullets collection and Save back to the Mayhem 3 addon/types/ folder as TBullets.txt
-        /// </summary>
-        private void RandomizeWeapons()
-        {
-            List<string> newBullets = new List<string>();
-            int count = 0;
-            foreach(string src in m_Bullets)
-            {
-                if (count < 3)
-                {
-                    newBullets.Add(src);
-                    count++;
-                    continue;        // First 3 lines are junk.
-                }
-                if (src.Length < 5) break;      // end of line or some other barf.
-
-                string mod;
-                if (rbTwentypercent.Checked)
-                {
-                    mod = AdjustBullet(src, m_Rand.Next(-20, 21));                 // Every weapon gets it's own random adjustment.
+                    name = "TBullets.txt";
+                    output = WeaponRandomizer.Randomize(ReadDefaults(name, 50),
+                        ReadDefaults("TLaser.txt", 24), Random, range, out count, out laserOutput);
                 }
                 else
                 {
-                    mod = AdjustBullet(src, m_Rand.Next(-30, 31));
+                    name = "TShips.txt";
+                    int selectedRace = rbAllShipStatsForRace.Checked ? (int)cbRace.SelectedValue : 0;
+                    string path = Path.Combine(MayhemFolder, name);
+                    TypeTable existing = selectedRace != 0 && File.Exists(path)
+                        ? new TypeTable(name, File.ReadAllLines(path), 60) : null;
+                    output = ShipRandomizer.Randomize(ReadDefaults(name, 60),
+                        ShipRandomizer.ShieldCapacities(ReadDefaults("TShields.txt", 22)),
+                        Random, range, selectedRace, existing, out count);
                 }
-                newBullets.Add(mod);
-                count++;
+                Directory.CreateDirectory(MayhemFolder);
+                if (laserOutput != null)
+                {
+                    TypeOverrideFile.WriteBatch(new[] { Path.Combine(MayhemFolder, name),
+                        Path.Combine(MayhemFolder, "TLaser.txt") }, new[] { output, laserOutput });
+                    name = "TBullets.txt + TLaser.txt";
+                }
+                else TypeOverrideFile.Write(Path.Combine(MayhemFolder, name), output);
+                MessageBox.Show(this, X3Utils.Ui("Randomizer.Success", count, name), Text);
             }
-
-            m_Bullets = newBullets;
-
-            File.WriteAllLines(MayhemFolder + "TBullets.txt", m_Bullets);
-            MessageBox.Show(X3Utils.Ui("WeaponsEditor.WeaponsWereModifiedSuccessfullyEachHasA", count));
-        }
-
-        private string AdjustBullet(string line, int amount)
-        {
-            // effects\weapons\bullet_ebc;
-            // 0;
-            // 0;
-            // 0;
-            // 0;
-            // -1;
-            // 8003;
-            // 1358;            (7: Shield Damage)
-            // 0;
-            // 302;
-            // 1400;            (10: Lifetime in milliseconds. Laser Range)
-            // 750000;
-            // 0;
-            // 255;
-            // 255;
-            // 255;
-            // 2.0;
-            // 2.0;
-            // 5.0;
-            // 0;
-            // 202;
-            // 108;
-            // 452;             (22: Hull Damage)
-            // 0;
-            // 0;
-            // 0;
-            // 255;
-            // 0;
-            // 0;
-            // 0;
-            // 0;
-            // 0;
-            // 0;
-            // 0;
-            // 0;
-            // 0;
-            // 0;
-            // 210;             (37: OOS Shield Damage
-            // 70;              (38: OOS Hull Damage)
-            // 128;
-            // 10000;25;1;0;10000;-100000;0;0;SS_BULLET_IRE;
-
-            // Limit to range of -10 to -20 or +10 to +20.
-            if (amount < 0)
+            catch (Exception ex)
             {
-                if (amount > -10) amount = -10;
+                MessageBox.Show(this, X3Utils.Ui("Randomizer.Failed", ex.Message), Text,
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            else
-            {
-                if (amount < 10) amount = 10;
-            }
-
-            float adjust = (100f + amount) / 100f;
-            string[] items = line.Split(';');
-
-            // Now alter the weapon.
-
-            // Shield damage
-            items[7] = ((int)(adjust * float.Parse(items[7], NumberFormatInfo.InvariantInfo))).ToString(NumberFormatInfo.InvariantInfo);
-            // Lifetime in ms (laser range
-            items[10] = ((int)(adjust * float.Parse(items[10], NumberFormatInfo.InvariantInfo))).ToString(NumberFormatInfo.InvariantInfo);
-            // Hull Damage
-            items[22] = ((int)(adjust * float.Parse(items[22], NumberFormatInfo.InvariantInfo))).ToString(NumberFormatInfo.InvariantInfo);
-            // OOS Shield Damage
-            items[37] = ((int)(adjust * float.Parse(items[37], NumberFormatInfo.InvariantInfo))).ToString(NumberFormatInfo.InvariantInfo);
-            // OOS Hull Damage
-            items[38] = ((int)(adjust * float.Parse(items[38], NumberFormatInfo.InvariantInfo))).ToString(NumberFormatInfo.InvariantInfo);
-
-            return string.Join(";", items);
+            finally { btnDoIt.Enabled = true; }
         }
 
         private void btnRestore_Click(object sender, EventArgs e)
         {
-            if (File.Exists(MayhemFolder + "TBullets.txt"))
+            if (MessageBox.Show(this, X3Utils.Ui("Randomizer.RestoreConfirm"), Text,
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2)
+                != DialogResult.Yes) return;
+            try
             {
-                File.Delete(MayhemFolder + "TBullets.txt");
+                TypeOverrideFile.RemoveOverrides(MayhemFolder);
+                MessageBox.Show(this, X3Utils.Ui("Randomizer.Restored"), Text);
             }
-            if (File.Exists(MayhemFolder + "TShips.txt"))
+            catch (Exception ex)
             {
-                File.Delete(MayhemFolder + "TShips.txt");
+                MessageBox.Show(this, X3Utils.Ui("Randomizer.Failed", ex.Message), Text,
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            MessageBox.Show(X3Utils.Ui("WeaponsEditor.AddonTBulletsTxtAddonTShipsTxtHave"));
         }
+
+        private void btnExit_Click(object sender, EventArgs e) { Close(); }
 
         private void btnHelpMain_Click(object sender, EventArgs e)
         {

@@ -20,6 +20,8 @@ namespace Azimuth
         private bool m_StartMaelstrom;
         private bool m_InitialStartSector;
         private bool committed, bindingOwners;
+        private bool bindingFoodChoices;
+        private KeyValuePair<string, int>[] foodChoices;
         private int? attributeOwner;
         private Dictionary<X3Sector, List<X3Gate>> originalGates;
         private bool originalDirty, originalManual;
@@ -28,6 +30,8 @@ namespace Azimuth
         public SectorEdit()
         {
             InitializeComponent();
+            cbProduction.SelectedValueChanged += FoodSelectionChanged;
+            cbConsumption.SelectedValueChanged += FoodSelectionChanged;
         }
 
         /// <summary>
@@ -72,8 +76,7 @@ namespace Azimuth
             cbOwner.SelectedValue = sector.r;
 
             RefreshOwnerAttributes(sector.r);
-            cbProduction.SelectedValue = sector.SectorCreationData.Production;
-            cbConsumption.SelectedValue = sector.SectorCreationData.Consumption;
+            RefreshFoodChoices(sector.SectorCreationData.Production, sector.SectorCreationData.Consumption);
 
             cbSunLevel.SelectedValue = X3Utils.PlaceDigitValue(0, sector.Sun.s);
 
@@ -222,7 +225,7 @@ namespace Azimuth
             tipSectorEdit.SetToolTip(cbStartSector, gamestartTip);
             tipSectorEdit.SetToolTip(lblStartSec, gamestartTip);
 
-            var productsdd = new[]
+            foodChoices = new[]
             {
                 new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Fish}"), 0),
                 new KeyValuePair<string, int>(X3Utils.GetLocalizedText("{Fruit}"), 1),
@@ -251,11 +254,9 @@ namespace Azimuth
 
             cbProduction.DisplayMember = "Key";
             cbProduction.ValueMember = "Value";
-            cbProduction.DataSource = productsdd.ToList();
 
             cbConsumption.DisplayMember = "Key";
             cbConsumption.ValueMember = "Value";
-            cbConsumption.DataSource = productsdd.ToList();
 
             cbCompany.DisplayMember = "Key";
             cbCompany.ValueMember = "Value";
@@ -266,6 +267,35 @@ namespace Azimuth
             cbSunLevel.DataSource = sunlevels.ToList();
         }
 
+        // Filter by stable food IDs, not localized labels or dropdown positions.
+        // Rebinding triggers selection events, so suppress those until both lists agree.
+        private void FoodSelectionChanged(object sender, EventArgs e)
+        {
+            if (bindingFoodChoices || foodChoices == null) return;
+            RefreshFoodChoices(cbProduction.SelectedValue as int?, cbConsumption.SelectedValue as int?);
+        }
+
+        private void RefreshFoodChoices(int? production, int? consumption)
+        {
+            if (!foodChoices.Any(food => food.Value == production)) production = null;
+            if (!foodChoices.Any(food => food.Value == consumption)) consumption = null;
+            // For an invalid imported pair, require a consumption choice instead of
+            // silently assigning another food. Nothing touches the sector until OK.
+            if (production == consumption) consumption = null;
+            bindingFoodChoices = true;
+            try
+            {
+                cbProduction.DataSource = foodChoices.Where(food => food.Value != consumption).ToList();
+                cbProduction.SelectedIndex = -1;
+                if (production.HasValue) cbProduction.SelectedValue = production.Value;
+
+                cbConsumption.DataSource = foodChoices.Where(food => food.Value != production).ToList();
+                cbConsumption.SelectedIndex = -1;
+                if (consumption.HasValue) cbConsumption.SelectedValue = consumption.Value;
+            }
+            finally { bindingFoodChoices = false; }
+        }
+
         private void btnOk_Click(object sender, EventArgs e)
         {
             if (!(cbOwner.SelectedValue is int)) return;
@@ -273,6 +303,11 @@ namespace Azimuth
             string invalidOwner = new GalaxyEditRules(X3Galaxy.Instance).OwnerError(m_Sector, owner);
             if (invalidOwner != null) { MessageBox.Show(this, X3Utils.Ui(invalidOwner), X3Utils.Ui("Edit.Invalid")); return; }
             int dejowner = owner != m_Sector.r ? 0 : (int)cbDejureOwner.SelectedValue;
+            if (!(cbProduction.SelectedValue is int) || !(cbConsumption.SelectedValue is int))
+            {
+                MessageBox.Show(this, X3Utils.Ui("SectorEdit.SelectDifferentFoods"));
+                return;
+            }
             int production = (int)cbProduction.SelectedValue;
             int consumption = (int)cbConsumption.SelectedValue;
             int company = (int)cbCompany.SelectedValue;
