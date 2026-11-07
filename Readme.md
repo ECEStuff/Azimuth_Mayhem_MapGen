@@ -35,4 +35,4 @@ Development focuses on:
 
 ## Licensing
 
-Licensing information will be added in a future update following review of the original project's terms and applicable dependencies.
+See Azimuth/LICENSE.txt for details. The license file is also included with Azimuth releases.
