@@ -5,6 +5,23 @@ Getting started
 - Click either path to change it.
 - Back up existing saves before switching galaxies for the first time.
 
+Compatibility with other Mayhem editions
+- Azimuth supports multiple Mayhem editions, but ship, weapon, shield, and configuration files may differ between them. 
+- Before using the Ships and Weapons Editor or Config Editor with another edition, ensure the reference files match your installation.
+
+- Ship and weapon files:
+  - Use X3 Editor 2 to open the relevant .cat/.dat (should be 12.cat/dat) archives from your Mayhem installation.
+  - Extract TShips, TLaser, TShields, and TBullets as .txt files.
+  - Save them beside Azimuth.exe, replacing the existing TShips.txt, TLaser.txt, TShields.txt, and TBullets.txt.
+  - If your installation already contains modified versions in addon/types, use the appropriate active versions instead.
+
+- Configuration files:
+  - The 9972-L044.xml and 9973-L044.xml files are located in your installation's addon/t folder.
+  - Ensure the Config Editor uses the matching files from your selected Mayhem edition.
+
+- Do not mix reference files from different Mayhem editions. Differences in ship definitions, weapon references, or configuration variables may produce incorrect results.
+- Repeat this process when switching Mayhem editions or installing updates that change these files.
+
 Generate a galaxy
 - Choose a galaxy size, shape, and expansion stage.
 - Void sets the target percentage of empty cells within the size limits. 
