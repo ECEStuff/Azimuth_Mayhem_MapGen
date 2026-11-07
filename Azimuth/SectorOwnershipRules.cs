@@ -33,7 +33,9 @@ namespace Azimuth
             if (peaceful) return xenon == 1;
             int requiredPercent = chaotic ? 50 : percent;
             if (requiredPercent < 0 || requiredPercent > 100) return false;
-            return xenon >= ((long)total * requiredPercent + 99) / 100;
+            // Keep the rounded-up minimum and allow one extra sector for editing.
+            int requiredCount = (int)(((long)total * requiredPercent + 99) / 100);
+            return xenon >= requiredCount && (long)xenon <= (long)requiredCount + 1;
         }
     }
 }

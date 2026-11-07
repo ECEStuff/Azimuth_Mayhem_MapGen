@@ -51,7 +51,7 @@ Edit the map
 - Right-click a tile to add or remove a sector within the size limits.
 
 - New sectors receive a validated gate connection. 
-  - Ownership choices and structural edits must preserve the territory rules, required enclaves, and stored Xenon minimum: exactly one in Peaceful, at least the stored percentage in Standard, and at least 50% in Chaotic (percentages round up). 
+  - Ownership choices and structural edits must preserve the territory rules, required enclaves, and stored Xenon allocation: exactly one in Peaceful; for Standard and Chaotic, the rounded-up target through one extra Xenon sector. Standard uses the stored percentage; Chaotic uses 50%. Generation uses the target without the extra allowance. Editing limits are recalculated after each proposed edit. Ownership changes must also preserve territory and enclave rules. 
   - Regenerate Gates retains the existing network if it cannot find a valid replacement. 
   - Legacy maps without territory seeds cannot use the new structural editing operations.
 
