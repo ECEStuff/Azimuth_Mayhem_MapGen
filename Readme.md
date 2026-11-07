@@ -1,6 +1,6 @@
 # Azimuth
 
-**Galaxy Generator and Editor for X3: Albion Prelude — Mayhem 3**
+**Galaxy Generator and Editor for X3: Albion Prelude — Mayhem**
 
 Azimuth (formerly ZMap Expanded) is an independently maintained galaxy generator and editor based on the original ZMap by Mordan (Hairless-Ape).
 
