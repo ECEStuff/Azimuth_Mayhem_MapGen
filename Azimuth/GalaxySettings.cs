@@ -39,14 +39,14 @@ namespace Azimuth
         // 23-28  Paranid Relations to same list.
         // 29-34  Teladi Relations to same list.
         // 35-40  Terran
-        // ID 100   mayhem_galaxy.scattered_galaxy      Not Used
-        // ID 101   Sector stats modifier: -1 = Saboteur, 0 = Normal, 1 = Extra sector stats.
-        // ID 102   mayhem_galaxy.clustered_xenons      Not Used
-        // ID 110   mayhem_galaxy.hollowed_galaxy       Not Used - legacy setting
-        // ID 111   mayhem_galaxy.random_distribution   Not Used - legacy setting
-        // ID 113   mayhem_galaxy.no_enclaves           Not Used
+        // ID 100   mayhem_galaxy.scattered_galaxy                  Not Used
+        // ID 101   mayhem_galaxy.stat_modifier (in Expanded)       Sector stats modifier: -1 = Saboteur, 0 = Normal, 1 = Extra sector stats.
+        // ID 102   mayhem_galaxy.clustered_xenons                  Not Used
+        // ID 110   mayhem_galaxy.hollowed_galaxy                   Not Used - legacy setting
+        // ID 111   mayhem_galaxy.random_distribution               Not Used - legacy setting
+        // ID 113   mayhem_galaxy.no_enclaves                       Not Used
         // ID 120   Optional Maelstrom sector, zero-based X,Y.
-        // ID 121   mayhem_galaxy.game_start            -1 = Standard Start, 0 = Peaceful Start, 1 = Chaotic Start
+        // ID 121   mayhem_galaxy.start_type (in Expanded)          -1 = Standard Start, 0 = Peaceful Start, 1 = Chaotic Start
 
         // All remaining ID's are System Stats for every system.  I.E. max population etc.
 
