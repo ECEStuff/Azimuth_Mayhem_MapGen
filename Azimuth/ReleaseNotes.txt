@@ -1,5 +1,13 @@
-﻿AZIMUTH 2.0.0
+﻿AZIMUTH 2.0.1
 =============
+
+FIXES AND UPDATES
+-----------------
+- Updated the bundled 9972 configuration file for Mayhem Expanded to reflect the latest settings and modifier descriptions.
+- Fixed Xenon territory bounding during galaxy generation.
+
+AZIMUTH 2.0
+===========
 
 Azimuth expands the Mayhem galaxy generator with connected faction territories, safer map editing, a configuration editor, and racial ship and weapon variation.
 Developed by herobetty, based on ZMap v1.8.2 by Mordan (Hairless-Ape) and the original galaxy generator by Joubarbe.
