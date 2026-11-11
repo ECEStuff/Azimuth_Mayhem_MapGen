@@ -20,7 +20,7 @@ Later FoF-specific ZMap development followed a separate path and is not maintain
 
 Azimuth originated as ZMap Add-Ons, briefly renamed ZMap Expanded, to support the Xenon game start and additional galaxy generation requirements introduced by the project now known as Mayhem Expanded.
 
-As Mayhem's different branches evolved, their compatibility requirements, development priorities, and philosophies diverged. Differences in expectations for cross-project collaboration further contributed to the decision to establish Azimuth as a separately named, independently maintained project.
+As the projects evolved separately, differences in compatibility requirements, implementation approaches, development priorities, and collaboration expectations reinforced the need for an independent project identity.
 
 The Azimuth name reflects this separation. As development progressed, overlapping functionality, including the configuration editor and sector editing tools, evolved through different implementations. Retaining the ZMap name or adopting a shared versioning scheme could incorrectly imply that one application supersedes the other. A distinct identity avoids confusion over compatibility, development history, and maintenance responsibility while preserving attribution to ZMap's original creator, Mordan.
 
