@@ -24,7 +24,9 @@ As Mayhem's different branches evolved, their compatibility requirements, develo
 
 The Azimuth name reflects this separation. As development progressed, overlapping functionality, including the configuration editor and sector editing tools, evolved through different implementations. Retaining the ZMap name or adopting a shared versioning scheme could incorrectly imply that one application supersedes the other. A distinct identity avoids confusion over compatibility, development history, and maintenance responsibility while preserving attribution to ZMap's original creator, Mordan.
 
-Azimuth also follows a different compatibility philosophy: supported functionality should not be artificially restricted or degraded solely because of the selected Mayhem edition. Genuine technical limitations and compatibility requirements remain respected.
+As later FoF-specific ZMap development continued without publicly released source code, Azimuth also serves to preserve a source-available development path based on ZMap v1.8.2. This allows its implementation to be examined, maintained, and improved independently, subject to applicable licensing and attribution requirements.
+
+Azimuth's compatibility philosophy is to avoid artificially restricting or degrading supported functionality solely because of the selected Mayhem edition. Genuine technical limitations and compatibility requirements remain respected.
 
 Independent development allows Azimuth to maintain its own roadmap, compatibility policies, and release schedule while providing consistent galaxy generation, editing, and configuration functionality across supported Mayhem editions, from Zero Hour onward, including Expanded.
 
