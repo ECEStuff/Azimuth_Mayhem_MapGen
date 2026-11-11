@@ -8,7 +8,7 @@ Originally developed to support [Mayhem Expanded](https://github.com/ECEStuff/Ma
 
 ## Background
 
-The original Mayhem 3 galaxy generator was developed by Joubarbe and released with Mayhem 3 in 2020. Its source code was lost and thus unavailable for subsequent ZMap development.
+The original Mayhem 3 galaxy generator was developed by Joubarbe and released with Mayhem 3 in 2020. Its source code was lost and was therefore unavailable for subsequent ZMap development.
 
 In 2022, Mordan (Hairless-Ape) developed ZMap by reverse-engineering the original generator's output, creating a new galaxy generator and editor. ZMap's source code was subsequently made publicly available on GitHub through version 1.8.2.
 
@@ -18,15 +18,15 @@ Later FoF-specific ZMap development followed a separate path and is not maintain
 
 ## Why Azimuth?
 
-Azimuth originated as ZMap Add-Ons, later briefly renamed ZMap Expanded, to support the Xenon game start and additional galaxy generation requirements introduced by the project now known as Mayhem Expanded.
+Azimuth originated as ZMap Add-Ons, briefly renamed ZMap Expanded, to support the Xenon game start and additional galaxy generation requirements introduced by the project now known as Mayhem Expanded.
 
-As Mayhem's different branches evolved, their compatibility requirements, development priorities, and philosophies increasingly diverged. Differences in expectations for cross-project collaboration also contributed to the decision to establish an independent fork.
+As Mayhem's different branches evolved, their compatibility requirements, development priorities, and philosophies diverged. Differences in expectations for cross-project collaboration further contributed to the decision to establish Azimuth as a separately named, independently maintained project.
 
-The Azimuth name distinguishes this independently maintained fork from the original ZMap and its subsequent development branches, preserving a clear distinction between their respective identities, development histories, and maintainers.
+The Azimuth name reflects this separation. As development progressed, overlapping functionality, including the configuration editor and sector editing tools, evolved through different implementations. Retaining the ZMap name or adopting a shared versioning scheme could incorrectly imply that one application supersedes the other. A distinct identity avoids confusion over compatibility, development history, and maintenance responsibility while preserving attribution to ZMap's original creator, Mordan.
 
-Azimuth also follows a different compatibility philosophy. Its development avoids artificial edition-specific penalties and feature restrictions, ensuring that supported functionality is not degraded solely because of the selected Mayhem edition. Genuine technical limitations and compatibility requirements remain respected.
+Azimuth also follows a different compatibility philosophy: supported functionality should not be artificially restricted or degraded solely because of the selected Mayhem edition. Genuine technical limitations and compatibility requirements remain respected.
 
-Maintaining an independent fork allows Azimuth to pursue its own compatibility policies, development priorities, and release schedule while providing consistent galaxy generation, editing, and configuration functionality across supported Mayhem editions, from Zero Hour onward, including Expanded.
+Independent development allows Azimuth to maintain its own roadmap, compatibility policies, and release schedule while providing consistent galaxy generation, editing, and configuration functionality across supported Mayhem editions, from Zero Hour onward, including Expanded.
 
 ## Development
 
