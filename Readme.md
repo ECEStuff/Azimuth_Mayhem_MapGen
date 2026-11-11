@@ -20,13 +20,13 @@ Later FoF-specific ZMap development followed a separate path and is not maintain
 
 Azimuth originated as ZMap Add-Ons, briefly renamed ZMap Expanded, to support the Xenon game start and additional galaxy generation requirements introduced by the project now known as Mayhem Expanded.
 
-As the projects evolved separately, differences in compatibility requirements, implementation approaches, development priorities, and collaboration expectations reinforced the need for an independent project identity.
+As the projects evolved separately, differences in compatibility requirements, implementation approaches, and development priorities reinforced the need for an independent project identity.
 
 The Azimuth name reflects this separation. As development progressed, overlapping functionality, including the configuration editor and sector editing tools, evolved through different implementations. Retaining the ZMap name or adopting a shared versioning scheme could incorrectly imply that one application supersedes the other. A distinct identity avoids confusion over compatibility, development history, and maintenance responsibility while preserving attribution to ZMap's original creator, Mordan.
 
 As later FoF-specific ZMap development continued without publicly released source code, Azimuth also serves to preserve a source-available development path based on ZMap v1.8.2. This allows its implementation to be examined, maintained, and improved independently, subject to applicable licensing and attribution requirements.
 
-Azimuth's compatibility philosophy is to avoid artificially restricting or degrading supported functionality solely because of the selected Mayhem edition. Genuine technical limitations and compatibility requirements remain respected.
+Azimuth is designed to provide consistent galaxy generation and editing functionality across all supported Mayhem editions, from Zero Hour onward, including Expanded. Genuine technical limitations and compatibility requirements remain respected.
 
 Independent development allows Azimuth to maintain its own roadmap, compatibility policies, and release schedule while providing consistent galaxy generation, editing, and configuration functionality across supported Mayhem editions, from Zero Hour onward, including Expanded.
 
