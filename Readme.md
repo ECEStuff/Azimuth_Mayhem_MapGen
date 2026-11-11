@@ -12,9 +12,7 @@ The original Mayhem 3 galaxy generator was developed by Joubarbe and released wi
 
 In 2022, Mordan (Hairless-Ape) developed [ZMap](https://forum.egosoft.com/viewtopic.php?t=449012) by reverse-engineering the original generator's output, creating a new galaxy generator and editor. ZMap's source code was subsequently made publicly available on GitHub through version 1.8.2.
 
-Azimuth is derived from the publicly released [ZMap v1.8.2 source code](https://github.com/Hairless-Ape/ZMap/releases/tag/V1.8.2). It retains much of ZMap's original architecture and interface while introducing new functionality and independently maintained improvements.
-
-Later FoF-specific ZMap development followed a separate path and is not maintained as Azimuth's upstream.
+Later ZMap development shifted toward exclusive support for Mayhem: Friend or Foe (FoF). Azimuth is derived from the publicly released [ZMap v1.8.2 source code](https://github.com/Hairless-Ape/ZMap/releases/tag/V1.8.2). It retains much of ZMap's original architecture and interface while introducing new functionality and independently maintained improvements.
 
 ## Why Azimuth?
 
