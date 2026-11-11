@@ -47,7 +47,7 @@ Base Mayhem 3 is outside the supported compatibility scope because it lacks Terr
 ## Credits
 
 - Joubarbe - Creator of the original Mayhem 3 galaxy generator.
-- Mordan (Hairless-Ape) — Original creator of ZMap, including its foundational architecture, interface, and functionality.
+- Mordan (Hairless-Ape) — Original creator of ZMap, including its foundational architecture, interface, and functionality. See the [original ZMap discussion thread](https://forum.egosoft.com/viewtopic.php?t=449012) and [latest ZMap public release](https://github.com/Hairless-Ape/ZMap/releases/tag/V1.8.2).
 - Sector Names icon: [Sector Names icon by Cap Cool](https://www.flaticon.com/free-icon/text_10768913?term=text+box&page=2&position=2&origin=tag&related_id=10768913)
 - App icon: [Constellation icon by Magnific](https://www.flaticon.com/free-icon/astronomy_3924439?term=constellation&page=1&position=44&origin=tag&related_id=3924439)
 
