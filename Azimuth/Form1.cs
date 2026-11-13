@@ -1147,10 +1147,10 @@ namespace Azimuth
 
         private void btnX3SaveGameFolder_Click(object sender, EventArgs e)
         {
-            // Prefer the configured save folder, otherwise use the default X3AP location.
+            // Reuse the user's configured location; otherwise start near X3AP's save folder.
             folderBrowserDialog1.SelectedPath = Directory.Exists(m_CurSaveGameFolder)
                 ? m_CurSaveGameFolder
-                : X3Utils.GetDefaultSaveGameFolder();
+                : X3Utils.FindSuggestedX3SaveDirectory();
 
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {

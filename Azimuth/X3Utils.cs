@@ -485,27 +485,33 @@ namespace Azimuth
             File.WriteAllLines("Settings.txt", settings);
         }
 
-        public static string GetDefaultSaveGameFolder()
+        // Suggest the closest existing folder to the standard X3AP save location.
+        // A user-selected X3Save path takes precedence in the Form1 browse handler.
+        public static string FindSuggestedX3SaveDirectory()
         {
-            string folderPath = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-            if (folderPath == string.Empty)
-            {
+            string documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            if (string.IsNullOrWhiteSpace(documents))
                 return string.Empty;
-            }
 
-            string saveFolder = Path.Combine(folderPath, "Egosoft", "X3AP", "save");
-            if (Directory.Exists(saveFolder))
+            DirectoryInfo documentsDirectory = new DirectoryInfo(documents);
+            DirectoryInfo directory = new DirectoryInfo(
+                Path.Combine(documentsDirectory.FullName, "Egosoft", "X3AP", "save"));
+
+            // Walk upward from the expected save location until an existing folder is found.
+            // This also handles a new install whose X3AP or save subfolder does not exist yet.
+            while (directory != null)
             {
-                return saveFolder;
+                if (directory.Exists)
+                    return directory.FullName;
+
+                if (string.Equals(directory.FullName, documentsDirectory.FullName,
+                    StringComparison.OrdinalIgnoreCase))
+                    break;
+
+                directory = directory.Parent;
             }
 
-            string egosoftFolder = Path.Combine(folderPath, "Egosoft");
-            if (Directory.Exists(egosoftFolder))
-            {
-                return egosoftFolder;
-            }
-
-            return folderPath;
+            return string.Empty;
         }
 
 
