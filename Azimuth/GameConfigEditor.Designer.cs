@@ -83,7 +83,7 @@ namespace Azimuth
             this.Value.HeaderText = "Current";
             this.Value.Name = "Value";
             this.Value.MinimumWidth = 80;
-            this.Value.Width = 78;
+            this.Value.Width = 80;
             // 
             // Section
             // 
@@ -107,7 +107,7 @@ namespace Azimuth
             this.Default.Name = "Default";
             this.Default.MinimumWidth = 80;
             this.Default.ReadOnly = true;
-            this.Default.Width = 78;
+            this.Default.Width = 80;
             // 
             // Status
             // 
