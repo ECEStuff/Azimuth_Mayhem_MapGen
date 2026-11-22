@@ -8,13 +8,13 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
 using System.Drawing.Imaging;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using Newtonsoft.Json;
-using System.Windows.Forms.VisualStyles;
 
 namespace Azimuth
 {
@@ -60,10 +60,7 @@ namespace Azimuth
             pictureBox1.MouseClick += MapCellMouseClick;
             toolStrip1.Renderer = new ActiveToolStripRenderer();
 
-            toolTip1.AutoPopDelay = 5000;
-            toolTip1.InitialDelay = 1000;
-            toolTip1.ReshowDelay = 500;
-            toolTip1.ShowAlways = true;
+            FormattedToolTip.Configure(toolTip1);
 
 
             pictureBox1.MouseLeave += (sender, e) => SetHoveredSector(null);
@@ -334,6 +331,9 @@ namespace Azimuth
             this.Text = X3Utils.Ui("Form1.AzimuthVByHerobettyBasedOnZMap", ver);
 
             SetupLocalization();
+            InitializeLanguageMenu();
+            LayoutSectorStatModifierOptions();
+            LayoutRelationsGrid();
 
             // Apply the initial Show Race Relations checkbox state.
             chkShowRelations_CheckedChanged(chkShowRelations, EventArgs.Empty);
@@ -350,6 +350,7 @@ namespace Azimuth
             UpdateVoidPreview(this, EventArgs.Empty);
             UpdateRelationsGrid();
             EnableButtons();
+
         }
 
         private void UpdateXenonPreview(object sender, EventArgs e)
@@ -371,11 +372,15 @@ namespace Azimuth
             voidLabel.Text = string.Format(X3Utils.GetLocalizedText("{VoidPercentLabel}") ?? "Void {0}%",voidSlider.Value);
             string title = X3Utils.GetLocalizedText("gbGalaxySize") ?? "Galaxy Size";
             gbGalaxySize.Text = string.Format(X3Utils.GetLocalizedText("{GalaxySizePreview}") ?? "{0} — Preview: {1} sectors, {2} empty cells", title, target, cells - target);
+            // With no map loaded, the toolbar maximum tracks the chosen size preset.
+            // With a map loaded, UpdateSectorCount uses the loaded map's own size.
+            UpdateSectorCount();
         }
 
         private void SetupLocalization()
         {
             X3Utils.SetControlChildrenText(this);
+            miLanguage.Text = X3Utils.Ui("Form1.LanguageMenu");
 
             toolTip1.SetToolTip(btnGenerateSystems, X3Utils.GetLocalizedText("{Tips.BtnGenerateSystems}"));
             toolTip1.SetToolTip(btnGenerateGates, X3Utils.GetLocalizedText("{Tips.BtnGenerateGates}"));
@@ -409,7 +414,7 @@ namespace Azimuth
             {
                 btnShowTerran, btnShowSectorStats, btnShowSectorNames,
                 btnLaunchWeaponsEditor, btnConfig, edit9972, edit9973,
-                txtFindSector, btnFindNext, btnExportPng
+                btnStartGame, txtFindSector, btnFindNext, btnExportPng
             };
 
             foreach (ToolStripItem item in toolbarItems)
@@ -424,6 +429,152 @@ namespace Azimuth
 
         }
 
+        // Use the translated label widths rather than fixed gaps. 
+		// This keeps English compact while leaving room for longer Russian labels.
+        private void LayoutSectorStatModifierOptions()
+        {
+            const int gap = 14;
+            int x = 8;
+            foreach (RadioButton option in new[] { rbNoModifier, rbExtraStats, rbSaboteurMode })
+            {
+                option.Location = new Point(x, 16);
+                x += option.PreferredSize.Width + gap;
+            }
+        }
+
+        // The menu items live in Form1.Designer.cs so they appear in the WinForms designer.
+        // This method only wires behavior and reflects the saved preference.
+        private void InitializeLanguageMenu()
+        {
+            string current = X3Utils.GetUiLanguage();
+            miLanguageEnglish.Checked = current != "07";
+            miLanguageRussian.Checked = current == "07";
+            miLanguageEnglish.Click += (sender, e) => SelectUiLanguage("44");
+            miLanguageRussian.Click += (sender, e) => SelectUiLanguage("07");
+        }
+
+        private void SelectUiLanguage(string language)
+        {
+            if (language == X3Utils.GetUiLanguage()) return;
+
+            if (language == "07")
+            {
+                string russianFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                    "Localizations", "Localizations_Russian07.json");
+                if (!File.Exists(russianFile))
+                {
+                    MessageBox.Show(this, X3Utils.Ui("Form1.LanguageFileMissing", russianFile),
+                        X3Utils.Ui("Form1.LanguageMenu"), MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                    return;
+                }
+            }
+
+            // Keep the previous in-memory catalog until the new one has been successfully loaded and applied. Only then save the preference.
+            var previousCatalog = X3Galaxy.Instance.LocalizationDictionary;
+            try
+            {
+                X3Utils.LoadLocalization(language);
+                RefreshLocalizedInterface(language);
+                X3Utils.SetUiLanguage(language);
+            }
+            catch (Exception ex)
+            {
+                X3Galaxy.Instance.LocalizationDictionary = previousCatalog;
+                try { RefreshLocalizedInterface(X3Utils.GetUiLanguage()); }
+                catch { /* Preserve the original error and show it below. */ }
+                MessageBox.Show(this, X3Utils.Ui("Form1.LanguageSaveFailed", ex.Message),
+                    X3Utils.Ui("Form1.LanguageMenu"), MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        // Refresh only presentation. 
+		// Do not recreate the form, reload a galaxy, or reset current selections: generated sectors and unsaved work stay put.
+        private void RefreshLocalizedInterface(string selectedLanguage)
+        {
+            SuspendLayout();
+            splitContainer1.Panel1.SuspendLayout();
+            try
+            {
+                Text = X3Utils.Ui("Form1.AzimuthVByHerobettyBasedOnZMap", X3Utils.GetVersion());
+                SetupLocalization();
+
+                miLanguageEnglish.Checked = selectedLanguage != "07";
+                miLanguageRussian.Checked = selectedLanguage == "07";
+
+                LayoutSectorStatModifierOptions();
+                LayoutRelationsGrid();
+                UpdateRelationsGrid();
+                UpdateXenonPreview(this, EventArgs.Empty);
+                UpdateVoidPreview(this, EventArgs.Empty);
+                UpdateGeneratedModifierSummary();
+                UpdateSectorCount();
+                CheckMapValidity();
+                if (m_FindMatches.Count == 0 && m_FindQuery.Length > 0)
+                    lblFindStatus.ToolTipText = Localize("{Find.NoMatches}", "No matching sectors");
+                ResizeValidityLabel();
+            }
+            finally
+            {
+                splitContainer1.Panel1.ResumeLayout(true);
+                ResumeLayout(true);
+            }
+        }
+
+        // The relation matrix must accommodate both English and Russian labels.
+        // Tags encode row|column; preserve the existing event handlers and rules.
+        private void LayoutRelationsGrid()
+        {
+            string[] races = { "Argon", "Boron", "Split", "Paranid", "Teladi", "Terran" };
+            const int firstColumn = 78;
+            const int columnStep = 67;
+            const int firstRow = 43;
+            const int rowStep = 25;
+
+            foreach (Control control in gbRelations.Controls)
+            {
+                Label label = control as Label;
+                if (label == null) continue;
+
+                string tag = label.Tag as string;
+                if (!string.IsNullOrWhiteSpace(tag))
+                {
+                    string[] pair = tag.Split('|');
+                    if (pair.Length != 2) continue;
+                    int row = Array.IndexOf(races, pair[0]);
+                    int column = Array.IndexOf(races, pair[1]);
+                    if (row < 0 || column < 0) continue;
+                    label.AutoSize = false;
+                    label.AutoEllipsis = true;
+                    label.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+                    label.SetBounds(firstColumn + column * columnStep,
+                        firstRow + row * rowStep, 66, 18);
+                    continue;
+                }
+
+                for (int i = 0; i < races.Length; i++)
+                {
+                    if (label.Name == "lbl" + races[i] + "1")
+                    {
+                        label.AutoSize = false;
+                        label.AutoEllipsis = true;
+                        label.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+                        label.SetBounds(firstColumn + i * columnStep, 16, 66, 18);
+                        break;
+                    }
+                    if (label.Name == "lbl" + races[i] + "2")
+                    {
+                        label.AutoSize = false;
+                        label.AutoEllipsis = true;
+                        label.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+                        label.SetBounds(7, firstRow + i * rowStep, 68, 18);
+                        break;
+                    }
+                }
+            }
+        }
+
         private void UpdateActiveGalaxyName()
         {
             if (m_CurX3RootFolder != string.Empty)
@@ -434,6 +585,12 @@ namespace Azimuth
             {
                 lblCurGalaxyName.Text = "";
             }
+
+            // A missing galaxy is neutral, not a failed operation.
+            string galaxyName = lblCurGalaxyName.Text;
+            lblCurGalaxyName.ForeColor = string.IsNullOrWhiteSpace(galaxyName) ||
+                galaxyName == "-None-" ? Color.DimGray : Color.DarkRed;
+            toolTip1.SetToolTip(lblCurGalaxyName, galaxyName);
         }
 
         private void TestRequiredFoldersSet()
@@ -447,6 +604,10 @@ namespace Azimuth
             {
                 btnGenerateSystems.Enabled = btnSaveGalaxy.Enabled = true;
             }
+
+            // Game launching requires only a valid installation, not a save folder.
+            btnStartGame.Enabled = !string.IsNullOrWhiteSpace(m_CurX3RootFolder)
+                && File.Exists(Path.Combine(m_CurX3RootFolder, "X3AP.exe"));
         }
 
 
@@ -748,19 +909,27 @@ namespace Azimuth
 
         private void UpdateSectorCount()
         {
-            int count = X3Galaxy.Instance.Sectors.Count;
-            int total = X3Galaxy.Instance.MaxX * X3Galaxy.Instance.MaxY;
+            X3Galaxy galaxy = X3Galaxy.Instance;
+            int count = galaxy.Sectors.Count;
 
+            // The toolbar shows the absolute sector cap for the galaxy size, not the number of grid cells (which includes required empty space).
+            // Before generation, use the currently selected size preset; after generation/loading, use the visible galaxy's actual settings.
+            GalaxySettings settings = count > 0
+                ? galaxy.GalaxyCreationSettings
+                : new GalaxySettings
+                {
+                    GalaxySize = rbSmallGalaxy.Checked ? 0 : rbMediumGalaxy.Checked ? 1 : 2
+                };
+
+            int minimum = settings.MinimumCount;
+            int maximum = settings.MaximumCount;
             lblSectorCount.ToolTipText = count > 0
                 ? Localize("{Tips.SectorCount}",
                     "Double-click a void to add a sector, or right-click a cell to add or remove one. Allowed: {0}–{1}.",
-                    X3Galaxy.Instance.MinimumSectorCount, X3Galaxy.Instance.MaximumSectorCount)
+                    minimum, maximum)
                 : string.Empty;
 
-            lblSectorCount.Text = total > 0
-                ? Localize("{Map.SectorCount}", "Sectors: {0} / {1}", count, total)
-                : Localize("{Map.NoSectors}", "Sectors: 0");
-
+            lblSectorCount.Text = Localize("{Map.SectorCount}", "Sectors: {0} / {1}", count, maximum);
             ResizeValidityLabel();
         }
 
@@ -1914,6 +2083,46 @@ namespace Azimuth
                 rbCustom.Checked = true;
                 Message(X3Utils.Ui("Form1.CustomMusicConfiguredSuccessfully"));
             }
+        }
+        // Launch X3: Albion Prelude from the configured Mayhem installation.
+        // Launching does not generate, install, or change the active galaxy.
+        private void btnStartGame_Click(object sender, EventArgs e)
+        {
+            string root = m_CurX3RootFolder;
+            string executable = string.IsNullOrWhiteSpace(root)
+                ? string.Empty : Path.Combine(root, "X3AP.exe");
+
+            if (string.IsNullOrEmpty(executable) || !File.Exists(executable))
+            {
+                MessageBox.Show(this, X3Utils.Ui("Form1.GameExecutableMissing"),
+                    X3Utils.Ui("Form1.StartGameFailed"), MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+                TestRequiredFoldersSet();
+                return;
+            }
+
+            try
+            {
+                var start = new ProcessStartInfo
+                {
+                    FileName = executable,
+                    WorkingDirectory = root,
+                    UseShellExecute = true
+                };
+                using (var process = Process.Start(start)) { }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this,
+                    X3Utils.Ui("Form1.GameLaunchError", ex.Message),
+                    X3Utils.Ui("Form1.StartGameFailed"), MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnHelpMenu_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

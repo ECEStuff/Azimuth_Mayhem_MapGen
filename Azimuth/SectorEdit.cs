@@ -30,6 +30,7 @@ namespace Azimuth
         public SectorEdit()
         {
             InitializeComponent();
+            FormattedToolTip.Configure(tipSectorEdit);
             cbProduction.SelectedValueChanged += FoodSelectionChanged;
             cbConsumption.SelectedValueChanged += FoodSelectionChanged;
         }

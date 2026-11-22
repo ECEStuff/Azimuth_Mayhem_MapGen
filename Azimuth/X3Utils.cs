@@ -17,6 +17,10 @@ namespace Azimuth
     public class X3Utils
     {
         private static Random m_Rand = new Random();
+        // The X3 resource-file language is independent of Azimuth's UI language.
+		// It is fixed at startup from the original localization setup so changing the UI cannot rename generated game files.
+        private static string m_GameFileLanguage;
+
 
 
         /// <summary>
@@ -101,7 +105,7 @@ namespace Azimuth
         public static string HelpFile(string document = "HelpMain")
         {
             string root = AppDomain.CurrentDomain.BaseDirectory;
-            string language = GetLocalizedText("language_id_file");
+            string language = GetUiLanguage();
             int code;
             if (int.TryParse(language, out code))
             {
@@ -111,22 +115,106 @@ namespace Azimuth
             return Path.Combine(root, document + ".txt");
         }
 
-        public static void LoadLocalization()
+        // The selected UI language is local to this Azimuth installation. 
+		// This keeps the original Settings.txt format without replacing localization files.
+        public static string GetUiLanguage()
+        {
+            string settingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings.txt");
+            if (File.Exists(settingsPath))
+            {
+                foreach (string line in File.ReadAllLines(settingsPath))
+                {
+                    if (!line.StartsWith("UiLanguage|", StringComparison.Ordinal))
+                        continue;
+                    string choice = line.Substring("UiLanguage|".Length).Trim();
+                    return choice == "07" ? "07" : "44";
+                }
+            }
+
+            // Backward compatibility: older releases selected Russian by replacing Localizations.json.
+			// Detect that once, before a preference is saved.
+            string legacyPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Localizations.json");
+            if (File.Exists(legacyPath))
+            {
+                var legacy = JsonConvert.DeserializeObject<Dictionary<string, string>>(
+                    File.ReadAllText(legacyPath));
+                string legacyLanguage;
+                if (legacy != null && legacy.TryGetValue("language_id_file", out legacyLanguage)
+                    && legacyLanguage == "07")
+                    return "07";
+            }
+            return "44";
+        }
+
+        public static void SetUiLanguage(string language)
+        {
+            if (language != "44" && language != "07")
+                throw new ArgumentException("Unsupported UI language", nameof(language));
+
+            string settingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings.txt");
+            List<string> lines = File.Exists(settingsPath)
+                ? File.ReadAllLines(settingsPath).ToList() : new List<string>();
+            int index = lines.FindIndex(line => line.StartsWith("UiLanguage|", StringComparison.Ordinal));
+            string setting = "UiLanguage|" + language;
+            if (index < 0) lines.Add(setting);
+            else lines[index] = setting;
+            File.WriteAllLines(settingsPath, lines);
+        }
+
+        public static void LoadLocalization(string requestedLanguage = null)
         {
             Dictionary<string, string> catalog;
             using (var stream = typeof(X3Utils).Assembly.GetManifestResourceStream("Azimuth.English.json"))
             using (var reader = new StreamReader(stream))
                 catalog = JsonConvert.DeserializeObject<Dictionary<string, string>>(reader.ReadToEnd());
 
-            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Localizations.json");
-            if (File.Exists(path))
+            // Explicit override is used for a live switch. 
+			// Do not persist the preference until the new catalog and UI have been loaded safely.
+            string language = requestedLanguage ?? GetUiLanguage();
+            if (language != "44" && language != "07")
+                throw new ArgumentException("Unsupported UI language", nameof(requestedLanguage));
+            string root = AppDomain.CurrentDomain.BaseDirectory;
+            string activePath = Path.Combine(root, "Localizations.json");
+            Dictionary<string, string> active = null;
+            if (File.Exists(activePath))
+                active = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(activePath));
+
+            // External English overrides remain supported.
+			// If a user previously replaced Localizations.json with Russian, don't let that override an explicit switch back to English.
+            string fileLanguage;
+            bool legacyRussian = active != null
+                && active.TryGetValue("language_id_file", out fileLanguage)
+                && fileLanguage == "07";
+            if (m_GameFileLanguage == null)
+                m_GameFileLanguage = legacyRussian ? "07" : "44";
+
+            if (active != null && !legacyRussian)
+                MergeLocalization(catalog, active);
+
+            if (language == "07")
             {
-                var active = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(path));
-                foreach (var entry in active)
-                    if (!string.IsNullOrEmpty(entry.Value))
-                        catalog[entry.Key] = entry.Value;
+                string russianPath = Path.Combine(root, "Localizations", "Localizations_Russian07.json");
+                if (File.Exists(russianPath))
+                {
+                    var russian = JsonConvert.DeserializeObject<Dictionary<string, string>>(
+                        File.ReadAllText(russianPath));
+                    MergeLocalization(catalog, russian);
+                }
+                else if (legacyRussian)
+                    MergeLocalization(catalog, active);
             }
+            // Some existing galaxy save/load operations use language_id_file to choose addon/t and addon/mov filenames.
+			// Keep that game-file language stable while presenting the selected UI language.
+            catalog["language_id_file"] = m_GameFileLanguage;
             X3Galaxy.Instance.LocalizationDictionary = catalog;
+        }
+
+        private static void MergeLocalization(Dictionary<string, string> destination,
+            Dictionary<string, string> source)
+        {
+            if (source == null) return;
+            foreach (var entry in source)
+                if (!string.IsNullOrEmpty(entry.Value)) destination[entry.Key] = entry.Value;
         }
 
         public static string Ui(string key, params object[] values)

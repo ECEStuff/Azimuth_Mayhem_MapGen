@@ -20,6 +20,12 @@ namespace Azimuth
         public GameConfigEditor()
         {
             InitializeComponent();
+
+            // Keep the larger default editor usable on smaller displays.
+            Rectangle workingArea = Screen.FromControl(this).WorkingArea;
+            if (Width > workingArea.Width || Height > workingArea.Height)
+                Size = new Size(Math.Min(Width, workingArea.Width),
+                    Math.Min(Height, workingArea.Height));
         }
 
         public GameConfigEditor(string path, string page) : this()
@@ -34,7 +40,22 @@ namespace Azimuth
             sections.SelectedIndex = 0;
             var baseline = defaults.Entries.ToDictionary(GameConfigFile.Id, entry => entry.Value);
             string catalogPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ConfigDefaults", "SettingNames.json");
-            var titles = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string,string>>>(File.ReadAllText(catalogPath))[page];
+            var titleCatalog = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(File.ReadAllText(catalogPath));
+            var titles = new Dictionary<string, string>(titleCatalog[page]);
+            if (X3Utils.GetUiLanguage() == "07")
+            {
+                string translatedPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
+                    "ConfigDefaults", "SettingNames_07.json");
+                if (File.Exists(translatedPath))
+                {
+                    var translated = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string>>>(
+                        File.ReadAllText(translatedPath));
+                    Dictionary<string, string> translatedPage;
+                    if (translated != null && translated.TryGetValue(page, out translatedPage))
+                        foreach (var title in translatedPage)
+                            if (!string.IsNullOrWhiteSpace(title.Value)) titles[title.Key] = title.Value;
+                }
+            }
             foreach (var entry in file.Entries)
             {
                 string description = GameConfigFile.Description(entry).Replace("manoeuvre", "maneuver");

@@ -67,7 +67,7 @@ namespace Azimuth
             this.grid.Name = "grid";
             this.grid.RowHeadersVisible = false;
             this.grid.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.grid.Size = new System.Drawing.Size(900, 375);
+            this.grid.Size = new System.Drawing.Size(1100, 465);
             this.grid.TabIndex = 0;
             // 
             // ID
@@ -82,12 +82,14 @@ namespace Azimuth
             // 
             this.Value.HeaderText = "Current";
             this.Value.Name = "Value";
+            this.Value.MinimumWidth = 80;
             this.Value.Width = 78;
             // 
             // Section
             // 
             this.Section.HeaderText = "Section";
             this.Section.Name = "Section";
+            this.Section.MinimumWidth = 135;
             this.Section.ReadOnly = true;
             this.Section.Width = 145;
             // 
@@ -96,12 +98,14 @@ namespace Azimuth
             this.Title.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.Title.HeaderText = "Setting";
             this.Title.Name = "Title";
+            this.Title.MinimumWidth = 250;
             this.Title.ReadOnly = true;
             // 
             // Default
             // 
             this.Default.HeaderText = "Default";
             this.Default.Name = "Default";
+            this.Default.MinimumWidth = 80;
             this.Default.ReadOnly = true;
             this.Default.Width = 78;
             // 
@@ -109,6 +113,7 @@ namespace Azimuth
             // 
             this.Status.HeaderText = "Status";
             this.Status.Name = "Status";
+            this.Status.MinimumWidth = 150;
             this.Status.ReadOnly = true;
             this.Status.Width = 160;
             // 
@@ -126,7 +131,7 @@ namespace Azimuth
             this.saveClose});
             this.bar.Location = new System.Drawing.Point(0, 0);
             this.bar.Name = "bar";
-            this.bar.Size = new System.Drawing.Size(900, 25);
+            this.bar.Size = new System.Drawing.Size(1100, 25);
             this.bar.TabIndex = 2;
             // 
             // sections
@@ -136,7 +141,7 @@ namespace Azimuth
             this.sections.Items.AddRange(new object[] {
             "All sections"});
             this.sections.Name = "sections";
-            this.sections.Size = new System.Drawing.Size(155, 21);
+            this.sections.Size = new System.Drawing.Size(180, 21);
             // 
             // filterLabel
             // 
@@ -149,7 +154,7 @@ namespace Azimuth
             this.search.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.search.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.search.Name = "search";
-            this.search.Size = new System.Drawing.Size(100, 25);
+            this.search.Size = new System.Drawing.Size(150, 25);
             // 
             // loadPreset
             // 
@@ -177,6 +182,8 @@ namespace Azimuth
             // 
             // saveClose
             // 
+            this.saveClose.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.saveClose.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
             this.saveClose.Name = "saveClose";
             this.saveClose.Size = new System.Drawing.Size(88, 22);
             this.saveClose.Text = "Save and close";
@@ -189,10 +196,10 @@ namespace Azimuth
             this.panel.Controls.Add(this.detailMeta);
             this.panel.Controls.Add(this.detailTitle);
             this.panel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel.Location = new System.Drawing.Point(0, 400);
+            this.panel.Location = new System.Drawing.Point(0, 490);
             this.panel.Name = "panel";
             this.panel.Padding = new System.Windows.Forms.Padding(10, 8, 10, 8);
-            this.panel.Size = new System.Drawing.Size(900, 140);
+            this.panel.Size = new System.Drawing.Size(1100, 170);
             this.panel.TabIndex = 1;
             // 
             // details
@@ -202,10 +209,11 @@ namespace Azimuth
             this.details.Dock = System.Windows.Forms.DockStyle.Fill;
             this.details.Location = new System.Drawing.Point(10, 54);
             this.details.Multiline = true;
+            this.details.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.details.Name = "details";
             this.details.ReadOnly = true;
             this.details.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.details.Size = new System.Drawing.Size(878, 76);
+            this.details.Size = new System.Drawing.Size(1078, 106);
             this.details.TabIndex = 0;
             this.details.Text = "Station attack behavior for ships without main batteries.";
             // 
@@ -216,7 +224,7 @@ namespace Azimuth
             this.detailMeta.ForeColor = System.Drawing.SystemColors.GrayText;
             this.detailMeta.Location = new System.Drawing.Point(10, 32);
             this.detailMeta.Name = "detailMeta";
-            this.detailMeta.Size = new System.Drawing.Size(878, 22);
+            this.detailMeta.Size = new System.Drawing.Size(1078, 22);
             this.detailMeta.TabIndex = 1;
             this.detailMeta.Text = "Combat  ·  9972 / 224";
             // 
@@ -227,18 +235,18 @@ namespace Azimuth
             this.detailTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold);
             this.detailTitle.Location = new System.Drawing.Point(10, 8);
             this.detailTitle.Name = "detailTitle";
-            this.detailTitle.Size = new System.Drawing.Size(878, 24);
+            this.detailTitle.Size = new System.Drawing.Size(1078, 24);
             this.detailTitle.TabIndex = 2;
             this.detailTitle.Text = "Station attack behavior";
             // 
             // GameConfigEditor
             // 
-            this.ClientSize = new System.Drawing.Size(900, 540);
+            this.ClientSize = new System.Drawing.Size(1100, 660);
             this.Controls.Add(this.grid);
             this.Controls.Add(this.panel);
             this.Controls.Add(this.bar);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MinimumSize = new System.Drawing.Size(650, 360);
+            this.MinimumSize = new System.Drawing.Size(820, 460);
             this.Name = "GameConfigEditor";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Azimuth configuration";

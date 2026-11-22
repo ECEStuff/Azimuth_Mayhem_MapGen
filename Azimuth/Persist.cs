@@ -31,6 +31,7 @@ namespace Azimuth
         public Persist()
         {
             InitializeComponent();
+            FormattedToolTip.Configure(tipSaveLoad);
         }
         public void Initialize()
         {

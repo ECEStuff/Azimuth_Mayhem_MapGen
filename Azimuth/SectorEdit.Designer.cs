@@ -188,7 +188,7 @@
             this.cbDejureOwner.FormattingEnabled = true;
             this.cbDejureOwner.Location = new System.Drawing.Point(346, 72);
             this.cbDejureOwner.Name = "cbDejureOwner";
-            this.cbDejureOwner.Size = new System.Drawing.Size(70, 21);
+            this.cbDejureOwner.Size = new System.Drawing.Size(105, 21);
             this.cbDejureOwner.TabIndex = 24;
             // 
             // nudAbnormalSignals
@@ -280,7 +280,7 @@
             this.cbProduction.FormattingEnabled = true;
             this.cbProduction.Location = new System.Drawing.Point(346, 99);
             this.cbProduction.Name = "cbProduction";
-            this.cbProduction.Size = new System.Drawing.Size(70, 21);
+            this.cbProduction.Size = new System.Drawing.Size(105, 21);
             this.cbProduction.TabIndex = 30;
             // 
             // cbConsumption
@@ -289,7 +289,7 @@
             this.cbConsumption.FormattingEnabled = true;
             this.cbConsumption.Location = new System.Drawing.Point(346, 126);
             this.cbConsumption.Name = "cbConsumption";
-            this.cbConsumption.Size = new System.Drawing.Size(70, 21);
+            this.cbConsumption.Size = new System.Drawing.Size(105, 21);
             this.cbConsumption.TabIndex = 31;
             // 
             // cbCompany
@@ -298,12 +298,12 @@
             this.cbCompany.FormattingEnabled = true;
             this.cbCompany.Location = new System.Drawing.Point(346, 152);
             this.cbCompany.Name = "cbCompany";
-            this.cbCompany.Size = new System.Drawing.Size(70, 21);
+            this.cbCompany.Size = new System.Drawing.Size(105, 21);
             this.cbCompany.TabIndex = 32;
             // 
             // btnOk
             // 
-            this.btnOk.Location = new System.Drawing.Point(346, 274);
+            this.btnOk.Location = new System.Drawing.Point(379, 274);
             this.btnOk.Name = "btnOk";
             this.btnOk.Size = new System.Drawing.Size(75, 23);
             this.btnOk.TabIndex = 33;
@@ -317,7 +317,7 @@
             this.cbOwner.FormattingEnabled = true;
             this.cbOwner.Location = new System.Drawing.Point(346, 45);
             this.cbOwner.Name = "cbOwner";
-            this.cbOwner.Size = new System.Drawing.Size(70, 21);
+            this.cbOwner.Size = new System.Drawing.Size(105, 21);
             this.cbOwner.TabIndex = 36;
             this.cbOwner.SelectedIndexChanged += new System.EventHandler(this.cbOwner_SelectedIndexChanged);
             // 
@@ -408,7 +408,7 @@
             this.panel1.Controls.Add(this.cbTerranMemory);
             this.panel1.Location = new System.Drawing.Point(12, 24);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(447, 310);
+            this.panel1.Size = new System.Drawing.Size(480, 310);
             this.panel1.TabIndex = 39;
             // 
             // btnChangeMusicFile
@@ -445,7 +445,7 @@
             this.cbSunLevel.FormattingEnabled = true;
             this.cbSunLevel.Location = new System.Drawing.Point(346, 179);
             this.cbSunLevel.Name = "cbSunLevel";
-            this.cbSunLevel.Size = new System.Drawing.Size(70, 21);
+            this.cbSunLevel.Size = new System.Drawing.Size(105, 21);
             this.cbSunLevel.TabIndex = 52;
             // 
             // lblPlanets
@@ -535,7 +535,7 @@
             // 
             // btnClose
             // 
-            this.btnClose.Location = new System.Drawing.Point(255, 274);
+            this.btnClose.Location = new System.Drawing.Point(288, 274);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(75, 23);
             this.btnClose.TabIndex = 43;
@@ -601,7 +601,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.AntiqueWhite;
-            this.ClientSize = new System.Drawing.Size(471, 346);
+            this.ClientSize = new System.Drawing.Size(504, 346);
             this.Controls.Add(this.lblSystemName);
             this.Controls.Add(this.panel1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
