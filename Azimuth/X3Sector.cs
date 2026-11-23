@@ -84,7 +84,7 @@ namespace Azimuth
             }
 
             // X3 asteroid subtypes 0, 1 and 2 are large/mineable asteroids; other subtypes are small rocks (debris). Both are encoded as t=17.
-			// For new sectors, preserve up to 50 large Ore/Silicon asteroids, plus a separate random 0..100% of the source template's debris. Existing maps are untouched.
+			// For new sectors, preserve up to 50 large Ore/Silicon asteroids, plus a separate random 50..100% of the source template's debris. Existing maps are untouched.
             var realAsteroids = new List<X3Asteroid>();
             var debris = new List<X3Asteroid>();
             foreach (string asteroidXml in asteroids)
