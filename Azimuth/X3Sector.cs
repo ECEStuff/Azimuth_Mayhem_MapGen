@@ -56,7 +56,7 @@ namespace Azimuth
         private List<X3Special> m_Specials = new List<X3Special>();
 
         // Called when generator is creating a new sector.
-        public X3Sector(int xx, int yy, string soundfile, int background, List<string> sunAndPlanets, List<string> asteroids)
+        public X3Sector(int xx, int yy, string soundfile, int background, List<string> sunAndPlanets, List<string> asteroids, Random asteroidRandom = null)
         {
             x = xx;         // 0-based index for system coordinates
             y = yy;
@@ -83,15 +83,102 @@ namespace Azimuth
                 }
             }
 
-            // asteroids  is a short list of 1 sun and 1 or more planets in raw XML.  Parse them out into our members.
-            foreach (string asteroidxml in asteroids)
+            // X3 asteroid subtypes 0, 1 and 2 are large/mineable asteroids; other subtypes are small rocks (debris). Both are encoded as t=17.
+			// For new sectors, preserve up to 50 large Ore/Silicon asteroids, plus a separate random 0..100% of the source template's debris. Existing maps are untouched.
+            var realAsteroids = new List<X3Asteroid>();
+            var debris = new List<X3Asteroid>();
+            foreach (string asteroidXml in asteroids)
             {
-                X3Asteroid ass = new X3Asteroid(asteroidxml);
-                // Note, the asteroids template has asteroids in it of type 2 (nividium).  We only allow types 0 and 1 (ore and silicon).
-                if (ass.atype < 2)
+                var asteroid = new X3Asteroid(asteroidXml);
+                if (asteroid.s >= 0 && asteroid.s <= 2)
                 {
-                    m_Asteroids.Add(ass);
+                    // Mayhem does not use Nividium/Ice for these mineable deposits.
+                    if (asteroid.atype == 0 || asteroid.atype == 1)
+                        realAsteroids.Add(asteroid);
                 }
+                else
+                {
+                    // Keep debris of all mineral types for sector scenery/mining.
+                    debris.Add(asteroid);
+                }
+            }
+
+            Random selectionRandom = asteroidRandom ?? m_Rand;
+            // Preserve the template's natural mineable asteroid population.
+            // Sample only when it exceeds the 50-asteroid gameplay cap.
+            int realCount = Math.Min(50, realAsteroids.Count);
+            AddRandomAsteroidSubset(realAsteroids, realCount, selectionRandom);
+
+            // Roll the retained debris percentage separately for each new sector.
+            // Round to the nearest whole object, so 0% retains none and 100% retains all.
+			int debrisPercent = selectionRandom.Next(50, 101);
+            int debrisCount = (int)(((long)debris.Count * debrisPercent + 50) / 100);
+            AddRandomAsteroidSubset(debris, debrisCount, selectionRandom);
+
+            // New sectors reuse the template's rock types and yields, but not its exact coordinates.
+            // Transform both populations together to preserve recognizable asteroid-field clusters.
+            RandomizeAsteroidPositions(selectionRandom);
+        }
+
+        // Uniformly choose distinct entries from the original template.
+        private void AddRandomAsteroidSubset(List<X3Asteroid> pool, int count, Random random)
+        {
+            // Partial Fisher-Yates shuffle: only the chosen prefix is shuffled.
+            for (int i = 0; i < count; i++)
+            {
+                int index = random.Next(i, pool.Count);
+                X3Asteroid selected = pool[index];
+                pool[index] = pool[i];
+                pool[i] = selected;
+                m_Asteroids.Add(selected);
+            }
+        }
+
+        // Rotate and relocate the template's complete asteroid field, then apply subtle per-rock variation. 
+		// Keeping one shared transform maintains the source field's structure rather than scattering debris randomly across shipping lanes.
+        // This is called ONLY for newly generated sectors, never loaded galaxy XML.
+        private void RandomizeAsteroidPositions(Random random)
+        {
+            if (m_Asteroids.Count == 0) return;
+
+            double angle = random.NextDouble() * 2.0 * Math.PI;
+            double cosine = Math.Cos(angle);
+            double sine = Math.Sin(angle);
+
+            // Sector 'size' provides a scale for repositioning, not a hard limit on rock coordinates.
+			// Some original templates already extend beyond it.
+            int shiftRange = size / 4;
+            int verticalShiftRange = size / 12;
+            int shiftX = random.Next(-shiftRange, shiftRange + 1);
+            int shiftY = random.Next(-verticalShiftRange, verticalShiftRange + 1);
+            int shiftZ = random.Next(-shiftRange, shiftRange + 1);
+
+            // Small individual offsets break up the exact template while retaining the shape of rock clusters and their relative positions.
+            int horizontalJitter = Math.Max(1, size / 200);
+            int verticalJitter = Math.Max(1, size / 300);
+            var occupied = new HashSet<Tuple<int, int, int>>();
+
+            foreach (X3Asteroid asteroid in m_Asteroids)
+            {
+                int baseX = (int)Math.Round(asteroid.x * cosine - asteroid.z * sine) + shiftX;
+                int baseY = asteroid.y + shiftY;
+                int baseZ = (int)Math.Round(asteroid.x * sine + asteroid.z * cosine) + shiftZ;
+
+                // Avoid duplicate coordinates if two jittered rocks land on the same point; leave the subtype, yield and orientation untouched.
+                int nextX, nextY, nextZ;
+                Tuple<int, int, int> position;
+                do
+                {
+                    nextX = baseX + random.Next(-horizontalJitter, horizontalJitter + 1);
+                    nextY = baseY + random.Next(-verticalJitter, verticalJitter + 1);
+                    nextZ = baseZ + random.Next(-horizontalJitter, horizontalJitter + 1);
+                    position = Tuple.Create(nextX, nextY, nextZ);
+                }
+                while (!occupied.Add(position));
+
+                asteroid.x = nextX;
+                asteroid.y = nextY;
+                asteroid.z = nextZ;
             }
         }
 

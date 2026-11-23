@@ -1584,34 +1584,41 @@ namespace Azimuth
         }
 
         /// <summary>
-        /// Provided the X3 Root folder is correct, load up the text \mayhem_data\extracted\sunsandplanets.txt, which contains
-        /// a shit ton (239) of templated suns and planets that mayhem 3 used.  These are arranged as groups of 1 sun and 1-x planets followed by a blank line.
+        /// Load blank-line-separated scenery templates from the selected Mayhem installation.
+        /// The final group may end at EOF; comments and extra blank lines are not objects.
         /// </summary>
         private bool LoadTemplate(List<List<string>> template, string filename)
         {
-            List<string> newentry = null;
+            var entry = new List<string>();
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            int originalCount = template.Count;
 
-
-            List<string> sourcedata = File.ReadAllLines(filename).ToList();
-
-            foreach (string src in sourcedata)
+            foreach (string sourceLine in File.ReadLines(filename))
             {
-                // If blank line, create a new entry in m_SunsAndPlanets.
-                // If non blank, add the line to the new entry
-                if (src == "")
+                string line = sourceLine.Trim();
+                if (line.Length == 0)
                 {
-                    if (newentry != null)
+                    if (entry.Count > 0)
                     {
-                        template.Add(newentry);
+                        template.Add(entry);
+                        entry = new List<string>();
+                        seen.Clear();
                     }
-                    newentry = new List<string>();
                 }
-                else
+                else if (!line.StartsWith("<!--", StringComparison.Ordinal) && seen.Add(line))
                 {
-                    if (newentry == null) throw new Exception(X3Utils.Ui("Form1.InvalidLineIn", filename));
-                    newentry.Add(src);
+                    // Avoid coincident duplicate objects, e.g. the repeated planet in sunsandplanets.txt group 130.
+                    entry.Add(line);
                 }
             }
+
+            // A trailing blank line is optional in asteroids.txt and sunsandplanets.txt.
+            if (entry.Count > 0)
+                template.Add(entry);
+
+            if (template.Count == originalCount)
+                throw new InvalidDataException(X3Utils.Ui("Form1.InvalidLineIn", filename));
+
             return true;
         }
 
@@ -1976,7 +1983,7 @@ namespace Azimuth
             LoadTemplate(rocks, Path.Combine(data, "extracted", "asteroids.txt"));
             var backgrounds = File.ReadAllLines(Path.Combine(data, "custom_backgrounds.txt"));
             var sector = new X3Sector(cell.X, cell.Y, candidates[m_Rand.Next(candidates.Count)],
-                int.Parse(backgrounds[m_Rand.Next(backgrounds.Length)]), skies[m_Rand.Next(skies.Count)], rocks[m_Rand.Next(rocks.Count)]);
+                int.Parse(backgrounds[m_Rand.Next(backgrounds.Length)]), skies[m_Rand.Next(skies.Count)], rocks[m_Rand.Next(rocks.Count)], m_Rand);
             if (sector.Sun == null) throw new InvalidDataException(X3Utils.Ui("Form1.TheSelectedSectorTemplateHasNoSun"));
             sector.MarkSectorRace(ERace.Unknown);
             sector.SectorID = $"102{cell.Y + 1:00}{cell.X + 1:00}";

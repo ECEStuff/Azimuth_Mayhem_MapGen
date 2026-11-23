@@ -114,13 +114,13 @@ namespace Azimuth
             this.rbBasicMusic = new System.Windows.Forms.RadioButton();
             this.btnSaveGalaxy = new System.Windows.Forms.Button();
             this.tblActiveGalaxyStatus = new System.Windows.Forms.TableLayoutPanel();
-            this.lblCurGalaxyName = new System.Windows.Forms.Label();
             this.lblActiveGal = new System.Windows.Forms.Label();
-            this.lblX3SaveGameFolder = new System.Windows.Forms.Label();
+            this.lblCurGalaxyName = new System.Windows.Forms.Label();
+            this.lblX3SaveGameFolder = new System.Windows.Forms.LinkLabel();
             this.gbMapType = new System.Windows.Forms.GroupBox();
             this.rbRectMap = new System.Windows.Forms.RadioButton();
             this.rbSquareMap = new System.Windows.Forms.RadioButton();
-            this.lblX3RootFolder = new System.Windows.Forms.Label();
+            this.lblX3RootFolder = new System.Windows.Forms.LinkLabel();
             this.btnGenerateGates = new System.Windows.Forms.Button();
             this.gbGateDensity = new System.Windows.Forms.GroupBox();
             this.rbHighGateDensity = new System.Windows.Forms.RadioButton();
@@ -175,7 +175,6 @@ namespace Azimuth
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
-            this.tblActiveGalaxyStatus.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             this.gbMapOptions.SuspendLayout();
@@ -192,6 +191,7 @@ namespace Azimuth
             ((System.ComponentModel.ISupportInitialize)(this.udTeladi)).BeginInit();
             this.gbRelations.SuspendLayout();
             this.gbMusic.SuspendLayout();
+            this.tblActiveGalaxyStatus.SuspendLayout();
             this.gbMapType.SuspendLayout();
             this.gbGateDensity.SuspendLayout();
             this.gbGalaxySize.SuspendLayout();
@@ -1230,8 +1230,6 @@ namespace Azimuth
             // 
             // tblActiveGalaxyStatus
             // 
-            // Both labels belong to one fixed Designer-managed row. 
-			// A panel inside the scrolling settings pane is never moved with SetBounds at runtime.
             this.tblActiveGalaxyStatus.ColumnCount = 2;
             this.tblActiveGalaxyStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 245F));
             this.tblActiveGalaxyStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
@@ -1245,48 +1243,49 @@ namespace Azimuth
             this.tblActiveGalaxyStatus.Size = new System.Drawing.Size(430, 24);
             this.tblActiveGalaxyStatus.TabIndex = 74;
             // 
-            // lblCurGalaxyName
-            // 
-            this.lblCurGalaxyName.AutoEllipsis = true;
-            this.lblCurGalaxyName.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold);
-            this.lblCurGalaxyName.ForeColor = System.Drawing.Color.DarkRed;
-            this.lblCurGalaxyName.Location = new System.Drawing.Point(253, 0);
-            this.lblCurGalaxyName.Name = "lblCurGalaxyName";
-            this.lblCurGalaxyName.Size = new System.Drawing.Size(177, 24);
-            this.lblCurGalaxyName.Margin = new System.Windows.Forms.Padding(8, 0, 0, 0);
-            this.lblCurGalaxyName.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.lblCurGalaxyName.TabIndex = 75;
-            this.lblCurGalaxyName.Text = "-None-";
-            this.lblCurGalaxyName.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
             // lblActiveGal
             // 
+            this.lblActiveGal.AutoEllipsis = true;
+            this.lblActiveGal.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblActiveGal.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold);
             this.lblActiveGal.ForeColor = System.Drawing.Color.DarkBlue;
             this.lblActiveGal.Location = new System.Drawing.Point(0, 0);
+            this.lblActiveGal.Margin = new System.Windows.Forms.Padding(0);
             this.lblActiveGal.Name = "lblActiveGal";
             this.lblActiveGal.Size = new System.Drawing.Size(245, 24);
-            this.lblActiveGal.Margin = new System.Windows.Forms.Padding(0);
-            this.lblActiveGal.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblActiveGal.TabIndex = 74;
             this.lblActiveGal.Text = "Installed game galaxy:";
-            this.lblActiveGal.AutoEllipsis = true;
             this.lblActiveGal.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // lblCurGalaxyName
+            // 
+            this.lblCurGalaxyName.AutoEllipsis = true;
+            this.lblCurGalaxyName.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblCurGalaxyName.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold);
+            this.lblCurGalaxyName.ForeColor = System.Drawing.Color.DarkRed;
+            this.lblCurGalaxyName.Location = new System.Drawing.Point(253, 0);
+            this.lblCurGalaxyName.Margin = new System.Windows.Forms.Padding(8, 0, 0, 0);
+            this.lblCurGalaxyName.Name = "lblCurGalaxyName";
+            this.lblCurGalaxyName.Size = new System.Drawing.Size(177, 24);
+            this.lblCurGalaxyName.TabIndex = 75;
+            this.lblCurGalaxyName.Text = "-None-";
+            this.lblCurGalaxyName.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // lblX3SaveGameFolder
             // 
             this.lblX3SaveGameFolder.AutoEllipsis = true;
             this.lblX3SaveGameFolder.BackColor = System.Drawing.Color.Transparent;
-            this.lblX3SaveGameFolder.Cursor = System.Windows.Forms.Cursors.Hand;
             this.lblX3SaveGameFolder.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblX3SaveGameFolder.ForeColor = System.Drawing.SystemColors.HotTrack;
+            this.lblX3SaveGameFolder.LinkBehavior = System.Windows.Forms.LinkBehavior.AlwaysUnderline;
+            this.lblX3SaveGameFolder.LinkColor = System.Drawing.SystemColors.HotTrack;
             this.lblX3SaveGameFolder.Location = new System.Drawing.Point(18, 118);
             this.lblX3SaveGameFolder.Name = "lblX3SaveGameFolder";
             this.lblX3SaveGameFolder.Size = new System.Drawing.Size(438, 16);
             this.lblX3SaveGameFolder.TabIndex = 72;
+            this.lblX3SaveGameFolder.TabStop = true;
             this.lblX3SaveGameFolder.Text = "C:\\Users\\...";
             this.lblX3SaveGameFolder.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.lblX3SaveGameFolder.Click += new System.EventHandler(this.btnX3SaveGameFolder_Click);
+            this.lblX3SaveGameFolder.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.btnX3SaveGameFolder_Click);
             // 
             // gbMapType
             // 
@@ -1325,16 +1324,17 @@ namespace Azimuth
             // 
             this.lblX3RootFolder.AutoEllipsis = true;
             this.lblX3RootFolder.BackColor = System.Drawing.Color.Transparent;
-            this.lblX3RootFolder.Cursor = System.Windows.Forms.Cursors.Hand;
             this.lblX3RootFolder.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Underline, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblX3RootFolder.ForeColor = System.Drawing.SystemColors.HotTrack;
+            this.lblX3RootFolder.LinkBehavior = System.Windows.Forms.LinkBehavior.AlwaysUnderline;
+            this.lblX3RootFolder.LinkColor = System.Drawing.SystemColors.HotTrack;
             this.lblX3RootFolder.Location = new System.Drawing.Point(18, 84);
             this.lblX3RootFolder.Name = "lblX3RootFolder";
             this.lblX3RootFolder.Size = new System.Drawing.Size(438, 16);
             this.lblX3RootFolder.TabIndex = 68;
+            this.lblX3RootFolder.TabStop = true;
             this.lblX3RootFolder.Text = "C:\\Mayhem\\";
             this.lblX3RootFolder.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.lblX3RootFolder.Click += new System.EventHandler(this.btnRootFolder_Click);
+            this.lblX3RootFolder.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.btnRootFolder_Click);
             // 
             // btnGenerateGates
             // 
@@ -1483,7 +1483,7 @@ namespace Azimuth
             // btnGenerateSystems
             // 
             this.btnGenerateSystems.BackColor = System.Drawing.Color.Linen;
-            this.btnGenerateSystems.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold);
+            this.btnGenerateSystems.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnGenerateSystems.Location = new System.Drawing.Point(16, 12);
             this.btnGenerateSystems.Name = "btnGenerateSystems";
             this.btnGenerateSystems.Size = new System.Drawing.Size(192, 23);
@@ -1759,8 +1759,7 @@ namespace Azimuth
             this.lblSectorCount.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
             this.lblSectorCount.Name = "lblSectorCount";
             this.lblSectorCount.Overflow = System.Windows.Forms.ToolStripItemOverflow.Never;
-            this.lblSectorCount.Size = new System.Drawing.Size(106, 22);
-            this.lblSectorCount.Text = "";
+            this.lblSectorCount.Size = new System.Drawing.Size(0, 22);
             this.lblSectorCount.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // btnHelpMenu
@@ -1784,7 +1783,7 @@ namespace Azimuth
             this.miLanguageEnglish,
             this.miLanguageRussian});
             this.miLanguage.Name = "miLanguage";
-            this.miLanguage.Size = new System.Drawing.Size(180, 22);
+            this.miLanguage.Size = new System.Drawing.Size(155, 22);
             this.miLanguage.Text = "Language";
             // 
             // miLanguageEnglish
@@ -1792,38 +1791,38 @@ namespace Azimuth
             this.miLanguageEnglish.Checked = true;
             this.miLanguageEnglish.CheckState = System.Windows.Forms.CheckState.Checked;
             this.miLanguageEnglish.Name = "miLanguageEnglish";
-            this.miLanguageEnglish.Size = new System.Drawing.Size(180, 22);
+            this.miLanguageEnglish.Size = new System.Drawing.Size(119, 22);
             this.miLanguageEnglish.Text = "English";
             // 
             // miLanguageRussian
             // 
             this.miLanguageRussian.Name = "miLanguageRussian";
-            this.miLanguageRussian.Size = new System.Drawing.Size(180, 22);
+            this.miLanguageRussian.Size = new System.Drawing.Size(119, 22);
             this.miLanguageRussian.Text = "Русский";
             // 
             // miLanguageSeparator
             // 
             this.miLanguageSeparator.Name = "miLanguageSeparator";
-            this.miLanguageSeparator.Size = new System.Drawing.Size(177, 6);
+            this.miLanguageSeparator.Size = new System.Drawing.Size(152, 6);
             // 
             // miUserGuide
             // 
             this.miUserGuide.Name = "miUserGuide";
-            this.miUserGuide.Size = new System.Drawing.Size(180, 22);
+            this.miUserGuide.Size = new System.Drawing.Size(155, 22);
             this.miUserGuide.Text = "User Guide";
             this.miUserGuide.Click += new System.EventHandler(this.btnHelpMain_Click);
             // 
             // miReleaseNotes
             // 
             this.miReleaseNotes.Name = "miReleaseNotes";
-            this.miReleaseNotes.Size = new System.Drawing.Size(180, 22);
+            this.miReleaseNotes.Size = new System.Drawing.Size(155, 22);
             this.miReleaseNotes.Text = "Release Notes";
             this.miReleaseNotes.Click += new System.EventHandler(this.miReleaseNotes_Click);
             // 
             // miAboutAzimuth
             // 
             this.miAboutAzimuth.Name = "miAboutAzimuth";
-            this.miAboutAzimuth.Size = new System.Drawing.Size(180, 22);
+            this.miAboutAzimuth.Size = new System.Drawing.Size(155, 22);
             this.miAboutAzimuth.Text = "About Azimuth";
             this.miAboutAzimuth.Click += new System.EventHandler(this.btnAbout_Click);
             // 
@@ -1842,7 +1841,6 @@ namespace Azimuth
             this.Shown += new System.EventHandler(this.Form1_Shown);
             this.Resize += new System.EventHandler(this.Form1_Resize);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
-            this.tblActiveGalaxyStatus.ResumeLayout(false);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel1.PerformLayout();
             this.splitContainer1.Panel2.ResumeLayout(false);
@@ -1867,6 +1865,7 @@ namespace Azimuth
             this.gbRelations.PerformLayout();
             this.gbMusic.ResumeLayout(false);
             this.gbMusic.PerformLayout();
+            this.tblActiveGalaxyStatus.ResumeLayout(false);
             this.gbMapType.ResumeLayout(false);
             this.gbMapType.PerformLayout();
             this.gbGateDensity.ResumeLayout(false);
@@ -1926,12 +1925,12 @@ namespace Azimuth
         private System.Windows.Forms.Label voidLabel;
         private System.Windows.Forms.CheckBox cbClusteredVoids;
         private System.Windows.Forms.Button btnGenerateSystems;
-        private System.Windows.Forms.Label lblX3RootFolder;
+        private System.Windows.Forms.LinkLabel lblX3RootFolder;
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
         private System.Windows.Forms.GroupBox gbMapType;
         private System.Windows.Forms.RadioButton rbRectMap;
         private System.Windows.Forms.RadioButton rbSquareMap;
-        private System.Windows.Forms.Label lblX3SaveGameFolder;
+        private System.Windows.Forms.LinkLabel lblX3SaveGameFolder;
         private System.Windows.Forms.Button btnSaveGalaxy;
         private System.Windows.Forms.TableLayoutPanel tblActiveGalaxyStatus;
         private System.Windows.Forms.Label lblCurGalaxyName;

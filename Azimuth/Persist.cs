@@ -260,27 +260,24 @@ namespace Azimuth
                 return;
             }
 
-            // parse all folders found in the root\mayhem_galaxies folder.
-            List<string> directories = Directory.GetDirectories(m_CurX3RootFolder + "\\mayhem_galaxies").ToList();
+            // Keep the active galaxy at the top; sort the remaining entries by name.
+            // The backing names and the ListBox MUST be populated in the same order:
+            // SelectedGalaxyName uses the selected index to identify the physical folder.
+            string activeGalaxy = GetActiveMap();
+            var folders = Directory.GetDirectories(Path.Combine(m_CurX3RootFolder, "mayhem_galaxies"))
+                .Select(path => new DirectoryInfo(path).Name)
+                .OrderBy(name => string.Equals(name, activeGalaxy, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+                .ThenBy(name => name, StringComparer.CurrentCultureIgnoreCase);
 
-            foreach (string directory in directories)
+            foreach (string folder in folders)
             {
-                string folder = new DirectoryInfo(directory).Name;
                 m_SavedGalaxyFolderNames.Add(folder);
-
-
-                // The only ACTIVE galaxy is the one referenced in the root folder.
-                if (string.Equals(GetActiveMap(), folder, StringComparison.OrdinalIgnoreCase))
-                {
-                    folder += ActiveString;
-                }
-
-                lbAvailableGalaxies.Items.Add(folder);
+                bool isActive = string.Equals(folder, activeGalaxy, StringComparison.OrdinalIgnoreCase);
+                lbAvailableGalaxies.Items.Add(isActive ? folder + ActiveString : folder);
             }
         }
 
-        private string OwnerFile =>
-            Path.Combine(m_X3SaveFolder, "Azimuth.LiveSaves.json");
+        private string OwnerFile => Path.Combine(m_X3SaveFolder, "Azimuth.LiveSaves.json");
 
         private static string NormalizeRoot(string path)
         {
@@ -1232,14 +1229,24 @@ namespace Azimuth
                 savedGalaxy.LoadFrom_X3_Universe_Settings(Path.Combine(source, "GalaxySettings.json"));
                 string language = X3Utils.GetLocalizedText("language_id_file");
                 savedGalaxy.Load9970_XML(Path.Combine(source, "addon", "t", "9970-L0" + language + ".xml"));
-                bool hasUnknownEnclave = savedGalaxy.Sectors.Count(sector => (ERace)sector.r == ERace.Unknown && sector.Gates.Count == 1)
-                    >= TerritoryPlanner.RequiredUnknownEnclaves(savedGalaxy.GalaxyCreationSettings.ChaoticStart);
-                string attributeError = new GalaxyEditRules(savedGalaxy).AttributeError();
-                if (attributeError != null) { MessageBox.Show(this, X3Utils.Ui(attributeError), X3Utils.Ui("Persist.InvalidGalaxy")); return false; }
-                if (savedGalaxy.GalaxyCreationSettings.TerritorySeeds != null)
+                // Legacy ZMap/Azimuth maps have no TerritorySeeds metadata and were generated before the modern ownership, Xenon share, and 4-enclave rules.
+                // Do not reject an existing playable galaxy for breaking rules that did not exist when it was generated.
+				// Still validate all required source files, XML, and reciprocal gate-network connectivity.
+                bool legacyGalaxy = savedGalaxy.GalaxyCreationSettings.TerritorySeeds == null;
+                int requiredEnclaves = legacyGalaxy
+                    ? 1 // ZMap's original HasUnknownEnclave requirement
+                    : TerritoryPlanner.RequiredUnknownEnclaves(savedGalaxy.GalaxyCreationSettings.ChaoticStart);
+                bool hasUnknownEnclave = savedGalaxy.Sectors.Count(
+                    sector => (ERace)sector.r == ERace.Unknown && sector.Gates.Count == 1) >= requiredEnclaves;
+
+                if (!legacyGalaxy)
                 {
                     string reason = new GalaxyEditRules(savedGalaxy).CurrentError();
-                    if (reason != null) { MessageBox.Show(this, X3Utils.Ui(reason), X3Utils.Ui("Persist.InvalidGalaxy")); return false; }
+                    if (reason != null)
+                    {
+                        MessageBox.Show(this, X3Utils.Ui(reason), X3Utils.Ui("Persist.InvalidGalaxy"));
+                        return false;
+                    }
                 }
                 GateNetworkReport network = savedGalaxy.AnalyzeGateNetwork();
 

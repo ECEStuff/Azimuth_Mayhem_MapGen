@@ -1,6 +1,14 @@
 ﻿AZIMUTH 2.0.2
 =============
 
+GALAXY GENERATION
+-----------------
+- Corrected asteroid generation to distinguish real asteroids (subtypes s=0-2) from debris (other s values), instead of limiting all asteroid-type objects to 50 per sector.
+- Retained all available real Ore and Silicon asteroids from each template, up to 50 per newly generated sector. When a template exceeds this limit, a random subset is selected.
+- Independently retained a random 50-100% of each template's debris, preserving its mineral composition.
+- Randomized asteroid-field rotation and position, with small individual position offsets, while retaining original mineral types and yields. Existing galaxies are not modified automatically.
+- Fixed scenery template loading so the final group is not omitted when a file lacks a trailing blank line. XML comments and exact duplicate entries are ignored.
+
 INTERFACE AND LOCALIZATION
 --------------------------
 - Added Help > Language > English / Русский. The main interface changes language immediately; the choice is saved per installation for subsequent launches.
@@ -11,6 +19,13 @@ INTERFACE AND LOCALIZATION
 - Improved the installed-galaxy status with a shared layout row, consistent caption/name alignment, and a tooltip for longer names.
 - Enlarged the Configuration Editor, improved its description area and toolbar layout, and set minimum column widths so columns cannot be collapsed out of view.
 - Widened relevant Sector Editor selection controls for translated faction names. Ownership eligibility and other editing rules remain unchanged.
+- Fixed the folder-path click areas inherited from ZMap: only the visible game and save-directory links are clickable, not the empty space beside them.
+- Standardized the Generate Sectors and Save/Load Galaxy button fonts.
+
+SAVED GALAXIES AND COMPATIBILITY
+--------------------------------
+- The Saved Galaxies list now places the active galaxy first and sorts the remaining galaxies alphabetically, retaining the (active) indicator.
+- Restored activation compatibility for older ZMap/Azimuth galaxies without modern territory-seed metadata. New generation-specific enclave and ownership rules no longer retroactively block these galaxies; file integrity, gate-connectivity, and savegame-ownership safeguards remain in place.
 
 FIXES AND TECHNICAL CHANGES
 ---------------------------
@@ -23,8 +38,7 @@ FIXES AND TECHNICAL CHANGES
 
 ACKNOWLEDGMENTS
 ---------------
-- Thanks to Fallout/alexalsp for testing, screenshots, and interface-improvement feedback.
-- Russian localization credit remains with Fallout/alexalsp; see About Azimuth and the included localization notices.
+- Thanks to Fallout (EG), also known as alexalsp, for Russian localization, testing, screenshots, and interface-improvement feedback. See About Azimuth and the included localization notices.
 
 AZIMUTH 2.0.1
 =============

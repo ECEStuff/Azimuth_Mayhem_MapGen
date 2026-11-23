@@ -253,8 +253,8 @@ namespace Azimuth
                         asteroidsToUse = asteroids[asteroidsIndex];
                     }
 
-                    // Create uninitialized sectors in all spaces to start with.  Void/Empty (not unknown) sectors will be removed from the list when we are all done.
-                    X3Sector sector = new X3Sector(x, y, null, backgroundFile, sunsToUse, asteroidsToUse);
+                    // Create uninitialized sectors in all spaces to start with. Void/Empty (not unknown) sectors will be removed from the list when we are all done.
+                    X3Sector sector = new X3Sector(x, y, null, backgroundFile, sunsToUse, asteroidsToUse, m_Rand);
                     m_Galaxy.Sectors.Add(sector);                     // All sectors exist at start.  They are just uninitialized.
                 }
             }
@@ -281,8 +281,8 @@ namespace Azimuth
         }
 
 
-        // Gate topology is finalized before ownership. Regeneration validates the existing
-        // territories and restores the previous gate graph if no safe replacement is found.
+        // Gate topology is finalized before ownership. 
+		// Regeneration validates the existing territories and restores the previous gate graph if no safe replacement is found.
         private static readonly ERace[] TerritoryRaces =
             { ERace.Argon, ERace.Boron, ERace.Split, ERace.Paranid, ERace.Teladi, ERace.Terran };
 
