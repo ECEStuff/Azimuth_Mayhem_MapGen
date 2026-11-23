@@ -319,6 +319,9 @@ namespace Azimuth
             if (Width > screen.Bounds.Width) Width = screen.Bounds.Width;
             if (Height > screen.Bounds.Height) Height = screen.Bounds.Height;
 
+            X3Utils.EnsureSetting("ShowMap", "1");
+            btnShowMap.Checked = GetShowSetting("ShowMap") != 0;
+            pictureBox1.Visible = btnShowMap.Checked;
             m_ShowTerran = GetShowSetting("ShowTerran");
             m_ShowStats = GetShowSetting("ShowStats");
             X3Utils.EnsureSetting("ShowNames", "0");
@@ -412,7 +415,7 @@ namespace Azimuth
 
             ToolStripItem[] toolbarItems =
             {
-                btnShowTerran, btnShowSectorStats, btnShowSectorNames,
+                btnShowMap, btnShowTerran, btnShowSectorStats, btnShowSectorNames,
                 btnLaunchWeaponsEditor, btnConfig, edit9972, edit9973,
                 btnStartGame, txtFindSector, btnFindNext, btnExportPng
             };
@@ -1810,6 +1813,23 @@ namespace Azimuth
             ControlPaint.DrawBorder(graphics, box, SystemColors.InfoText, ButtonBorderStyle.Solid);
             box.Inflate(-pad, -pad);
             TextRenderer.DrawText(graphics, text, font, box, SystemColors.InfoText, flags);
+        }
+
+        // UI-only visibility toggle: the underlying galaxy and PNG export stay intact.
+        private void btnShowMap_Click(object sender, EventArgs e)
+        {
+            bool showMap = btnShowMap.Checked;
+            if (!showMap)
+            {
+                SetHoveredSector(null);
+                m_MapCells.Clear();
+            }
+
+            pictureBox1.Visible = showMap;
+            X3Utils.SaveSetting("ShowMap", showMap ? "1" : "0");
+
+            if (showMap)
+                pictureBox1.Invalidate();
         }
 
         private void btnShowTerran_Click(object sender, EventArgs e)

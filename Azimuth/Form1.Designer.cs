@@ -151,6 +151,7 @@ namespace Azimuth
             this.edit9972 = new System.Windows.Forms.ToolStripMenuItem();
             this.edit9973 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
+            this.btnShowMap = new System.Windows.Forms.ToolStripButton();
             this.btnShowTerran = new System.Windows.Forms.ToolStripButton();
             this.btnShowSectorStats = new System.Windows.Forms.ToolStripButton();
             this.btnShowSectorNames = new System.Windows.Forms.ToolStripButton();
@@ -1635,6 +1636,7 @@ namespace Azimuth
             // 
             this.toolStrip1.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.btnShowMap,
             this.btnShowTerran,
             this.btnShowSectorStats,
             this.btnShowSectorNames,
@@ -1656,6 +1658,18 @@ namespace Azimuth
             this.toolStrip1.Size = new System.Drawing.Size(1514, 25);
             this.toolStrip1.TabIndex = 26;
             this.toolStrip1.Text = "toolStrip1";
+            // 
+            // btnShowMap
+            // 
+            this.btnShowMap.Checked = true;
+            this.btnShowMap.CheckOnClick = true;
+            this.btnShowMap.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.btnShowMap.Image = ((System.Drawing.Image)(resources.GetObject("btnShowMap.Image")));
+            this.btnShowMap.Name = "btnShowMap";
+            this.btnShowMap.Size = new System.Drawing.Size(83, 22);
+            this.btnShowMap.Text = "Show Map";
+            this.btnShowMap.ToolTipText = "Show or hide the map preview without changing galaxy data";
+            this.btnShowMap.Click += new System.EventHandler(this.btnShowMap_Click);
             // 
             // btnShowTerran
             // 
@@ -1985,6 +1999,7 @@ namespace Azimuth
         private System.Windows.Forms.ToolStripMenuItem edit9972;
         private System.Windows.Forms.ToolStripMenuItem edit9973;
         private System.Windows.Forms.ToolStrip toolStrip1;
+        private System.Windows.Forms.ToolStripButton btnShowMap;
         private System.Windows.Forms.ToolStripButton btnShowTerran;
         private System.Windows.Forms.ToolStripButton btnShowSectorStats;
         private System.Windows.Forms.RadioButton rbChaoticStart;
