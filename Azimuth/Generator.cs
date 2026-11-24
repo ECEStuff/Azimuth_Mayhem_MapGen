@@ -35,9 +35,9 @@ namespace Azimuth
             return (fifths * value + 2) / 5;
         }
 
-        public void GenerateSystemStats()
+        public void GenerateSystemStats(bool isRegeneration = false)
         {
-            Msg(X3Utils.Ui("Generator.GeneratingNewAttributesForEachSector"));
+            Msg(X3Utils.Ui(isRegeneration ? "Generator.RegeneratingSectorStats" : "Generator.GeneratingNewAttributesForEachSector"));
 
             var settings = m_Galaxy.GalaxyCreationSettings;
             int fifths = settings.SaboteurMode ? 4 : settings.ExtraSystemStats ? 6 : 5;

@@ -152,7 +152,8 @@ namespace Azimuth
                 retainedIceDebris |= debris.Any(line => line.Contains("atype=\"3\""));
             }
             Check(realCounts.Count == 1 && realCounts.Contains(50), "Overfull template always retains exactly 50 real asteroids");
-            Check(debrisCounts.Contains(0) && debrisCounts.Contains(100), "Inclusive debris percentage range 0-100");
+            Check(debrisCounts.All(count => count >= 50 && count <= 100) &&
+                debrisCounts.Contains(50) && debrisCounts.Contains(100), "Inclusive debris percentage range 50-100");
             Check(debrisCounts.Any(count => count > 50), "Debris not capped by large-asteroid limit");
             Check(retainedNividiumDebris && retainedIceDebris, "All debris minerals are retained");
             Check(layouts.Count > 100, "Random combined subsets differ across sectors");

@@ -645,7 +645,6 @@ namespace Azimuth
 
         private void btnGenerateGates_Click(object sender, EventArgs e)
         {
-            rtb1.Clear();
             GenerateGates();
         }
 
@@ -791,6 +790,8 @@ namespace Azimuth
             // The visible galaxy is never used as the worker's scratch space.
             galaxy.GalaxyCreationSettings = previousSettings;
             galaxy.HasUnsavedChanges = previousDirty;
+            // A new generation starts a fresh system log; other actions continue appending.
+            rtb1.Clear();
             var messages = new List<string>();
             using (var progress = new GenerationProgressDialog((token, report) =>
             {
@@ -1741,7 +1742,7 @@ namespace Azimuth
         private void btnGenerateStats_Click(object sender, EventArgs e)
         {
             X3Galaxy.Instance.HasUnsavedChanges = true;
-            m_Generator.GenerateSystemStats();
+            m_Generator.GenerateSystemStats(true);
             pictureBox1.Refresh();
         }
 

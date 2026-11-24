@@ -110,7 +110,7 @@ namespace Azimuth
             AddRandomAsteroidSubset(realAsteroids, realCount, selectionRandom);
 
             // Roll the retained debris percentage separately for each new sector.
-            // Round to the nearest whole object, so 0% retains none and 100% retains all.
+            // Round to the nearest whole object; 100% retains all source debris.
 			int debrisPercent = selectionRandom.Next(50, 101);
             int debrisCount = (int)(((long)debris.Count * debrisPercent + 50) / 100);
             AddRandomAsteroidSubset(debris, debrisCount, selectionRandom);
