@@ -406,7 +406,7 @@
             this.panel1.Controls.Add(this.nudResearch);
             this.panel1.Controls.Add(this.nudAbnormalSignals);
             this.panel1.Controls.Add(this.cbTerranMemory);
-            this.panel1.Location = new System.Drawing.Point(12, 24);
+            this.panel1.Location = new System.Drawing.Point(12, 34);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(480, 310);
             this.panel1.TabIndex = 39;
@@ -583,10 +583,10 @@
             // 
             // lblSystemName
             // 
-            this.lblSystemName.Font = new System.Drawing.Font("Georgia", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblSystemName.Location = new System.Drawing.Point(118, 5);
+            this.lblSystemName.Font = new System.Drawing.Font("Georgia", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.lblSystemName.Location = new System.Drawing.Point(12, 4);
             this.lblSystemName.Name = "lblSystemName";
-            this.lblSystemName.Size = new System.Drawing.Size(239, 13);
+            this.lblSystemName.Size = new System.Drawing.Size(480, 24);
             this.lblSystemName.TabIndex = 39;
             this.lblSystemName.Text = "Owner:";
             this.lblSystemName.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -601,7 +601,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.AntiqueWhite;
-            this.ClientSize = new System.Drawing.Size(504, 346);
+            this.ClientSize = new System.Drawing.Size(504, 356);
             this.Controls.Add(this.lblSystemName);
             this.Controls.Add(this.panel1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;

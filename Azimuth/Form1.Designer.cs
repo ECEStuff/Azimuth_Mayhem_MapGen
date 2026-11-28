@@ -283,7 +283,7 @@ namespace Azimuth
             // btnCustomMusic
             // 
             this.btnCustomMusic.BackColor = System.Drawing.Color.Linen;
-            this.btnCustomMusic.Location = new System.Drawing.Point(284, 646);
+            this.btnCustomMusic.Location = new System.Drawing.Point(314, 646);
             this.btnCustomMusic.Name = "btnCustomMusic";
             this.btnCustomMusic.Size = new System.Drawing.Size(125, 23);
             this.btnCustomMusic.TabIndex = 94;
@@ -1170,7 +1170,7 @@ namespace Azimuth
             this.gbMusic.Controls.Add(this.rbBasicMusic);
             this.gbMusic.Location = new System.Drawing.Point(16, 630);
             this.gbMusic.Name = "gbMusic";
-            this.gbMusic.Size = new System.Drawing.Size(260, 48);
+            this.gbMusic.Size = new System.Drawing.Size(292, 48);
             this.gbMusic.TabIndex = 66;
             this.gbMusic.TabStop = false;
             this.gbMusic.Text = "System Music Files";
@@ -1179,7 +1179,7 @@ namespace Azimuth
             // 
             this.rbCustom.AutoSize = true;
             this.rbCustom.Enabled = false;
-            this.rbCustom.Location = new System.Drawing.Point(192, 20);
+            this.rbCustom.Location = new System.Drawing.Point(214, 20);
             this.rbCustom.Name = "rbCustom";
             this.rbCustom.Size = new System.Drawing.Size(60, 17);
             this.rbCustom.TabIndex = 3;
@@ -1189,7 +1189,7 @@ namespace Azimuth
             // rbAllMusic
             // 
             this.rbAllMusic.AutoSize = true;
-            this.rbAllMusic.Location = new System.Drawing.Point(139, 20);
+            this.rbAllMusic.Location = new System.Drawing.Point(156, 20);
             this.rbAllMusic.Name = "rbAllMusic";
             this.rbAllMusic.Size = new System.Drawing.Size(36, 17);
             this.rbAllMusic.TabIndex = 2;
@@ -1200,7 +1200,7 @@ namespace Azimuth
             // 
             this.rbLitcubeMusic.AutoSize = true;
             this.rbLitcubeMusic.Checked = true;
-            this.rbLitcubeMusic.Location = new System.Drawing.Point(67, 20);
+            this.rbLitcubeMusic.Location = new System.Drawing.Point(79, 20);
             this.rbLitcubeMusic.Name = "rbLitcubeMusic";
             this.rbLitcubeMusic.Size = new System.Drawing.Size(60, 17);
             this.rbLitcubeMusic.TabIndex = 1;
@@ -1292,9 +1292,9 @@ namespace Azimuth
             // 
             this.gbMapType.Controls.Add(this.rbRectMap);
             this.gbMapType.Controls.Add(this.rbSquareMap);
-            this.gbMapType.Location = new System.Drawing.Point(196, 574);
+            this.gbMapType.Location = new System.Drawing.Point(202, 574);
             this.gbMapType.Name = "gbMapType";
-            this.gbMapType.Size = new System.Drawing.Size(250, 48);
+            this.gbMapType.Size = new System.Drawing.Size(244, 48);
             this.gbMapType.TabIndex = 70;
             this.gbMapType.TabStop = false;
             this.gbMapType.Text = "Map Type";
@@ -1302,7 +1302,7 @@ namespace Azimuth
             // rbRectMap
             // 
             this.rbRectMap.AutoSize = true;
-            this.rbRectMap.Location = new System.Drawing.Point(88, 19);
+            this.rbRectMap.Location = new System.Drawing.Point(113, 19);
             this.rbRectMap.Name = "rbRectMap";
             this.rbRectMap.Size = new System.Drawing.Size(74, 17);
             this.rbRectMap.TabIndex = 1;
@@ -1676,7 +1676,7 @@ namespace Azimuth
             this.btnShowTerran.Image = ((System.Drawing.Image)(resources.GetObject("btnShowTerran.Image")));
             this.btnShowTerran.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.btnShowTerran.Name = "btnShowTerran";
-            this.btnShowTerran.Size = new System.Drawing.Size(60, 22);
+            this.btnShowTerran.Size = new System.Drawing.Size(59, 22);
             this.btnShowTerran.Text = "Terran";
             this.btnShowTerran.ToolTipText = "Highlight sectors with Terran Memory";
             this.btnShowTerran.Click += new System.EventHandler(this.btnShowTerran_Click);
@@ -1742,7 +1742,7 @@ namespace Azimuth
             // 
             this.btnFindNext.Enabled = false;
             this.btnFindNext.Name = "btnFindNext";
-            this.btnFindNext.Size = new System.Drawing.Size(61, 22);
+            this.btnFindNext.Size = new System.Drawing.Size(62, 22);
             this.btnFindNext.Text = "Find Next";
             this.btnFindNext.ToolTipText = "Find the next matching sector (Enter also works)";
             this.btnFindNext.Click += new System.EventHandler(this.btnFindNext_Click);
@@ -1756,7 +1756,7 @@ namespace Azimuth
             // 
             this.btnExportPng.Enabled = false;
             this.btnExportPng.Name = "btnExportPng";
-            this.btnExportPng.Size = new System.Drawing.Size(71, 22);
+            this.btnExportPng.Size = new System.Drawing.Size(72, 22);
             this.btnExportPng.Text = "Export PNG";
             this.btnExportPng.ToolTipText = "Export the complete galaxy map as a PNG image";
             this.btnExportPng.Click += new System.EventHandler(this.btnExportPng_Click);
